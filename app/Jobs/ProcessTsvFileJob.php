@@ -32,6 +32,9 @@ class ProcessTsvFileJob implements ShouldQueue
 
     public function __construct(private readonly File $file) {}
 
+    /**
+     * @throws \Throwable
+     */
     public function handle(): void
     {
         $path = Storage::disk('local')->path($this->file->path);
@@ -157,6 +160,9 @@ class ProcessTsvFileJob implements ShouldQueue
 
     // -------------------------------------------------------------------------
 
+    /**
+     * @throws \Throwable
+     */
     private function flushBuffer(array $rows): void
     {
         DB::transaction(function () use ($rows) {
