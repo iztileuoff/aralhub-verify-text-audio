@@ -21,7 +21,12 @@ class TextResource extends JsonResource
             'tokenized_transcript' => $this->tokenized_transcript,
             'duration' => $this->duration,
             'speaker_gender' => $this->speaker_gender,
-            'filter_transcript' => $this->filter_transcript,
+            'filter_original_transcript' => $this->filter_original_transcript,
+            'filter_normalized_transcript' => $this->filter_normalized_transcript,
+            'filter_tokenized_transcript' => $this->filter_tokenized_transcript,
+            'edit_original_transcript' => $this->edit_original_transcript,
+            'edit_normalized_transcript' => $this->edit_normalized_transcript,
+            'edit_tokenized_transcript' => $this->edit_tokenized_transcript,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

@@ -18,7 +18,12 @@ return new class extends Migration
             $table->text('tokenized_transcript');
             $table->unsignedInteger('duration');
             $table->string('speaker_gender');
-            $table->text('filter_transcript')->nullable();
+            $table->text('filter_original_transcript')->nullable();
+            $table->text('filter_normalized_transcript')->nullable();
+            $table->text('filter_tokenized_transcript')->nullable();
+            $table->text('edit_original_transcript')->nullable();
+            $table->text('edit_normalized_transcript')->nullable();
+            $table->text('edit_tokenized_transcript')->nullable();
             $table->timestamps();
         });
     }

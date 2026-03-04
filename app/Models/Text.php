@@ -16,7 +16,12 @@ class Text extends Model
         'tokenized_transcript',
         'duration',
         'speaker_gender',
-        'filter_transcript',
+        'filter_original_transcript',
+        'filter_normalized_transcript',
+        'filter_tokenized_transcript',
+        'edit_original_transcript',
+        'edit_normalized_transcript',
+        'edit_tokenized_transcript',
     ];
 
     protected function casts(): array
@@ -30,7 +35,12 @@ class Text extends Model
             'tokenized_transcript' => 'string',
             'duration' => 'integer',
             'speaker_gender' => GenderEnum::class,
-            'filter_transcript' => 'string',
+            'filter_original_transcript' => 'string',
+            'filter_normalized_transcript' => 'string',
+            'filter_tokenized_transcript' => 'string',
+            'edit_original_transcript' => 'string',
+            'edit_normalized_transcript' => 'string',
+            'edit_tokenized_transcript' => 'string',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
