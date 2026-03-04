@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +25,7 @@ class User extends Authenticatable
         'name',
         'phone',
         'password',
+        'gender',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'name' => 'string',
             'phone' => 'string',
             'password' => 'hashed',
+            'gender' => GenderEnum::class,
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

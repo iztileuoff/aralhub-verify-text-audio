@@ -17,7 +17,7 @@ class ProfileResource extends JsonResource
             'role_name' => $this->role->name,
             'name' => $this->name,
             'phone' => $this->phone,
-            'password' => $this->password,
+            'gender' => $this->gender
         ];
     }
 }
