@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Admin\FileController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
 use App\Http\Controllers\Api\V1\Admin\LogoutController;
 use App\Http\Controllers\Api\V1\Admin\ProfileController;
+use App\Http\Controllers\Api\V1\Admin\TextController;
 
 Route::group([
     'prefix' => 'admin/auth',
@@ -24,5 +25,6 @@ Route::group([
 
     Route::apiResources([
         'files' => FileController::class,
+        'texts' => TextController::class,
     ]);
 });
