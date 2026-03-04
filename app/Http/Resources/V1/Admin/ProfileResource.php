@@ -13,7 +13,6 @@ class ProfileResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'role' => $this->role,
             'role_name' => $this->role->getLabelText(),
             'name' => $this->name,
             'phone' => $this->phone,

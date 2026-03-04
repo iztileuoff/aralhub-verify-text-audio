@@ -15,6 +15,7 @@ Route::group([
 Route::group([
     'prefix' => 'admin',
     'as' => 'admin.',
+    'middleware' => ['auth:sanctum'],
 ], function () {
     Route::apiSingletons([
         'profile' => ProfileController::class,
