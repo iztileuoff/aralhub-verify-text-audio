@@ -14,7 +14,7 @@ class TextController extends Controller
     public function index(Request $request)
     {
         $texts = Text::query()
-            ->orderBy('id', 'desc')
+            ->when($request->filled('file_id'), fn ($q) => $q->where('file_id', $request->input('file_id')))
             ->paginate($request->input('per_page', 10));
 
         return new TextCollection($texts);
