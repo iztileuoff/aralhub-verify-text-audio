@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "C:\\Users\\Asus\\.config\\herd\\bin\\php82\\php.exe",
+            "args": [
+                "C:\\Work\\Herd\\aralhub-verify-text-audio\\artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}
