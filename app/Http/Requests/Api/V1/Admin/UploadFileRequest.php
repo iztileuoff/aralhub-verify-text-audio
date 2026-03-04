@@ -36,9 +36,9 @@ class UploadFileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'file.required'  => 'A TSV file is required.',
+            'file.required' => 'A TSV file is required.',
             'file.mimetypes' => 'The file must be a valid TSV (tab-separated values) file.',
-            'file.max'       => 'The file must not exceed 50 MB.',
+            'file.max' => 'The file must not exceed 50 MB.',
         ];
     }
 }

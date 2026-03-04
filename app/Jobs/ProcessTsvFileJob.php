@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\File;
-use App\Models\Text;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,22 +36,24 @@ class ProcessTsvFileJob implements ShouldQueue
     {
         $path = Storage::disk('local')->path($this->file->path);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->markFailed("TSV file not found on disk: {$path}");
+
             return;
         }
 
         // Mark as processing
         $this->file->update([
-            'status'         => 'processing',
-            'error_message'  => null,
-            'rows_imported'  => 0,
+            'status' => 'processing',
+            'error_message' => null,
+            'rows_imported' => 0,
         ]);
 
         $handle = fopen($path, 'r');
 
         if ($handle === false) {
-            $this->markFailed("Cannot open TSV file.");
+            $this->markFailed('Cannot open TSV file.');
+
             return;
         }
 
@@ -60,10 +61,10 @@ class ProcessTsvFileJob implements ShouldQueue
         $totalRows = $this->countLines($path);
         $this->file->update(['rows_total' => $totalRows]);
 
-        $fileCache   = [];  // "{userId}_{filename}" => file_id (but we use $this->file->id)
-        $buffer      = [];
-        $rowCount    = 0;
-        $skipped     = 0;
+        $fileCache = [];  // "{userId}_{filename}" => file_id (but we use $this->file->id)
+        $buffer = [];
+        $rowCount = 0;
+        $skipped = 0;
 
         try {
             while (($line = fgets($handle)) !== false) {
@@ -78,10 +79,11 @@ class ProcessTsvFileJob implements ShouldQueue
                 if (count($cols) < self::EXPECTED_COLS) {
                     Log::warning("TsvImport: skipping malformed row #{$rowCount}", [
                         'file_id' => $this->file->id,
-                        'cols'    => count($cols),
+                        'cols' => count($cols),
                         'preview' => mb_substr($line, 0, 80),
                     ]);
                     $skipped++;
+
                     continue;
                 }
 
@@ -96,16 +98,16 @@ class ProcessTsvFileJob implements ShouldQueue
                 ] = array_map('trim', $cols);
 
                 $buffer[] = [
-                    'file_id'               => $this->file->id,
-                    'transcript_id'         => (int) $transcriptId,
-                    'audio_filename'        => $audioFilename,
-                    'original_transcript'   => $originalTranscript,
+                    'file_id' => $this->file->id,
+                    'transcript_id' => (int) $transcriptId,
+                    'audio_filename' => $audioFilename,
+                    'original_transcript' => $originalTranscript,
                     'normalized_transcript' => $normalizedTranscript,
-                    'tokenized_transcript'  => $tokenizedTranscript,
-                    'duration'              => (int) $duration,
-                    'speaker_gender'        => strtoupper($speakerGender),
-                    'created_at'            => now(),
-                    'updated_at'            => now(),
+                    'tokenized_transcript' => $tokenizedTranscript,
+                    'duration' => (int) $duration,
+                    'speaker_gender' => strtoupper($speakerGender),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
 
                 $rowCount++;
@@ -120,21 +122,21 @@ class ProcessTsvFileJob implements ShouldQueue
             }
 
             // Flush remaining rows
-            if (!empty($buffer)) {
+            if (! empty($buffer)) {
                 $this->flushBuffer($buffer);
             }
 
             fclose($handle);
 
             $this->file->update([
-                'status'        => 'completed',
+                'status' => 'completed',
                 'rows_imported' => $rowCount,
-                'rows_total'    => $rowCount + $skipped,
+                'rows_total' => $rowCount + $skipped,
             ]);
 
             Log::info("TsvImport: completed file #{$this->file->id}", [
                 'rows_imported' => $rowCount,
-                'rows_skipped'  => $skipped,
+                'rows_skipped' => $skipped,
             ]);
 
         } catch (\Throwable $e) {
@@ -165,7 +167,7 @@ class ProcessTsvFileJob implements ShouldQueue
     private function markFailed(string $reason): void
     {
         $this->file->update([
-            'status'        => 'failed',
+            'status' => 'failed',
             'error_message' => $reason,
         ]);
     }
@@ -173,14 +175,15 @@ class ProcessTsvFileJob implements ShouldQueue
     private function countLines(string $path): int
     {
         $count = 0;
-        $fp    = fopen($path, 'r');
-        while (!feof($fp)) {
+        $fp = fopen($path, 'r');
+        while (! feof($fp)) {
             $line = fgets($fp);
             if ($line !== false && trim($line) !== '') {
                 $count++;
             }
         }
         fclose($fp);
+
         return $count;
     }
 }

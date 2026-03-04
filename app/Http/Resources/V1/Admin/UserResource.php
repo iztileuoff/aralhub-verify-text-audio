@@ -16,7 +16,7 @@ class UserResource extends JsonResource
             'role_name' => $this->role->getLabelText(),
             'name' => $this->name,
             'phone' => $this->phone,
-            'gender' => $this->gender
+            'gender' => $this->gender,
         ];
     }
 }

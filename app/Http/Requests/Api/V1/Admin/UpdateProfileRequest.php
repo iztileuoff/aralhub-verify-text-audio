@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Api\V1\Admin;
 
-use App\Rules\UzPhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
