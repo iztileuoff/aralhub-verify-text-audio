@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\FileController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
 use App\Http\Controllers\Api\V1\Admin\LogoutController;
 use App\Http\Controllers\Api\V1\Admin\ProfileController;
@@ -19,5 +20,9 @@ Route::group([
 ], function () {
     Route::apiSingletons([
         'profile' => ProfileController::class,
+    ]);
+
+    Route::apiResources([
+        'files' => FileController::class,
     ]);
 });
