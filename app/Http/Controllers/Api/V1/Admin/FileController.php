@@ -44,7 +44,7 @@ class FileController extends Controller
         ]);
 
         // Dispatch background job to parse and import rows
-        ProcessTsvFileJob::dispatchSync($file);
+        ProcessTsvFileJob::dispatch($file);
 
         return new FileResource($file->load('user'));
     }
