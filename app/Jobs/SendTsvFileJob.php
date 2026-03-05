@@ -10,7 +10,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -22,11 +21,9 @@ class SendTsvFileJob implements ShouldQueue
     private const TRANSLATE_ENDPOINT = 'https://api.translator.aralhub.uz/translate-dataset';
 
     private const EXPECTED_COLS = 7;
-
     private const CHUNK_SIZE = 500;
 
-    public int $timeout = 120;
-
+    public int $timeout = 1800;
     public int $tries = 3;
 
     public function backoff(): array
@@ -44,18 +41,30 @@ class SendTsvFileJob implements ShouldQueue
     {
         $path = Storage::disk('public')->path($this->file->path);
 
-        if (! file_exists($path)) {
-            $this->markFailed("TSV file not found on disk: {$path}");
-
+        if (!file_exists($path)) {
+            $this->markFailed("TSV file not found: {$path}");
             return;
         }
 
         $this->file->update(['status' => 'sending']);
 
-        Log::info("SendTsvFile: sending file #{$this->file->id} to translation API");
+        Log::info("SendTsvFile: sending file #{$this->file->id}");
 
-        // ── 1. Send file ──────────────────────────────────────────────────────
-        $response = Http::timeout(600)
+        $translatedPath = storage_path("app/tmp/translated_{$this->file->id}.tsv");
+
+        if (!is_dir(dirname($translatedPath))) {
+            mkdir(dirname($translatedPath), 0777, true);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Send file and stream response directly to disk
+        |--------------------------------------------------------------------------
+        */
+
+        $response = Http::timeout(1800)
+            ->retry(3, 5000)
+            ->sink($translatedPath)
             ->attach(
                 'file',
                 fopen($path, 'r'),
@@ -65,30 +74,37 @@ class SendTsvFileJob implements ShouldQueue
             ->post(self::TRANSLATE_ENDPOINT);
 
         if ($response->failed()) {
+
             $error = "Translation API error [{$response->status()}]: ".$response->body();
+
             $this->markFailed($error);
 
-            Log::error("SendTsvFile: failed for file #{$this->file->id}", [
-                'http_status' => $response->status(),
-                'body' => mb_substr($response->body(), 0, 500),
+            Log::error("SendTsvFile failed", [
+                'file_id' => $this->file->id,
+                'status' => $response->status(),
             ]);
 
             throw new \RuntimeException($error);
         }
 
-        // ── 2. Parse response and update texts rows ───────────────────────────
-        $rawBody = $response->body(); // plain-text TSV string
+        /*
+        |--------------------------------------------------------------------------
+        | Parse TSV file from disk
+        |--------------------------------------------------------------------------
+        */
 
-        $updated = $this->parseAndUpdate($rawBody);
+        $updated = $this->parseAndUpdateFile($translatedPath);
 
-        // ── 3. Mark done ──────────────────────────────────────────────────────
         $this->file->update([
-            'status' => 'sent',
+            'status' => 'sent'
         ]);
 
-        Log::info("SendTsvFile: file #{$this->file->id} translation applied", [
-            'texts_updated' => $updated,
+        Log::info("SendTsvFile completed", [
+            'file_id' => $this->file->id,
+            'texts_updated' => $updated
         ]);
+
+        unlink($translatedPath);
     }
 
     public function failed(\Throwable $exception): void
@@ -96,46 +112,32 @@ class SendTsvFileJob implements ShouldQueue
         $this->markFailed($exception->getMessage());
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
+    /*
+    |--------------------------------------------------------------------------
+    | Parse TSV file line-by-line
+    |--------------------------------------------------------------------------
+    */
 
-    /**
-     * Parse TSV response body and update filter_* columns on matching Text rows.
-     *
-     * Response columns:
-     *   [0] transcript_id
-     *   [1] audio_filename
-     *   [2] filter_original_transcript   (translated original)
-     *   [3] filter_normalized_transcript (translated normalized)
-     *   [4] filter_tokenized_transcript  (translated tokenized)
-     *   [5] duration
-     *   [6] speaker_gender
-     *
-     * @throws \Throwable
-     */
-    private function parseAndUpdate(string $body): int
+    private function parseAndUpdateFile(string $filePath): int
     {
-        $lines = explode("\n", $body);
-        $buffer = [];   // audio_filename => [filter fields]
+        $handle = fopen($filePath, 'r');
+
+        $buffer = [];
         $count = 0;
         $skipped = 0;
 
-        foreach ($lines as $line) {
-            $line = rtrim($line, "\r");
+        while (($line = fgets($handle)) !== false) {
 
-            if (empty($line)) {
+            $line = rtrim($line, "\r\n");
+
+            if ($line === '') {
                 continue;
             }
 
             $cols = explode("\t", $line);
 
             if (count($cols) < self::EXPECTED_COLS) {
-                Log::warning('SendTsvFile: skipping malformed response row', [
-                    'file_id' => $this->file->id,
-                    'cols' => count($cols),
-                    'preview' => mb_substr($line, 0, 80),
-                ]);
                 $skipped++;
-
                 continue;
             }
 
@@ -146,7 +148,7 @@ class SendTsvFileJob implements ShouldQueue
                 $filterNormalized,
                 $filterTokenized,
                 $duration,
-                $speakerGender,
+                $speakerGender
             ] = array_map('trim', $cols);
 
             $buffer[] = [
@@ -158,59 +160,61 @@ class SendTsvFileJob implements ShouldQueue
 
             $count++;
 
-            // Flush chunk
             if (count($buffer) >= self::CHUNK_SIZE) {
                 $this->flushUpdates($buffer);
                 $buffer = [];
             }
         }
 
-        if (! empty($buffer)) {
+        fclose($handle);
+
+        if (!empty($buffer)) {
             $this->flushUpdates($buffer);
         }
 
         if ($skipped > 0) {
-            Log::warning("SendTsvFile: skipped {$skipped} malformed rows", [
+            Log::warning("SendTsvFile skipped rows", [
                 'file_id' => $this->file->id,
+                'skipped' => $skipped
             ]);
         }
 
         return $count;
     }
 
-    /**
-     * Bulk-update texts rows using a single CASE WHEN query per chunk.
-     *
-     * @throws \Throwable
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Batch update
+    |--------------------------------------------------------------------------
+    */
+
     private function flushUpdates(array $rows): void
     {
         $filenames = array_column($rows, 'audio_filename');
 
-        // Index by filename for fast lookup
         $map = array_column($rows, null, 'audio_filename');
 
-        DB::transaction(function () use ($filenames, $map) {
-            Text::where('file_id', $this->file->id)
-                ->whereIn('audio_filename', $filenames)
-                ->each(function (Text $text) use ($map) {
-                    $data = $map[$text->audio_filename] ?? null;
-                    if ($data) {
-                        $text->update([
-                            'filter_original_transcript' => $data['filter_original_transcript'],
-                            'filter_normalized_transcript' => $data['filter_normalized_transcript'],
-                            'filter_tokenized_transcript' => $data['filter_tokenized_transcript'],
-                        ]);
-                    }
-                });
-        });
+        Text::where('file_id', $this->file->id)
+            ->whereIn('audio_filename', $filenames)
+            ->each(function (Text $text) use ($map) {
+
+                $data = $map[$text->audio_filename] ?? null;
+
+                if ($data) {
+                    $text->update([
+                        'filter_original_transcript' => $data['filter_original_transcript'],
+                        'filter_normalized_transcript' => $data['filter_normalized_transcript'],
+                        'filter_tokenized_transcript' => $data['filter_tokenized_transcript'],
+                    ]);
+                }
+            });
     }
 
     private function markFailed(string $reason): void
     {
         $this->file->update([
             'status' => 'failed',
-            'error_message' => $reason,
+            'error_message' => $reason
         ]);
     }
 }
