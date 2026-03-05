@@ -55,7 +55,7 @@ class SendTsvFileJob implements ShouldQueue
         Log::info("SendTsvFile: sending file #{$this->file->id} to translation API");
 
         // ── 1. Send file ──────────────────────────────────────────────────────
-        $response = Http::timeout(60)
+        $response = Http::timeout(60 * 10)
             ->attach(
                 'file',
                 fopen($path, 'r'),
