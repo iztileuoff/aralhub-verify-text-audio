@@ -62,16 +62,25 @@ class SendTsvFileJob implements ShouldQueue
         |--------------------------------------------------------------------------
         */
 
-        $response = Http::timeout(1800)
-            ->retry(3, 5000)
-            ->sink($translatedPath)
-            ->attach(
-                'file',
-                fopen($path, 'r'),
-                $this->file->filename,
-                ['Content-Type' => $this->file->mime_type]
-            )
-            ->post(self::TRANSLATE_ENDPOINT);
+        $response = retry(3, function () use ($path, $translatedPath) {
+
+            return Http::timeout(1800)
+                ->sink($translatedPath)
+                ->withOptions([
+                    'multipart' => [
+                        [
+                            'name' => 'file',
+                            'contents' => fopen($path, 'r'),
+                            'filename' => basename($path),
+                            'headers' => [
+                                'Content-Type' => 'text/tab-separated-values'
+                            ],
+                        ],
+                    ],
+                ])
+                ->post(self::TRANSLATE_ENDPOINT);
+
+        }, 5000);
 
         if ($response->failed()) {
 
