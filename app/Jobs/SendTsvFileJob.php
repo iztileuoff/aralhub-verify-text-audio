@@ -19,7 +19,8 @@ class SendTsvFileJob implements ShouldQueue
 
     private const TRANSLATE_ENDPOINT = 'https://api.translator.aralhub.uz/translate-dataset';
 
-    private const EXPECTED_COLS = 7;
+    // Изменили ожидаемое количество колонок на 5, так как для обновления нужны только первые 5
+    private const EXPECTED_COLS = 5;
 
     private const CHUNK_SIZE = 500;
 
@@ -48,20 +49,21 @@ class SendTsvFileJob implements ShouldQueue
 
         Log::info("SendTsvFile: sending file #{$this->file->id} to translation API");
 
-        // ── 1. Send via raw cURL to avoid Guzzle cURL error 18 ───────────────
-        // Error 18 = server closes connection before Content-Length is reached.
-        // Fix: CURLOPT_IGNORE_CONTENT_LENGTH + read response into a temp stream.
-        $responseBody = $this->sendWithCurl($path);
+        // ── 1. Отправляем файл и получаем ресурс потока (stream) ──────────────
+        $stream = $this->sendWithCurl($path);
 
-        if ($responseBody === null) {
-            // markFailed already called inside sendWithCurl
+        if ($stream === null) {
+            // markFailed уже вызван внутри sendWithCurl
             return;
         }
 
-        // ── 2. Parse response and update texts rows ───────────────────────────
-        $updated = $this->parseAndUpdate($responseBody);
+        // ── 2. Парсим ответ построчно и обновляем БД ──────────────────────────
+        $updated = $this->parseAndUpdate($stream);
 
-        // ── 3. Mark done ──────────────────────────────────────────────────────
+        // Обязательно закрываем временный файл, чтобы освободить ресурсы
+        fclose($stream);
+
+        // ── 3. Отмечаем успешное завершение ───────────────────────────────────
         $this->file->update([
             'status' => 'sent',
         ]);
@@ -80,16 +82,11 @@ class SendTsvFileJob implements ShouldQueue
 
     /**
      * Send the TSV file using raw cURL.
-     *
-     * Key options that fix cURL error 18:
-     *   CURLOPT_IGNORE_CONTENT_LENGTH — ignore a mismatched Content-Length header
-     *   CURLOPT_HTTP_VERSION CURL_HTTP_VERSION_1_1 — avoid HTTP/2 framing issues
-     *   Writing to a temp file — avoids memory overflow on large responses
+     * Returns a file pointer resource instead of a string to save RAM.
      */
-    private function sendWithCurl(string $filePath): ?string
+    private function sendWithCurl(string $filePath)
     {
         $tmpFile = tmpfile();
-        $tmpPath = stream_get_meta_data($tmpFile)['uri'];
 
         $curl = curl_init();
 
@@ -106,7 +103,7 @@ class SendTsvFileJob implements ShouldQueue
             // ── Fixes for error 18 ────────────────────────────────────────
             CURLOPT_IGNORE_CONTENT_LENGTH => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            // ── Write response to temp file (handles large bodies) ────────
+            // ── Пишем ответ во временный файл (предотвращает OOM) ─────────
             CURLOPT_FILE => $tmpFile,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_TIMEOUT => 240,
@@ -121,7 +118,7 @@ class SendTsvFileJob implements ShouldQueue
         $curlErrNo = curl_errno($curl);
         curl_close($curl);
 
-        // cURL error 18 means partial data — still try to use what we got
+        // cURL error 18 означает частичные данные — всё равно пытаемся их использовать
         if (! $success && $curlErrNo !== CURLE_PARTIAL_FILE) {
             fclose($tmpFile);
             $this->markFailed("cURL error {$curlErrNo}: {$curlError}");
@@ -143,43 +140,32 @@ class SendTsvFileJob implements ShouldQueue
             return null;
         }
 
-        // Read response from temp file
-        fseek($tmpFile, 0);
-        $body = stream_get_contents($tmpFile);
-        fclose($tmpFile);
-
         Log::info("SendTsvFile: received response for file #{$this->file->id}", [
             'http_code' => $httpCode,
-            'response_size' => strlen($body),
-            'curl_errno' => $curlErrNo, // 18 = partial but usable
+            'curl_errno' => $curlErrNo,
         ]);
 
-        return $body;
+        // Возвращаем указатель в начало файла и отдаем ресурс
+        fseek($tmpFile, 0);
+
+        return $tmpFile;
     }
 
     // ── Private: Parser ───────────────────────────────────────────────────────
 
     /**
-     * Parse TSV response body and update filter_* columns on matching Text rows.
-     *
-     * Response columns:
-     *   [0] transcript_id
-     *   [1] audio_filename
-     *   [2] filter_original_transcript
-     *   [3] filter_normalized_transcript
-     *   [4] filter_tokenized_transcript
-     *   [5] duration
-     *   [6] speaker_gender
+     * Parse TSV stream and update filter_* columns on matching Text rows.
      */
-    private function parseAndUpdate(string $body): int
+    private function parseAndUpdate($stream): int
     {
-        $lines = explode("\n", $body);
         $buffer = [];
         $count = 0;
         $skipped = 0;
+        $isFirstLine = true;
 
-        foreach ($lines as $line) {
-            $line = rtrim($line, "\r");
+        // Читаем поток построчно (максимальная экономия RAM)
+        while (($line = fgets($stream)) !== false) {
+            $line = rtrim($line, "\r\n");
 
             if (empty($line)) {
                 continue;
@@ -187,9 +173,15 @@ class SendTsvFileJob implements ShouldQueue
 
             $cols = explode("\t", $line);
 
+            // Пропускаем строку заголовков, если она пришла
+            if ($isFirstLine && str_contains($cols[0], 'transcript_id')) {
+                $isFirstLine = false;
+                continue;
+            }
+            $isFirstLine = false;
+
             if (count($cols) < self::EXPECTED_COLS) {
                 $skipped++;
-
                 continue;
             }
 
