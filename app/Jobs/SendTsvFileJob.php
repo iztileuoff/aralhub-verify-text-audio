@@ -7,9 +7,11 @@ use App\Models\Text;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,12 +21,11 @@ class SendTsvFileJob implements ShouldQueue
 
     private const TRANSLATE_ENDPOINT = 'https://api.translator.aralhub.uz/translate-dataset';
 
-    // Изменили ожидаемое количество колонок на 5, так как для обновления нужны только первые 5
-    private const EXPECTED_COLS = 5;
+    private const EXPECTED_COLS = 7;
 
     private const CHUNK_SIZE = 500;
 
-    public int $timeout = 300;
+    public int $timeout = 120;
 
     public int $tries = 3;
 
@@ -35,6 +36,10 @@ class SendTsvFileJob implements ShouldQueue
 
     public function __construct(private readonly File $file) {}
 
+    /**
+     * @throws \Throwable
+     * @throws ConnectionException
+     */
     public function handle(): void
     {
         $path = Storage::disk('public')->path($this->file->path);
@@ -49,21 +54,34 @@ class SendTsvFileJob implements ShouldQueue
 
         Log::info("SendTsvFile: sending file #{$this->file->id} to translation API");
 
-        // ── 1. Отправляем файл и получаем ресурс потока (stream) ──────────────
-        $stream = $this->sendWithCurl($path);
+        // ── 1. Send file ──────────────────────────────────────────────────────
+        $response = Http::timeout(60 * 10)
+            ->attach(
+                'file',
+                fopen($path, 'r'),
+                $this->file->filename,
+                ['Content-Type' => $this->file->mime_type]
+            )
+            ->post(self::TRANSLATE_ENDPOINT);
 
-        if ($stream === null) {
-            // markFailed уже вызван внутри sendWithCurl
-            return;
+        if ($response->failed()) {
+            $error = "Translation API error [{$response->status()}]: ".$response->body();
+            $this->markFailed($error);
+
+            Log::error("SendTsvFile: failed for file #{$this->file->id}", [
+                'http_status' => $response->status(),
+                'body' => mb_substr($response->body(), 0, 500),
+            ]);
+
+            throw new \RuntimeException($error);
         }
 
-        // ── 2. Парсим ответ построчно и обновляем БД ──────────────────────────
-        $updated = $this->parseAndUpdate($stream);
+        // ── 2. Parse response and update texts rows ───────────────────────────
+        $rawBody = $response->body(); // plain-text TSV string
 
-        // Обязательно закрываем временный файл, чтобы освободить ресурсы
-        fclose($stream);
+        $updated = $this->parseAndUpdate($rawBody);
 
-        // ── 3. Отмечаем успешное завершение ───────────────────────────────────
+        // ── 3. Mark done ──────────────────────────────────────────────────────
         $this->file->update([
             'status' => 'sent',
         ]);
@@ -78,94 +96,31 @@ class SendTsvFileJob implements ShouldQueue
         $this->markFailed($exception->getMessage());
     }
 
-    // ── Private: HTTP ─────────────────────────────────────────────────────────
+    // ── Private ───────────────────────────────────────────────────────────────
 
     /**
-     * Send the TSV file using raw cURL.
-     * Returns a file pointer resource instead of a string to save RAM.
+     * Parse TSV response body and update filter_* columns on matching Text rows.
+     *
+     * Response columns:
+     *   [0] transcript_id
+     *   [1] audio_filename
+     *   [2] filter_original_transcript   (translated original)
+     *   [3] filter_normalized_transcript (translated normalized)
+     *   [4] filter_tokenized_transcript  (translated tokenized)
+     *   [5] duration
+     *   [6] speaker_gender
+     *
+     * @throws \Throwable
      */
-    private function sendWithCurl(string $filePath)
+    private function parseAndUpdate(string $body): int
     {
-        $tmpFile = tmpfile();
-
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => self::TRANSLATE_ENDPOINT,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => [
-                'file' => new \CURLFile(
-                    $filePath,
-                    $this->file->mime_type,
-                    $this->file->filename
-                ),
-            ],
-            // ── Fixes for error 18 ────────────────────────────────────────
-            CURLOPT_IGNORE_CONTENT_LENGTH => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            // ── Пишем ответ во временный файл (предотвращает OOM) ─────────
-            CURLOPT_FILE => $tmpFile,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT => 240,
-            CURLOPT_CONNECTTIMEOUT => 30,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-        ]);
-
-        $success = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($curl);
-        $curlErrNo = curl_errno($curl);
-        curl_close($curl);
-
-        // cURL error 18 означает частичные данные — всё равно пытаемся их использовать
-        if (! $success && $curlErrNo !== CURLE_PARTIAL_FILE) {
-            fclose($tmpFile);
-            $this->markFailed("cURL error {$curlErrNo}: {$curlError}");
-            Log::error("SendTsvFile: cURL failed for file #{$this->file->id}", [
-                'curl_errno' => $curlErrNo,
-                'curl_error' => $curlError,
-            ]);
-
-            return null;
-        }
-
-        if ($httpCode >= 400) {
-            fclose($tmpFile);
-            $this->markFailed("Translation API HTTP {$httpCode}");
-            Log::error("SendTsvFile: HTTP error for file #{$this->file->id}", [
-                'http_code' => $httpCode,
-            ]);
-
-            return null;
-        }
-
-        Log::info("SendTsvFile: received response for file #{$this->file->id}", [
-            'http_code' => $httpCode,
-            'curl_errno' => $curlErrNo,
-        ]);
-
-        // Возвращаем указатель в начало файла и отдаем ресурс
-        fseek($tmpFile, 0);
-
-        return $tmpFile;
-    }
-
-    // ── Private: Parser ───────────────────────────────────────────────────────
-
-    /**
-     * Parse TSV stream and update filter_* columns on matching Text rows.
-     */
-    private function parseAndUpdate($stream): int
-    {
-        $buffer = [];
+        $lines = explode("\n", $body);
+        $buffer = [];   // audio_filename => [filter fields]
         $count = 0;
         $skipped = 0;
-        $isFirstLine = true;
 
-        // Читаем поток построчно (максимальная экономия RAM)
-        while (($line = fgets($stream)) !== false) {
-            $line = rtrim($line, "\r\n");
+        foreach ($lines as $line) {
+            $line = rtrim($line, "\r");
 
             if (empty($line)) {
                 continue;
@@ -173,15 +128,14 @@ class SendTsvFileJob implements ShouldQueue
 
             $cols = explode("\t", $line);
 
-            // Пропускаем строку заголовков, если она пришла
-            if ($isFirstLine && str_contains($cols[0], 'transcript_id')) {
-                $isFirstLine = false;
-                continue;
-            }
-            $isFirstLine = false;
-
             if (count($cols) < self::EXPECTED_COLS) {
+                Log::warning('SendTsvFile: skipping malformed response row', [
+                    'file_id' => $this->file->id,
+                    'cols' => count($cols),
+                    'preview' => mb_substr($line, 0, 80),
+                ]);
                 $skipped++;
+
                 continue;
             }
 
@@ -191,9 +145,12 @@ class SendTsvFileJob implements ShouldQueue
                 $filterOriginal,
                 $filterNormalized,
                 $filterTokenized,
+                $duration,
+                $speakerGender,
             ] = array_map('trim', $cols);
 
-            $buffer[$audioFilename] = [
+            $buffer[] = [
+                'audio_filename' => $audioFilename,
                 'filter_original_transcript' => $filterOriginal,
                 'filter_normalized_transcript' => $filterNormalized,
                 'filter_tokenized_transcript' => $filterTokenized,
@@ -201,6 +158,7 @@ class SendTsvFileJob implements ShouldQueue
 
             $count++;
 
+            // Flush chunk
             if (count($buffer) >= self::CHUNK_SIZE) {
                 $this->flushUpdates($buffer);
                 $buffer = [];
@@ -212,7 +170,7 @@ class SendTsvFileJob implements ShouldQueue
         }
 
         if ($skipped > 0) {
-            Log::warning("SendTsvFile: skipped {$skipped} malformed rows in response", [
+            Log::warning("SendTsvFile: skipped {$skipped} malformed rows", [
                 'file_id' => $this->file->id,
             ]);
         }
@@ -221,18 +179,28 @@ class SendTsvFileJob implements ShouldQueue
     }
 
     /**
-     * Bulk-update texts using whereIn on audio_filename.
+     * Bulk-update texts rows using a single CASE WHEN query per chunk.
+     *
+     * @throws \Throwable
      */
-    private function flushUpdates(array $map): void
+    private function flushUpdates(array $rows): void
     {
-        $filenames = array_keys($map);
+        $filenames = array_column($rows, 'audio_filename');
+
+        // Index by filename for fast lookup
+        $map = array_column($rows, null, 'audio_filename');
 
         DB::transaction(function () use ($filenames, $map) {
             Text::where('file_id', $this->file->id)
                 ->whereIn('audio_filename', $filenames)
                 ->each(function (Text $text) use ($map) {
-                    if (isset($map[$text->audio_filename])) {
-                        $text->update($map[$text->audio_filename]);
+                    $data = $map[$text->audio_filename] ?? null;
+                    if ($data) {
+                        $text->update([
+                            'filter_original_transcript' => $data['filter_original_transcript'],
+                            'filter_normalized_transcript' => $data['filter_normalized_transcript'],
+                            'filter_tokenized_transcript' => $data['filter_tokenized_transcript'],
+                        ]);
                     }
                 });
         });
