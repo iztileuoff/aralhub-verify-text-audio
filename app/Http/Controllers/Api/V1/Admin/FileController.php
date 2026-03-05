@@ -28,7 +28,7 @@ class FileController extends Controller
         $userId = $request->input('user_id');
 
         // Store the raw TSV in a private disk
-        $storedPath = Storage::disk('local')->putFileAs(
+        $storedPath = Storage::disk('public')->putFileAs(
             "tsv_uploads/{$userId}",
             $uploaded,
             $uploaded->getClientOriginalName()
