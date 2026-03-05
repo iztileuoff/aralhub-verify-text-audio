@@ -15,8 +15,16 @@ return new class extends Migration
             $table->string('mime_type');
             $table->unsignedInteger('size');
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('status', ['pending', 'processing', 'completed', 'failed'])
-                ->default('pending');
+
+            $table->enum('status', [
+                'pending',      // just uploaded
+                'processing',   // ProcessTsvFile running
+                'completed',    // rows imported to DB
+                'sending',      // SendTsvFile running
+                'sent',         // translation API accepted
+                'failed',       // any step failed
+            ])->default('pending');
+
             $table->unsignedInteger('rows_total')->nullable();
             $table->unsignedInteger('rows_imported')->default(0);
             $table->text('error_message')->nullable();

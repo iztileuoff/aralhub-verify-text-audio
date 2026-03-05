@@ -142,6 +142,9 @@ class ProcessTsvFileJob implements ShouldQueue
                 'rows_skipped' => $skipped,
             ]);
 
+            // Dispatch next job: send TSV to translation API
+            SendTsvFileJob::dispatch($this->file);
+
         } catch (\Throwable $e) {
             fclose($handle);
             $this->markFailed($e->getMessage());
