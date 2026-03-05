@@ -21,13 +21,11 @@ class SendTsvFileJob implements ShouldQueue
 
     private const TRANSLATE_ENDPOINT = 'https://api.translator.aralhub.uz/translate-dataset';
 
-    // Снижаем ожидаемое количество до 5 (нам важны только поля для БД)
-    private const EXPECTED_COLS = 5;
+    private const EXPECTED_COLS = 7;
 
     private const CHUNK_SIZE = 500;
 
-    // Увеличиваем таймаут джоба, чтобы он дождался ответа HTTP-клиента
-    public int $timeout = 600;
+    public int $timeout = 120;
 
     public int $tries = 3;
 
@@ -39,6 +37,7 @@ class SendTsvFileJob implements ShouldQueue
     public function __construct(private readonly File $file) {}
 
     /**
+     * @throws \Throwable
      * @throws ConnectionException
      */
     public function handle(): void
@@ -47,6 +46,7 @@ class SendTsvFileJob implements ShouldQueue
 
         if (! file_exists($path)) {
             $this->markFailed("TSV file not found on disk: {$path}");
+
             return;
         }
 
@@ -54,29 +54,13 @@ class SendTsvFileJob implements ShouldQueue
 
         Log::info("SendTsvFile: sending file #{$this->file->id} to translation API");
 
-        // Читаем весь файл в память чтобы передать точный Content-Length без Chunked Transfer
-        $fileContents = file_get_contents($path);
-
-        // Отправка файла
+        // ── 1. Send file ──────────────────────────────────────────────────────
         $response = Http::timeout(600)
-            ->withHeaders([
-                'Expect' => '',
-                'Connection' => 'close',
-                'Accept-Encoding' => 'gzip, deflate',
-            ])
-            ->withOptions([
-                'version' => 1.1,
-                'decode_content' => false,
-                'curl' => [
-                    CURLOPT_ENCODING => '',
-                    CURLOPT_FORBID_REUSE => true,
-                    CURLOPT_FRESH_CONNECT => true,
-                ],
-            ])
             ->attach(
                 'file',
-                $fileContents,
-                $this->file->filename
+                fopen($path, 'r'),
+                $this->file->filename,
+                ['Content-Type' => $this->file->mime_type]
             )
             ->post(self::TRANSLATE_ENDPOINT);
 
@@ -92,9 +76,12 @@ class SendTsvFileJob implements ShouldQueue
             throw new \RuntimeException($error);
         }
 
-        // Парсинг ответа
-        $updated = $this->parseAndUpdate($response->body());
+        // ── 2. Parse response and update texts rows ───────────────────────────
+        $rawBody = $response->body(); // plain-text TSV string
 
+        $updated = $this->parseAndUpdate($rawBody);
+
+        // ── 3. Mark done ──────────────────────────────────────────────────────
         $this->file->update([
             'status' => 'sent',
         ]);
@@ -109,13 +96,28 @@ class SendTsvFileJob implements ShouldQueue
         $this->markFailed($exception->getMessage());
     }
 
+    // ── Private ───────────────────────────────────────────────────────────────
+
+    /**
+     * Parse TSV response body and update filter_* columns on matching Text rows.
+     *
+     * Response columns:
+     *   [0] transcript_id
+     *   [1] audio_filename
+     *   [2] filter_original_transcript   (translated original)
+     *   [3] filter_normalized_transcript (translated normalized)
+     *   [4] filter_tokenized_transcript  (translated tokenized)
+     *   [5] duration
+     *   [6] speaker_gender
+     *
+     * @throws \Throwable
+     */
     private function parseAndUpdate(string $body): int
     {
         $lines = explode("\n", $body);
-        $buffer = [];
+        $buffer = [];   // audio_filename => [filter fields]
         $count = 0;
         $skipped = 0;
-        $isFirstLine = true;
 
         foreach ($lines as $line) {
             $line = rtrim($line, "\r");
@@ -126,20 +128,14 @@ class SendTsvFileJob implements ShouldQueue
 
             $cols = explode("\t", $line);
 
-            // Пропускаем строку с заголовками
-            if ($isFirstLine && str_contains($cols[0], 'transcript_id')) {
-                $isFirstLine = false;
-                continue;
-            }
-            $isFirstLine = false;
-
-            // Проверяем только необходимые 5 колонок
             if (count($cols) < self::EXPECTED_COLS) {
                 Log::warning('SendTsvFile: skipping malformed response row', [
                     'file_id' => $this->file->id,
                     'cols' => count($cols),
+                    'preview' => mb_substr($line, 0, 80),
                 ]);
                 $skipped++;
+
                 continue;
             }
 
@@ -149,6 +145,8 @@ class SendTsvFileJob implements ShouldQueue
                 $filterOriginal,
                 $filterNormalized,
                 $filterTokenized,
+                $duration,
+                $speakerGender,
             ] = array_map('trim', $cols);
 
             $buffer[] = [
@@ -160,6 +158,7 @@ class SendTsvFileJob implements ShouldQueue
 
             $count++;
 
+            // Flush chunk
             if (count($buffer) >= self::CHUNK_SIZE) {
                 $this->flushUpdates($buffer);
                 $buffer = [];
@@ -179,9 +178,16 @@ class SendTsvFileJob implements ShouldQueue
         return $count;
     }
 
+    /**
+     * Bulk-update texts rows using a single CASE WHEN query per chunk.
+     *
+     * @throws \Throwable
+     */
     private function flushUpdates(array $rows): void
     {
         $filenames = array_column($rows, 'audio_filename');
+
+        // Index by filename for fast lookup
         $map = array_column($rows, null, 'audio_filename');
 
         DB::transaction(function () use ($filenames, $map) {
