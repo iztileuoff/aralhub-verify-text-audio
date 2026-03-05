@@ -33,7 +33,7 @@ class SendTsvFileJob implements ShouldQueue
 
     public function handle(): void
     {
-        $path = Storage::disk('local')->path($this->file->path);
+        $path = Storage::disk('public')->path($this->file->path);
 
         if (!file_exists($path)) {
             $this->markFailed("TSV file not found on disk: {$path}");
