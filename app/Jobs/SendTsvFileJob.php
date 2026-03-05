@@ -54,26 +54,28 @@ class SendTsvFileJob implements ShouldQueue
 
         Log::info("SendTsvFile: sending file #{$this->file->id} to translation API");
 
+        // Читаем весь файл в память чтобы передать точный Content-Length без Chunked Transfer
+        $fileContents = file_get_contents($path);
+
         // Отправка файла
         $response = Http::timeout(600)
             ->withHeaders([
                 'Expect' => '',
-                'Connection' => 'close', // Close connection immediately
+                'Connection' => 'close',
                 'Accept-Encoding' => 'gzip, deflate',
             ])
             ->withOptions([
-                'version' => 1.0, // Force HTTP/1.0
+                'version' => 1.1,
                 'decode_content' => false,
                 'curl' => [
                     CURLOPT_ENCODING => '',
-                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0,
                     CURLOPT_FORBID_REUSE => true,
                     CURLOPT_FRESH_CONNECT => true,
                 ],
             ])
             ->attach(
                 'file',
-                fopen($path, 'r'),
+                $fileContents,
                 $this->file->filename
             )
             ->post(self::TRANSLATE_ENDPOINT);
