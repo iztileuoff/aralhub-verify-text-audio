@@ -56,8 +56,17 @@ class SendTsvFileJob implements ShouldQueue
 
         // Отправка файла
         $response = Http::timeout(600)
-            ->withHeaders(['Expect' => ''])
-            ->withOptions(['version' => 1.1])
+            ->withHeaders([
+                'Expect' => '',
+                'Connection' => 'keep-alive',
+            ])
+            ->withOptions([
+                'version' => 1.1,
+                'decode_content' => false,
+                'curl' => [
+                    CURLOPT_ENCODING => '',
+                ],
+            ])
             ->attach(
                 'file',
                 fopen($path, 'r'),
