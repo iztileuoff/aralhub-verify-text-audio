@@ -14,10 +14,15 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'role' => RoleEnum::SUPER_ADMIN->value,
-                'name' => 'Timur',
+                'first_name' => 'Timur',
+                'last_name' => 'Baltabekov',
                 'phone' => '998999999999',
                 'password' => '123aral123',
                 'gender' => GenderEnum::MALE->value,
+                'age' => 26,
+                'specialization_id' => null,
+                'course' => null,
+                'is_verified' => true,
             ],
         ];
 

@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -22,10 +24,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'role',
-        'name',
+        'first_name',
+        'last_name',
         'phone',
         'password',
         'gender',
+        'age',
+        'specialization_id',
+        'course',
+        'is_verified',
     ];
 
     /**
@@ -46,12 +53,30 @@ class User extends Authenticatable
     {
         return [
             'role' => RoleEnum::class,
-            'name' => 'string',
+            'first_name' => 'string',
+            'last_name' => 'string',
             'phone' => 'string',
             'password' => 'hashed',
             'gender' => GenderEnum::class,
+            'age' => 'integer',
+            'specialization_id' => 'integer',
+            'course' => 'string',
+            'is_verified' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    public function password(): Attribute
+    {
+        return new Attribute(
+            get: null,
+            set: fn ($value) => bcrypt($value),
+        );
+    }
+
+    public function specialization(): BelongsTo
+    {
+        return $this->belongsTo(Specialization::class);
     }
 }

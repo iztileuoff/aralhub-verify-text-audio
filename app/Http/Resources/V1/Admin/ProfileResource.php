@@ -14,9 +14,15 @@ class ProfileResource extends JsonResource
         return [
             'id' => $this->id,
             'role_name' => $this->role->getLabelText(),
-            'name' => $this->name,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
             'phone' => $this->phone,
             'gender' => $this->gender,
+            'age' => $this->age,
+            'specialization_id' => $this->specialization_id,
+            'specialization' => new SpecializationResource($this->whenLoaded('specialization')),
+            'course' => $this->whenLoaded('course'),
+            'is_verified' => $this->is_verified,
         ];
     }
 }

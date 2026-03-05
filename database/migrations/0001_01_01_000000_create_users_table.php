@@ -14,10 +14,15 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->unsignedTinyInteger('role');
-            $table->string('name');
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('phone')->unique();
             $table->string('password');
             $table->string('gender');
+            $table->unsignedTinyInteger('age')->nullable();
+            $table->foreignId('specialization_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedTinyInteger('course')->nullable();
+            $table->boolean('is_verified')->default(false);
             $table->timestamps();
         });
 
