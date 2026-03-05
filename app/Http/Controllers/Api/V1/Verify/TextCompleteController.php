@@ -17,33 +17,23 @@ class TextCompleteController extends Controller
 
         $validatedText = $request->input('text');
 
-        // 1. Original Transcript (как есть)
+        // 1. Original Transcript (Оригинал как есть)
         $originalTranscript = $validatedText;
 
         // 2. Normalized Transcript
-        // Приводим к нижнему регистру и удаляем пунктуацию (кроме кавычек, как в вашем примере)
-        $normalizedTranscript = mb_strtolower($validatedText);
-        // Удаляем запятые, точки, скобки
-        $normalizedTranscript = preg_replace('/[,().]/u', '', $normalizedTranscript);
+        // Приводим к нижнему регистру и удаляем финальную точку
+        $normalizedTranscript = mb_strtolower(trim($validatedText, '.?!'));
 
         // 3. Tokenized Transcript
-        // Разбиваем строку на слова
+        // Разбиваем на слова, затем каждое слово на буквы через пробел, разделяя слова пайпом |
         $words = explode(' ', $normalizedTranscript);
-        $tokenizedArray = [];
-
-        foreach ($words as $word) {
-            if (empty($word)) {
-                continue;
-            }
-
-            // Разбиваем слово на отдельные символы (мультибайтовая поддержка)
+        $tokenizedParts = array_map(function ($word) {
+            // mb_str_split корректно разбивает казахские символы (қ, ө, ұ и т.д.)
             $chars = mb_str_split($word);
-            // Соединяем символы через пробел и добавляем в массив
-            $tokenizedArray[] = implode(' ', $chars);
-        }
+            return implode(' ', $chars) . ' |';
+        }, $words);
 
-        // Соединяем слова через пайп | и добавляем финальный пайп в конце
-        $tokenizedTranscript = implode(' | ', $tokenizedArray).' |';
+        $tokenizedTranscript = implode(' ', $tokenizedParts);
 
         $text->edit_original_transcript = $validatedText;
         $text->normalized_transcript = $normalizedTranscript;
