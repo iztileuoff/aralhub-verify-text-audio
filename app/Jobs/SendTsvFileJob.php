@@ -66,18 +66,11 @@ class SendTsvFileJob implements ShouldQueue
 
             return Http::timeout(1800)
                 ->sink($translatedPath)
-                ->withOptions([
-                    'multipart' => [
-                        [
-                            'name' => 'file',
-                            'contents' => fopen($path, 'r'),
-                            'filename' => basename($path),
-                            'headers' => [
-                                'Content-Type' => 'text/tab-separated-values'
-                            ],
-                        ],
-                    ],
-                ])
+                ->attach(
+                    'file',
+                    file_get_contents($path),
+                    basename($path)
+                )
                 ->post(self::TRANSLATE_ENDPOINT);
 
         }, 5000);
