@@ -27,6 +27,12 @@ class TextResource extends JsonResource
             'edit_original_transcript' => $this->edit_original_transcript,
             'edit_normalized_transcript' => $this->edit_normalized_transcript,
             'edit_tokenized_transcript' => $this->edit_tokenized_transcript,
+            'edit_user_id' => $this->edit_user_id,
+            'edit_user' => new UserResource($this->whenLoaded('editUser')),
+            'edit_started_at' => $this->edit_started_at?->format('Y-m-d H:i:s'),
+            'edit_finished_at' => $this->edit_finished_at?->format('Y-m-d H:i:s'),
+            'edit_cancelled_user_id' => $this->edit_cancelled_user_id,
+            'edit_cancelled_user' => new UserResource($this->whenLoaded('editCancelledUser')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

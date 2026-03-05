@@ -18,11 +18,14 @@ class SendTsvFileJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private const TRANSLATE_ENDPOINT = 'https://api.translator.aralhub.uz/translate-dataset';
-    private const EXPECTED_COLS      = 7;
-    private const CHUNK_SIZE         = 500;
+
+    private const EXPECTED_COLS = 7;
+
+    private const CHUNK_SIZE = 500;
 
     public int $timeout = 300;
-    public int $tries   = 3;
+
+    public int $tries = 3;
 
     public function backoff(): array
     {
@@ -35,8 +38,9 @@ class SendTsvFileJob implements ShouldQueue
     {
         $path = Storage::disk('public')->path($this->file->path);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->markFailed("TSV file not found on disk: {$path}");
+
             return;
         }
 
@@ -59,7 +63,7 @@ class SendTsvFileJob implements ShouldQueue
 
         // ── 3. Mark done ──────────────────────────────────────────────────────
         $this->file->update([
-            'status'             => 'sent',
+            'status' => 'sent',
         ]);
 
         Log::info("SendTsvFile: file #{$this->file->id} translation applied", [
@@ -90,9 +94,9 @@ class SendTsvFileJob implements ShouldQueue
         $curl = curl_init();
 
         curl_setopt_array($curl, [
-            CURLOPT_URL            => self::TRANSLATE_ENDPOINT,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => [
+            CURLOPT_URL => self::TRANSLATE_ENDPOINT,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [
                 'file' => new \CURLFile(
                     $filePath,
                     $this->file->mime_type,
@@ -101,30 +105,31 @@ class SendTsvFileJob implements ShouldQueue
             ],
             // ── Fixes for error 18 ────────────────────────────────────────
             CURLOPT_IGNORE_CONTENT_LENGTH => true,
-            CURLOPT_HTTP_VERSION          => CURL_HTTP_VERSION_1_1,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             // ── Write response to temp file (handles large bodies) ────────
-            CURLOPT_FILE               => $tmpFile,
-            CURLOPT_FOLLOWLOCATION     => true,
-            CURLOPT_TIMEOUT            => 240,
-            CURLOPT_CONNECTTIMEOUT     => 30,
-            CURLOPT_SSL_VERIFYPEER     => true,
-            CURLOPT_SSL_VERIFYHOST     => 2,
+            CURLOPT_FILE => $tmpFile,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 240,
+            CURLOPT_CONNECTTIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
         ]);
 
-        $success  = curl_exec($curl);
+        $success = curl_exec($curl);
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curlError = curl_error($curl);
         $curlErrNo = curl_errno($curl);
         curl_close($curl);
 
         // cURL error 18 means partial data — still try to use what we got
-        if (!$success && $curlErrNo !== CURLE_PARTIAL_FILE) {
+        if (! $success && $curlErrNo !== CURLE_PARTIAL_FILE) {
             fclose($tmpFile);
             $this->markFailed("cURL error {$curlErrNo}: {$curlError}");
             Log::error("SendTsvFile: cURL failed for file #{$this->file->id}", [
                 'curl_errno' => $curlErrNo,
                 'curl_error' => $curlError,
             ]);
+
             return null;
         }
 
@@ -134,6 +139,7 @@ class SendTsvFileJob implements ShouldQueue
             Log::error("SendTsvFile: HTTP error for file #{$this->file->id}", [
                 'http_code' => $httpCode,
             ]);
+
             return null;
         }
 
@@ -143,9 +149,9 @@ class SendTsvFileJob implements ShouldQueue
         fclose($tmpFile);
 
         Log::info("SendTsvFile: received response for file #{$this->file->id}", [
-            'http_code'     => $httpCode,
+            'http_code' => $httpCode,
             'response_size' => strlen($body),
-            'curl_errno'    => $curlErrNo, // 18 = partial but usable
+            'curl_errno' => $curlErrNo, // 18 = partial but usable
         ]);
 
         return $body;
@@ -167,9 +173,9 @@ class SendTsvFileJob implements ShouldQueue
      */
     private function parseAndUpdate(string $body): int
     {
-        $lines   = explode("\n", $body);
-        $buffer  = [];
-        $count   = 0;
+        $lines = explode("\n", $body);
+        $buffer = [];
+        $count = 0;
         $skipped = 0;
 
         foreach ($lines as $line) {
@@ -183,6 +189,7 @@ class SendTsvFileJob implements ShouldQueue
 
             if (count($cols) < self::EXPECTED_COLS) {
                 $skipped++;
+
                 continue;
             }
 
@@ -195,9 +202,9 @@ class SendTsvFileJob implements ShouldQueue
             ] = array_map('trim', $cols);
 
             $buffer[$audioFilename] = [
-                'filter_original_transcript'   => $filterOriginal,
+                'filter_original_transcript' => $filterOriginal,
                 'filter_normalized_transcript' => $filterNormalized,
-                'filter_tokenized_transcript'  => $filterTokenized,
+                'filter_tokenized_transcript' => $filterTokenized,
             ];
 
             $count++;
@@ -208,7 +215,7 @@ class SendTsvFileJob implements ShouldQueue
             }
         }
 
-        if (!empty($buffer)) {
+        if (! empty($buffer)) {
             $this->flushUpdates($buffer);
         }
 
@@ -242,7 +249,7 @@ class SendTsvFileJob implements ShouldQueue
     private function markFailed(string $reason): void
     {
         $this->file->update([
-            'status'        => 'failed',
+            'status' => 'failed',
             'error_message' => $reason,
         ]);
     }

@@ -24,6 +24,10 @@ return new class extends Migration
             $table->text('edit_original_transcript')->nullable();
             $table->text('edit_normalized_transcript')->nullable();
             $table->text('edit_tokenized_transcript')->nullable();
+            $table->foreignId('edit_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('edit_started_at')->nullable();
+            $table->timestamp('edit_finished_at')->nullable();
+            $table->foreignId('edit_cancelled_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

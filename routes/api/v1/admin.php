@@ -8,6 +8,9 @@ use App\Http\Controllers\Api\V1\Admin\RegistrationController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\TextController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
+use App\Http\Controllers\Api\V1\Verify\TextCancelController;
+use App\Http\Controllers\Api\V1\Verify\TextCompleteController;
+use App\Http\Controllers\Api\V1\Verify\TextController as VerifyTextController;
 
 Route::group([
     'prefix' => 'admin/auth',
@@ -41,10 +44,10 @@ Route::group([
     'as' => 'admin.verify.',
     'middleware' => ['auth:sanctum'],
 ], function () {
-    //    Route::get('text');
-    //    Route::post('text/{text}/complete');
-    //    Route::post('text/{text}/cancel');
-    //
+    Route::get('text', VerifyTextController::class)->name('text');
+    Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
+    Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
+
     //    Route::get('edited/text');
     //    Route::post('edited/text/{text}/audio/complete');
 });

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\GenderEnum;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Text extends Model
 {
@@ -22,6 +23,10 @@ class Text extends Model
         'edit_original_transcript',
         'edit_normalized_transcript',
         'edit_tokenized_transcript',
+        'edit_user_id',
+        'edit_started_at',
+        'edit_finished_at',
+        'edit_cancelled_user_id',
     ];
 
     protected function casts(): array
@@ -41,8 +46,22 @@ class Text extends Model
             'edit_original_transcript' => 'string',
             'edit_normalized_transcript' => 'string',
             'edit_tokenized_transcript' => 'string',
+            'edit_user_id' => 'integer',
+            'edit_started_at' => 'datetime',
+            'edit_finished_at' => 'datetime',
+            'edit_cancelled_user_id' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    public function editUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'edit_user_id');
+    }
+
+    public function editCancelledUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'edit_cancelled_user_id');
     }
 }
