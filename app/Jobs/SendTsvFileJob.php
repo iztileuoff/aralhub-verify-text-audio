@@ -38,6 +38,9 @@ class SendTsvFileJob implements ShouldQueue
 
     public function __construct(private readonly File $file) {}
 
+    /**
+     * @throws ConnectionException
+     */
     public function handle(): void
     {
         $path = Storage::disk('public')->path($this->file->path);
@@ -53,11 +56,12 @@ class SendTsvFileJob implements ShouldQueue
 
         // Отправка файла
         $response = Http::timeout(600)
+            ->withHeaders(['Expect' => ''])
+            ->withOptions(['version' => 1.1])
             ->attach(
                 'file',
                 fopen($path, 'r'),
-                $this->file->filename,
-                ['Content-Type' => $this->file->mime_type]
+                $this->file->filename
             )
             ->post(self::TRANSLATE_ENDPOINT);
 
