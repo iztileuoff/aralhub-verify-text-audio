@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,6 +74,13 @@ class User extends Authenticatable
             get: null,
             set: fn ($value) => bcrypt($value),
         );
+    }
+
+    public function scopeSearch(Builder $query, $search): void
+    {
+        $query->where('first_name', 'like', "%$search%")
+            ->orWhere('last_name', 'like', "%$search%")
+            ->orWhere('phone', 'like', "%$search%");
     }
 
     public function specialization(): BelongsTo
