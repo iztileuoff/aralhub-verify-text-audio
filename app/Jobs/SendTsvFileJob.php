@@ -58,13 +58,17 @@ class SendTsvFileJob implements ShouldQueue
         $response = Http::timeout(600)
             ->withHeaders([
                 'Expect' => '',
-                'Connection' => 'keep-alive',
+                'Connection' => 'close', // Close connection immediately
+                'Accept-Encoding' => 'gzip, deflate',
             ])
             ->withOptions([
-                'version' => 1.1,
+                'version' => 1.0, // Force HTTP/1.0
                 'decode_content' => false,
                 'curl' => [
                     CURLOPT_ENCODING => '',
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0,
+                    CURLOPT_FORBID_REUSE => true,
+                    CURLOPT_FRESH_CONNECT => true,
                 ],
             ])
             ->attach(
