@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Resources\V1\Admin;
+namespace App\Http\Resources\V1\Verify;
 
+use App\Http\Resources\V1\Admin\SpecializationResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,6 +23,7 @@ class UserResource extends JsonResource
             'specialization_id' => $this->specialization_id,
             'specialization' => new SpecializationResource($this->whenLoaded('specialization')),
             'course' => $this->course,
+            'finished_edit_texts_count' => $this->whenHas('finished_edit_texts_count'),
             'is_verified' => $this->is_verified,
         ];
     }

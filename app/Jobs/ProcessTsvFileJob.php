@@ -98,9 +98,6 @@ class ProcessTsvFileJob implements ShouldQueue
                     $tokenizedTranscript,
                     $duration,
                     $speakerGender,
-                    $filter_original_transcript,
-                    $filter_normalized_transcript,
-                    $filter_tokenized_transcript,
                 ] = array_map('trim', $cols);
 
                 $buffer[] = [
@@ -112,9 +109,6 @@ class ProcessTsvFileJob implements ShouldQueue
                     'tokenized_transcript' => $tokenizedTranscript,
                     'duration' => (int) $duration,
                     'speaker_gender' => strtoupper($speakerGender),
-                    'filter_original_transcript' => $filter_original_transcript,
-                    'filter_normalized_transcript' => $filter_normalized_transcript,
-                    'filter_tokenized_transcript' => $filter_tokenized_transcript,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];

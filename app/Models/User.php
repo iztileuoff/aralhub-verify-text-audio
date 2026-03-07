@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -88,12 +89,12 @@ class User extends Authenticatable
         return $this->belongsTo(Specialization::class);
     }
 
-    public function editTexts()
+    public function editTexts(): HasMany
     {
         return $this->hasMany(Text::class, 'edit_user_id');
     }
 
-    public function finishedEditTexts()
+    public function finishedEditTexts(): HasMany
     {
         return $this->hasMany(Text::class, 'edit_user_id')->whereNotNull('edit_finished_at');
     }

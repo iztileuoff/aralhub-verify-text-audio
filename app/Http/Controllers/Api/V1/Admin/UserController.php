@@ -16,8 +16,9 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::query()
-            ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
+            ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
+            ->when($request->filled('specialization_id'), fn ($q) => $q->search($request->input('specialization_id')))
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));
 
