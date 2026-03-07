@@ -37,9 +37,10 @@ Route::group([
     Route::apiResources([
         'roles' => RoleController::class,
         'users' => UserController::class,
-        'files' => FileController::class,
         'texts' => TextController::class,
     ]);
+
+    Route::apiResource('files', FileController::class)->except('update');
 
     Route::post('dataset', DatasetController::class)->name('dataset');
 });
