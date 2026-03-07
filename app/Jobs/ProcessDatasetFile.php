@@ -16,6 +16,10 @@ class ProcessDatasetFile implements ShouldQueue
 
     protected string $path;
 
+    public int $timeout = 600;
+
+    public int $tries = 3;
+
     public function __construct(string $path)
     {
         $this->path = $path;
@@ -23,34 +27,25 @@ class ProcessDatasetFile implements ShouldQueue
 
     public function handle(): void
     {
-        $filePath = Storage::path($this->path);
+        $file = storage_path('app/'.$this->path);
 
-        $handle = fopen($filePath, 'r');
+        $handle = fopen($file, 'r');
+
+        $chunk = [];
+        $size = 1000;
 
         while (($line = fgets($handle)) !== false) {
 
-            $line = trim($line);
+            $chunk[] = $line;
 
-            if ($line === '') {
-                continue;
+            if (count($chunk) == $size) {
+                ProcessDatasetChunk::dispatch($chunk);
+                $chunk = [];
             }
+        }
 
-            $parts = explode("\t", $line);
-
-            if (count($parts) < 4) {
-                continue;
-            }
-
-            $audioFilename = trim($parts[0]);
-            $filterOriginalTranscript = trim($parts[1]);
-            $filterNormalizedTranscript = trim($parts[2]);
-            $filterTokenizedTranscript = trim($parts[3]);
-
-            Text::where('audio_filename', $audioFilename)->update([
-                'filter_original_transcript' => $filterOriginalTranscript,
-                'filter_normalized_transcript' => $filterNormalizedTranscript,
-                'filter_tokenized_transcript' => $filterTokenizedTranscript
-            ]);
+        if (!empty($chunk)) {
+            ProcessDatasetChunk::dispatch($chunk);
         }
 
         fclose($handle);
