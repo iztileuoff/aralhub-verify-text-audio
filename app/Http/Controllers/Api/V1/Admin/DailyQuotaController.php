@@ -48,7 +48,7 @@ class DailyQuotaController extends Controller
                 ->count();
 
             if ($usersCount === 0) {
-                return 0;
+                return $dailyQuotaTextsCount;
             }
 
             return intdiv($dailyQuotaTextsCount, $usersCount);
