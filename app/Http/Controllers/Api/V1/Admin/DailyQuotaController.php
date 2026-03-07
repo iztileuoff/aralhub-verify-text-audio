@@ -13,14 +13,12 @@ use Illuminate\Support\Facades\Cache;
 
 class DailyQuotaController extends Controller
 {
-    private const CACHE_KEY = 'daily_quota_texts_count';
+    private const CACHE_KEY = 'daily_quota_data';
 
     public function show(Request $request)
     {
         return response()->json([
-            'data' => [
-                'daily_quota_texts_count' => $this->getDailyQuota(),
-            ]
+            'data' => $this->getDailyQuota(),
         ]);
     }
 
@@ -29,29 +27,28 @@ class DailyQuotaController extends Controller
         Cache::forget(self::CACHE_KEY);
 
         return response()->json([
-            'data' => [
-                'daily_quota_texts_count' => $this->getDailyQuota(),
-            ]
+            'data' => $this->getDailyQuota(),
         ]);
     }
 
-    private function getDailyQuota()
+    private function getDailyQuota(): array
     {
         return Cache::rememberForever(self::CACHE_KEY, function () {
+
             $dailyQuotaTextsCount = Text::query()
                 ->whereNull('edit_finished_at')
-                ->orWhereDate('edit_finished_at', today())
+                ->orWhere('edit_finished_at', '>=', today())
                 ->count();
 
             $usersCount = User::query()
                 ->where('role', RoleEnum::VOLUNTEER->value)
                 ->count();
 
-            if ($usersCount === 0) {
-                return $dailyQuotaTextsCount;
-            }
-
-            return intdiv($dailyQuotaTextsCount, $usersCount);
+            return [
+                'daily_quota_texts_count' => $dailyQuotaTextsCount,
+                'users_count' => $usersCount,
+                'quota_per_user' => $usersCount ? intdiv($dailyQuotaTextsCount, $usersCount) : 0,
+            ];
         });
     }
 }
