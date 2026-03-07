@@ -26,6 +26,12 @@ class TextController extends Controller
             ->inRandomOrder()
             ->first();
 
+        if (! $text) {
+            return response()->json([
+                'message' => 'Нет доступных текстов для редактирования.',
+            ], 404);
+        }
+
         $text->edit_user_id = $request->user()->id;
         $text->edit_started_at = now();
         $text->save();
