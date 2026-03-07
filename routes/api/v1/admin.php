@@ -55,7 +55,6 @@ Route::group([
 ], function () {
     Route::get('users', VerifyUserController::class)->name('users');
 
-    Route::get('daily/quota/texts');
     Route::get('text', VerifyTextController::class)->name('text');
     Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
     Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
