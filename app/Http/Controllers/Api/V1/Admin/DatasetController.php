@@ -11,7 +11,7 @@ class DatasetController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $$request->validate([
+        $request->validate([
             'file' => 'required|file|mimes:txt'
         ]);
 
@@ -20,7 +20,6 @@ class DatasetController extends Controller
         ProcessDatasetFile::dispatch($path);
 
         return response()->json([
-            'status' => 'queued',
             'message' => 'Dataset processing started'
         ]);
     }
