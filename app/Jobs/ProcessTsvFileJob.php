@@ -98,6 +98,9 @@ class ProcessTsvFileJob implements ShouldQueue
                     $tokenizedTranscript,
                     $duration,
                     $speakerGender,
+                    $filter_original_transcript,
+                    $filter_normalized_transcript,
+                    $filter_tokenized_transcript,
                 ] = array_map('trim', $cols);
 
                 $buffer[] = [
@@ -109,6 +112,9 @@ class ProcessTsvFileJob implements ShouldQueue
                     'tokenized_transcript' => $tokenizedTranscript,
                     'duration' => (int) $duration,
                     'speaker_gender' => strtoupper($speakerGender),
+                    'filter_original_transcript' => $filter_original_transcript,
+                    'filter_normalized_transcript' => $filter_normalized_transcript,
+                    'filter_tokenized_transcript' => $filter_tokenized_transcript,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -141,9 +147,6 @@ class ProcessTsvFileJob implements ShouldQueue
                 'rows_imported' => $rowCount,
                 'rows_skipped' => $skipped,
             ]);
-
-            // Dispatch next job: send TSV to translation API
-            SendTsvFileJob::dispatch($this->file);
 
         } catch (\Throwable $e) {
             fclose($handle);

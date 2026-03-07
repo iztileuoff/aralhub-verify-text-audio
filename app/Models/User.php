@@ -87,4 +87,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Specialization::class);
     }
+
+    public function editTexts()
+    {
+        return $this->hasMany(Text::class, 'edit_user_id');
+    }
+
+    public function finishedEditTexts()
+    {
+        return $this->hasMany(Text::class, 'edit_user_id')->whereNotNull('edit_finished_at');
+    }
 }
