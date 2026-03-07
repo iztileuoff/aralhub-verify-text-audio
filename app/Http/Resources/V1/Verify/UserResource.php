@@ -25,6 +25,7 @@ class UserResource extends JsonResource
             'course' => $this->course,
             'finished_edit_texts_count' => $this->whenHas('finished_edit_texts_count'),
             'is_verified' => $this->is_verified,
+            'is_active' => $this->is_active,
         ];
     }
 }

@@ -11,7 +11,11 @@ class ProfileController extends Controller
 {
     public function show(Request $request)
     {
-        return new ProfileResource(auth()->user());
+        $date = $request->input('date', now()->format('Y-m-d'));
+
+        return new ProfileResource(auth()->user()->loadCount(['finishedEditTexts' => function ($query) use ($date) {
+            $query->whereDate('edit_finished_at', '=', $date);
+        }]));
     }
 
     public function update(UpdateProfileRequest $request)

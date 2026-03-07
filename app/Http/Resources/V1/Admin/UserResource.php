@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'specialization' => new SpecializationResource($this->whenLoaded('specialization')),
             'course' => $this->course,
             'is_verified' => $this->is_verified,
+            'is_active' => $this->is_active,
         ];
     }
 }
