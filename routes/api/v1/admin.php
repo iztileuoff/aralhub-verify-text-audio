@@ -41,7 +41,7 @@ Route::group([
         'texts' => TextController::class,
     ]);
 
-    Route::get('dataset', DatasetController::class)->name('dataset');
+    Route::post('dataset', DatasetController::class)->name('dataset');
 });
 
 Route::group([
