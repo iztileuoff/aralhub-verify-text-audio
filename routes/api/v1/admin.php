@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\DailyQuotaController;
 use App\Http\Controllers\Api\V1\Admin\DatasetController;
 use App\Http\Controllers\Api\V1\Admin\FileController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
@@ -32,6 +33,7 @@ Route::group([
 ], function () {
     Route::apiSingletons([
         'profile' => ProfileController::class,
+        'daily/quota/texts' => DailyQuotaController::class,
     ]);
 
     Route::apiResources([
@@ -43,6 +45,7 @@ Route::group([
     Route::apiResource('files', FileController::class)->except('update');
 
     Route::post('dataset', DatasetController::class)->name('dataset');
+
 });
 
 Route::group([
@@ -52,6 +55,7 @@ Route::group([
 ], function () {
     Route::get('users', VerifyUserController::class)->name('users');
 
+    Route::get('daily/quota/texts');
     Route::get('text', VerifyTextController::class)->name('text');
     Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
     Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
