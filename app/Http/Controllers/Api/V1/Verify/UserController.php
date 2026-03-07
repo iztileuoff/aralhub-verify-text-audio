@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function __invoke(Request $request)
     {
         $date = $request->input('date', now()->format('Y-m-d'));
 
