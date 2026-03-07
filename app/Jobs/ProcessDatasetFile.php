@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\Text;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,11 +24,16 @@ class ProcessDatasetFile implements ShouldQueue
         $this->path = $path;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function handle(): void
     {
-        $file = storage_path('app/'.$this->path);
+        $handle = Storage::readStream($this->path);
 
-        $handle = fopen($file, 'r');
+        if (!$handle) {
+            throw new \Exception("Dataset file not found: " . $this->path);
+        }
 
         $chunk = [];
         $size = 1000;
@@ -38,7 +42,7 @@ class ProcessDatasetFile implements ShouldQueue
 
             $chunk[] = $line;
 
-            if (count($chunk) == $size) {
+            if (count($chunk) >= $size) {
                 ProcessDatasetChunk::dispatch($chunk);
                 $chunk = [];
             }
