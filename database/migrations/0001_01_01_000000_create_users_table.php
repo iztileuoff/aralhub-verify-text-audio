@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('specialization_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedTinyInteger('course')->nullable();
             $table->boolean('is_verified')->default(false);
+            $table->boolean('is_active')->default(false);
             $table->timestamps();
         });
 

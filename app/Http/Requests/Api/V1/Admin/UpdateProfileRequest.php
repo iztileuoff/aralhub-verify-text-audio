@@ -11,6 +11,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'first_name' => ['string', 'max:255'],
             'last_name' => ['string', 'max:255'],
+            'is_active' => ['boolean'],
         ];
     }
 

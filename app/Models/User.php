@@ -35,6 +35,7 @@ class User extends Authenticatable
         'specialization_id',
         'course',
         'is_verified',
+        'is_active',
     ];
 
     /**
@@ -64,6 +65,7 @@ class User extends Authenticatable
             'specialization_id' => 'integer',
             'course' => 'string',
             'is_verified' => 'boolean',
+            'is_active' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
