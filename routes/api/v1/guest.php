@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Guest\SpecializationController;
+use Illuminate\Support\Facades\Route;
 
 Route::group([
     'prefix' => 'guest',

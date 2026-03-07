@@ -21,9 +21,11 @@ class SendTsvFileJob implements ShouldQueue
     private const TRANSLATE_ENDPOINT = 'https://api.translator.aralhub.uz/translate-dataset';
 
     private const EXPECTED_COLS = 7;
+
     private const CHUNK_SIZE = 500;
 
     public int $timeout = 1800;
+
     public int $tries = 3;
 
     public function backoff(): array
@@ -41,8 +43,9 @@ class SendTsvFileJob implements ShouldQueue
     {
         $path = Storage::disk('public')->path($this->file->path);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->markFailed("TSV file not found: {$path}");
+
             return;
         }
 
@@ -52,7 +55,7 @@ class SendTsvFileJob implements ShouldQueue
 
         $translatedPath = storage_path("app/tmp/translated_{$this->file->id}.tsv");
 
-        if (!is_dir(dirname($translatedPath))) {
+        if (! is_dir(dirname($translatedPath))) {
             mkdir(dirname($translatedPath), 0777, true);
         }
 
@@ -81,7 +84,7 @@ class SendTsvFileJob implements ShouldQueue
 
             $this->markFailed($error);
 
-            Log::error("SendTsvFile failed", [
+            Log::error('SendTsvFile failed', [
                 'file_id' => $this->file->id,
                 'status' => $response->status(),
             ]);
@@ -98,12 +101,12 @@ class SendTsvFileJob implements ShouldQueue
         $updated = $this->parseAndUpdateFile($translatedPath);
 
         $this->file->update([
-            'status' => 'sent'
+            'status' => 'sent',
         ]);
 
-        Log::info("SendTsvFile completed", [
+        Log::info('SendTsvFile completed', [
             'file_id' => $this->file->id,
-            'texts_updated' => $updated
+            'texts_updated' => $updated,
         ]);
 
         unlink($translatedPath);
@@ -140,6 +143,7 @@ class SendTsvFileJob implements ShouldQueue
 
             if (count($cols) < self::EXPECTED_COLS) {
                 $skipped++;
+
                 continue;
             }
 
@@ -170,14 +174,14 @@ class SendTsvFileJob implements ShouldQueue
 
         fclose($handle);
 
-        if (!empty($buffer)) {
+        if (! empty($buffer)) {
             $this->flushUpdates($buffer);
         }
 
         if ($skipped > 0) {
-            Log::warning("SendTsvFile skipped rows", [
+            Log::warning('SendTsvFile skipped rows', [
                 'file_id' => $this->file->id,
-                'skipped' => $skipped
+                'skipped' => $skipped,
             ]);
         }
 
@@ -216,7 +220,7 @@ class SendTsvFileJob implements ShouldQueue
     {
         $this->file->update([
             'status' => 'failed',
-            'error_message' => $reason
+            'error_message' => $reason,
         ]);
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Verify\TextCancelController;
 use App\Http\Controllers\Api\V1\Verify\TextCompleteController;
 use App\Http\Controllers\Api\V1\Verify\TextController as VerifyTextController;
+use Illuminate\Support\Facades\Route;
 
 Route::group([
     'prefix' => 'admin/auth',
@@ -25,7 +26,7 @@ Route::group([
 Route::group([
     'prefix' => 'admin',
     'as' => 'admin.',
-    'middleware' => ['auth:sanctum'],
+    'middleware' => ['auth:sanctum', 'verified'],
 ], function () {
     Route::apiSingletons([
         'profile' => ProfileController::class,
@@ -42,7 +43,7 @@ Route::group([
 Route::group([
     'prefix' => 'admin/verify',
     'as' => 'admin.verify.',
-    'middleware' => ['auth:sanctum'],
+    'middleware' => ['auth:sanctum', 'verified'],
 ], function () {
     Route::get('text', VerifyTextController::class)->name('text');
     Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');

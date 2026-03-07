@@ -30,7 +30,8 @@ class TextCompleteController extends Controller
         $tokenizedParts = array_map(function ($word) {
             // mb_str_split корректно разбивает казахские символы (қ, ө, ұ и т.д.)
             $chars = mb_str_split($word);
-            return implode(' ', $chars) . ' |';
+
+            return implode(' ', $chars).' |';
         }, $words);
 
         $tokenizedTranscript = implode(' ', $tokenizedParts);
