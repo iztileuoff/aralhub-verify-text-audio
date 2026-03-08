@@ -18,7 +18,7 @@ class UserController extends Controller
         $users = User::query()
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
-            ->when($request->filled('specialization_id'), fn ($q) => $q->search($request->input('specialization_id')))
+            ->when($request->filled('specialization_id'), fn ($q) => $q->where('specialization_id', $request->input('specialization_id')))
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));
 
