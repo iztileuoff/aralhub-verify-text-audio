@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\ProfileController;
 use App\Http\Controllers\Api\V1\Admin\RegistrationController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\TextController;
+use App\Http\Controllers\Api\V1\Admin\TextStatusesController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Verify\TextCancelController;
 use App\Http\Controllers\Api\V1\Verify\TextCompleteController;
@@ -37,8 +38,9 @@ Route::group([
         'daily/quota/texts' => DailyQuotaController::class,
     ]);
 
-    Route::apiResource('roles', RoleController::class);
+    Route::apiResource('roles', RoleController::class)->only('index');
     Route::apiResource('users', UserController::class);
+    Route::apiResource('text-statuses', TextStatusesController::class)->only('index');
     Route::apiResource('texts', TextController::class);
     Route::apiResource('files', FileController::class)->except('update');
 
