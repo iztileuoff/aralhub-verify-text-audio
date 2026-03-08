@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\DailyQuotaController;
 use App\Http\Controllers\Api\V1\Admin\DatasetController;
 use App\Http\Controllers\Api\V1\Admin\FileController;
+use App\Http\Controllers\Api\V1\Admin\FinishedEditTextController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
 use App\Http\Controllers\Api\V1\Admin\LogoutController;
 use App\Http\Controllers\Api\V1\Admin\ProfileController;
@@ -36,16 +37,14 @@ Route::group([
         'daily/quota/texts' => DailyQuotaController::class,
     ]);
 
-    Route::apiResources([
-        'roles' => RoleController::class,
-        'users' => UserController::class,
-        'texts' => TextController::class,
-    ]);
-
+    Route::apiResource('roles', RoleController::class);
+    Route::apiResource('users', UserController::class);
+    Route::apiResource('texts', TextController::class);
     Route::apiResource('files', FileController::class)->except('update');
 
-    Route::post('dataset', DatasetController::class)->name('dataset');
+    Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
 
+    Route::post('dataset', DatasetController::class)->name('dataset');
 });
 
 Route::group([
