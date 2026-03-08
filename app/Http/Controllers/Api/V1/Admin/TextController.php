@@ -21,7 +21,7 @@ class TextController extends Controller
                 match ($request->input('text_status')) {
                     TextStatusEnum::PENDING->value => $query->whereNull('edit_finished_at'),
                     TextStatusEnum::EDITED->value => $query->whereNotNull('edit_finished_at'),
-                    TextStatusEnum::EDIT_CANCELLED->value => $query->whereNotNull('edit_cancelled_at')->whereNull('edit_finished_at'),
+                    TextStatusEnum::EDIT_CANCELLED->value => $query->whereNotNull('edit_cancelled_user_id')->whereNull('edit_finished_at'),
                     default => $query,
                 };
             })
