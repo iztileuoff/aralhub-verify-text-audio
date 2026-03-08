@@ -40,12 +40,17 @@ class DailyQuotaController extends Controller
                 ->orWhere('edit_finished_at', '>=', today())
                 ->count();
 
+            $editFinishedTextsCount = Text::query()
+                ->whereNotNull('edit_finished_at')
+                ->count();
+
             $usersCount = User::query()
                 ->where('role', RoleEnum::VOLUNTEER->value)
                 ->count();
 
             return [
                 'daily_quota_texts_count' => $dailyQuotaTextsCount,
+                'edit_finished_texts_count' => $editFinishedTextsCount,
                 'users_count' => $usersCount,
                 'quota_per_user' => $usersCount ? intdiv($dailyQuotaTextsCount, $usersCount) : 0,
             ];
