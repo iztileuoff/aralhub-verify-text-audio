@@ -13,7 +13,9 @@ class RoleController extends Controller
         $roles = collect(RoleEnum::cases())
             ->filter(fn (RoleEnum $role) => in_array($role, [
                 RoleEnum::ADMIN,
-                RoleEnum::VOLUNTEER,
+                RoleEnum::EDITOR,
+                RoleEnum::SPEAKER,
+                RoleEnum::MODERATOR,
             ]))
             ->map(fn (RoleEnum $role) => [
                 'id' => $role->value,
