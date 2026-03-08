@@ -13,7 +13,7 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['required', Rule::in([RoleEnum::ADMIN->value, RoleEnum::VOLUNTEER->value])],
+            'role' => [Rule::in([RoleEnum::ADMIN->value, RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', new UzPhoneRule, Rule::unique('users', 'phone')],

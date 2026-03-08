@@ -45,7 +45,7 @@ class DailyQuotaController extends Controller
                 ->count();
 
             $usersCount = User::query()
-                ->where('role', RoleEnum::VOLUNTEER->value)
+                ->whereIn('role', [RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])
                 ->count();
 
             return [
