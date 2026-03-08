@@ -12,8 +12,8 @@ class TextStatusesController extends Controller
     public function index(Request $request)
     {
         $textStatuses = collect(TextStatusEnum::cases())
-            ->map(fn (RoleEnum $role) => [
-                'name' => $role->value,
+            ->map(fn (TextStatusEnum $textStatus) => [
+                'name' => $textStatus->value,
             ])
             ->values();
 
