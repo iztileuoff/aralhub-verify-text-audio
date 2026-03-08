@@ -16,7 +16,7 @@ class UpdateUserRequest extends FormRequest
             'role' => [Rule::in([RoleEnum::ADMIN->value, RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])],
             'first_name' => ['string', 'max:255'],
             'last_name' => ['string', 'max:255'],
-            'phone' => [new UzPhoneRule, Rule::unique('users', 'phone')->ignore($this->user()->id)],
+            'phone' => [new UzPhoneRule, Rule::unique('users', 'phone')->ignore($this->user->id)],
             'password' => ['string', 'min:8', 'max:64'],
             'gender' => [Rule::in([GenderEnum::MALE->value, GenderEnum::FEMALE->value])],
             'age' => ['integer', 'min:1', 'max:100'],
