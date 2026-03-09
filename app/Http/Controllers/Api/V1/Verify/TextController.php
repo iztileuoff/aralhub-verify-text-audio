@@ -17,6 +17,9 @@ class TextController extends Controller
             ->first();
 
         if ($text) {
+            $text->edit_started_at = now();
+            $text->save();
+
             return new TextResource($text);
         }
 
