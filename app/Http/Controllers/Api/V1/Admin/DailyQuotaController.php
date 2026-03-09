@@ -32,27 +32,26 @@ class DailyQuotaController extends Controller
 
     private function getDailyQuota(): array
     {
-        return Cache::rememberForever(self::CACHE_KEY, function () {
+        $editFinishedTextsCount = Text::query()
+            ->whereNotNull('edit_finished_at')
+            ->count();
 
-            $dailyQuotaTextsCount = Text::query()
+        $usersCount = User::query()
+            ->whereIn('role', [RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])
+            ->count();
+
+        $dailyQuotaTextsCount = Cache::rememberForever(self::CACHE_KEY, function () {
+            return Text::query()
                 ->whereNull('edit_finished_at')
                 ->orWhere('edit_finished_at', '>=', today())
                 ->count();
-
-            $editFinishedTextsCount = Text::query()
-                ->whereNotNull('edit_finished_at')
-                ->count();
-
-            $usersCount = User::query()
-                ->whereIn('role', [RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])
-                ->count();
-
-            return [
-                'daily_quota_texts_count' => $dailyQuotaTextsCount,
-                'edit_finished_texts_count' => $editFinishedTextsCount,
-                'users_count' => $usersCount,
-                'quota_per_user' => $usersCount ? intdiv($dailyQuotaTextsCount, $usersCount) : 0,
-            ];
         });
+
+        return [
+            'daily_quota_texts_count' => $dailyQuotaTextsCount,
+            'edit_finished_texts_count' => $editFinishedTextsCount,
+            'users_count' => $usersCount,
+            'quota_per_user' => $usersCount ? intdiv($dailyQuotaTextsCount, $usersCount) : 0,
+        ];
     }
 }
