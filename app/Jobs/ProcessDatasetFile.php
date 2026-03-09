@@ -3,11 +3,11 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class ProcessDatasetFile implements ShouldQueue
 {
@@ -31,8 +31,8 @@ class ProcessDatasetFile implements ShouldQueue
     {
         $handle = Storage::readStream($this->path);
 
-        if (!$handle) {
-            throw new \Exception("Dataset file not found: " . $this->path);
+        if (! $handle) {
+            throw new \Exception('Dataset file not found: '.$this->path);
         }
 
         $chunk = [];
@@ -48,7 +48,7 @@ class ProcessDatasetFile implements ShouldQueue
             }
         }
 
-        if (!empty($chunk)) {
+        if (! empty($chunk)) {
             ProcessDatasetChunk::dispatch($chunk);
         }
 

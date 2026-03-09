@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessDatasetFile;
-use App\Models\Text;
 use Illuminate\Http\Request;
 
 class DatasetController extends Controller
@@ -12,7 +11,7 @@ class DatasetController extends Controller
     public function __invoke(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:txt'
+            'file' => 'required|file|mimes:txt',
         ]);
 
         $path = $request->file('file')->store('datasets');
@@ -20,7 +19,7 @@ class DatasetController extends Controller
         ProcessDatasetFile::dispatch($path);
 
         return response()->json([
-            'message' => 'Dataset processing started'
+            'message' => 'Dataset processing started',
         ]);
     }
 }

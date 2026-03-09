@@ -24,7 +24,7 @@ enum RoleEnum: int
     public function getPermissionsArray(): array
     {
         return match ($this) {
-            self::SUPER_ADMIN => ['super-admin', 'admin',],
+            self::SUPER_ADMIN => ['super-admin', 'admin'],
             self::ADMIN => ['admin'],
             self::EDITOR => ['editor'],
             self::SPEAKER => ['speaker'],

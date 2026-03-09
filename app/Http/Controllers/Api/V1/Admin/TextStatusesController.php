@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
-use App\Enums\RoleEnum;
 use App\Enums\TextStatusEnum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

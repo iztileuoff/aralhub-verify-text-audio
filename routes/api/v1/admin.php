@@ -31,7 +31,7 @@ Route::group([
 Route::group([
     'prefix' => 'admin',
     'as' => 'admin.',
-    'middleware' => ['auth:sanctum'],
+    'middleware' => ['auth:sanctum', 'user-verified'],
 ], function () {
     Route::apiSingletons([
         'profile' => ProfileController::class,
@@ -52,7 +52,7 @@ Route::group([
 Route::group([
     'prefix' => 'admin/verify',
     'as' => 'admin.verify.',
-    'middleware' => ['auth:sanctum'],
+    'middleware' => ['auth:sanctum', 'user-verified'],
 ], function () {
     Route::get('users', VerifyUserController::class)->name('users');
 
