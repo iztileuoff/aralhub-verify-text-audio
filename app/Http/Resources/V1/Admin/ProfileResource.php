@@ -24,6 +24,7 @@ class ProfileResource extends JsonResource
             'specialization' => new SpecializationResource($this->whenLoaded('specialization')),
             'course' => $this->whenLoaded('course'),
             'finished_edit_texts_count' => $this->whenHas('finished_edit_texts_count'),
+            'today_finished_edit_texts_count' => $this->whenHas('today_finished_edit_texts_count'),
             'is_verified' => $this->is_verified,
             'is_active' => $this->is_active,
         ];

@@ -13,9 +13,7 @@ class ProfileController extends Controller
     {
         $date = $request->input('date', now()->format('Y-m-d'));
 
-        return new ProfileResource(auth()->user()->loadCount(['finishedEditTexts' => function ($query) use ($date) {
-            $query->whereDate('edit_finished_at', '=', $date);
-        }]));
+        return new ProfileResource(auth()->user()->loadCount(['finishedEditTexts', 'todayFinishedEditTexts']));
     }
 
     public function update(UpdateProfileRequest $request)
