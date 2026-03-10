@@ -19,12 +19,30 @@ class TestCommand extends Command
             ->get();
 
         foreach ($texts as $text) {
-            $action = Action::create([
-                'text_id' => $text->id,
-                'user_id' => $text->edit_user_id,
-                'old_text' => $text->filter_original_transcript,
-                'new_text' => $text->edit_original_transcript,
-            ]);
+            // 1. Original Transcript (Оригинал как есть)
+            $originalTranscript = $text->original_transcript;
+
+            // 2. Normalized Transcript
+            // Приводим к нижнему регистру и удаляем финальную точку
+            $normalizedTranscript = mb_strtolower(trim($originalTranscript, '.?!'));
+
+            // 3. Tokenized Transcript
+            // Разбиваем на слова, затем каждое слово на буквы через пробел, разделяя слова пайпом |
+            $words = explode(' ', $normalizedTranscript);
+            $tokenizedParts = array_map(function ($word) {
+                // mb_str_split корректно разбивает казахские символы (қ, ө, ұ и т.д.)
+                $chars = mb_str_split($word);
+
+                return implode(' ', $chars).' |';
+            }, $words);
+
+            $tokenizedTranscript = implode(' ', $tokenizedParts);
+
+            $text->normalized_transcript = $normalizedTranscript;
+            $text->tokenized_transcript = $tokenizedTranscript;
+            $text->save();
+
+            $this->info('ID: ' . $text->id . '. Success!');
         }
 
         $this->info('Success!');
