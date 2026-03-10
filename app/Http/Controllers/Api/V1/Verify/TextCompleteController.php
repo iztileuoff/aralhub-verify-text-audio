@@ -37,8 +37,8 @@ class TextCompleteController extends Controller
         $tokenizedTranscript = implode(' ', $tokenizedParts);
 
         $text->edit_original_transcript = $validatedText;
-        $text->normalized_transcript = $normalizedTranscript;
-        $text->tokenized_transcript = $tokenizedTranscript;
+        $text->edit_normalized_transcript = $normalizedTranscript;
+        $text->edit_tokenized_transcript = $tokenizedTranscript;
         $text->edit_finished_at = now();
         $text->save();
 
