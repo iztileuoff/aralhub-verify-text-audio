@@ -14,7 +14,7 @@ class FinishedEditTextController extends Controller
         $texts = Text::query()
             ->whereNotNull('edit_finished_at')
             ->when($request->filled('file_id'), fn ($q) => $q->where('file_id', $request->input('file_id')))
-            ->when($request->filled('user_id'), fn ($q) => $q->where('edit_user_id', $request->input('user_id')))
+            ->when($request->filled('edit_user_id'), fn ($q) => $q->where('edit_user_id', $request->input('edit_user_id')))
             ->with('editUser')
             ->orderByDesc('edit_finished_at')
             ->paginate($request->input('per_page', 10));
