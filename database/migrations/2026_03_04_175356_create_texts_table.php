@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('texts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('file_id')->constrained()->cascadeOnDelete();
-            $table->unsignedBigInteger('transcript_id');
-            $table->string('audio_filename');
-            $table->text('original_transcript');
-            $table->text('normalized_transcript');
-            $table->text('tokenized_transcript');
-            $table->unsignedInteger('duration');
-            $table->string('speaker_gender');
+            $table->foreignId('file_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('transcript_id')->nullable();
+            $table->string('audio_filename')->nullable();
+            $table->text('original_transcript')->nullable();
+            $table->text('normalized_transcript')->nullable();
+            $table->text('tokenized_transcript')->nullable();
+            $table->unsignedInteger('duration')->nullable();
+            $table->string('speaker_gender')->nullable();
             $table->text('filter_original_transcript')->nullable();
             $table->text('filter_normalized_transcript')->nullable();
             $table->text('filter_tokenized_transcript')->nullable();
