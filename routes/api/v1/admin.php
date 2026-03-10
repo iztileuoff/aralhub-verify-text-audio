@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\ActionController;
 use App\Http\Controllers\Api\V1\Admin\DailyQuotaController;
 use App\Http\Controllers\Api\V1\Admin\DatasetController;
 use App\Http\Controllers\Api\V1\Admin\FileController;
@@ -44,6 +45,7 @@ Route::group([
     Route::apiResource('text-statuses', TextStatusesController::class)->only('index');
     Route::apiResource('texts', TextController::class);
     Route::apiResource('files', FileController::class)->except('update');
+    Route::apiResource('actions', ActionController::class)->only('index');
 
     Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
 
