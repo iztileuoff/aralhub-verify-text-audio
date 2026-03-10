@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Verify\TextCancelController;
 use App\Http\Controllers\Api\V1\Verify\TextCompleteController;
 use App\Http\Controllers\Api\V1\Verify\TextController as VerifyTextController;
+use App\Http\Controllers\Api\V1\Verify\TextUpdateController;
 use App\Http\Controllers\Api\V1\Verify\UserController as VerifyUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,7 @@ Route::group([
 
     Route::get('text', VerifyTextController::class)->name('text');
     Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
+    Route::patch('text/{text}/update', TextUpdateController::class)->name('text.update');
     Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
 
     //    Route::get('edited/text');

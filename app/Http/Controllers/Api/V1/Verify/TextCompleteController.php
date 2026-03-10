@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Verify;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\TextResource;
+use App\Models\Action;
 use App\Models\Text;
 use Illuminate\Http\Request;
 
@@ -41,6 +42,13 @@ class TextCompleteController extends Controller
         $text->edit_tokenized_transcript = $tokenizedTranscript;
         $text->edit_finished_at = now();
         $text->save();
+
+        $action = Action::create([
+            'text_id' => $text->id,
+            'user_id' => $text->edit_user_id,
+            'old_text' => $text->filter_original_transcript,
+            'new_text' => $text->edit_original_transcript,
+        ]);
 
         return new TextResource($text);
     }

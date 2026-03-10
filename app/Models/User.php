@@ -105,4 +105,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Text::class, 'edit_user_id')->whereNotNull('edit_finished_at')->whereDate('edit_finished_at', '=', now()->format('Y-m-d'));
     }
+
+    public function actions(): HasMany
+    {
+        return $this->hasMany(Action::class);
+    }
 }

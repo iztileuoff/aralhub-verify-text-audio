@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\GenderEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Text extends Model
 {
@@ -63,5 +64,10 @@ class Text extends Model
     public function editCancelledUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'edit_cancelled_user_id');
+    }
+
+    public function actions(): HasMany
+    {
+        return $this->hasMany(Action::class);
     }
 }
