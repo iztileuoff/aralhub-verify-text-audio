@@ -29,7 +29,7 @@ class RegistrationRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'role' => RoleEnum::EDITOR->value,
+            'role' => RoleEnum::SPEAKER->value,
             'is_verified' => false,
         ]);
     }
