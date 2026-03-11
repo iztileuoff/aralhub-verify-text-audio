@@ -13,7 +13,7 @@ class ModeratorTextController extends Controller
     {
         $text = Text::query()
             ->whereNotNull('speak_finished_at')
-            ->inRandomOrder()
+            ->whereNull('is_correct')
             ->first();
 
         if (! $text) {
