@@ -32,8 +32,15 @@ class DailyQuotaController extends Controller
 
     private function getDailyQuota(): array
     {
+        $textsCount = Text::query()
+            ->count();
+
         $editFinishedTextsCount = Text::query()
             ->whereNotNull('edit_finished_at')
+            ->count();
+
+        $editNotFinishedTextsCount = Text::query()
+            ->whereNull('edit_finished_at')
             ->count();
 
         $usersCount = User::query()
@@ -48,8 +55,10 @@ class DailyQuotaController extends Controller
         });
 
         return [
-            'daily_quota_texts_count' => $dailyQuotaTextsCount,
+            'texts_count' => $textsCount,
             'edit_finished_texts_count' => $editFinishedTextsCount,
+            'edit_not_finished_texts_count' => $editNotFinishedTextsCount,
+            'daily_quota_texts_count' => $dailyQuotaTextsCount,
             'users_count' => $usersCount,
             'quota_per_user' => $usersCount ? intdiv($dailyQuotaTextsCount, $usersCount) : 0,
         ];
