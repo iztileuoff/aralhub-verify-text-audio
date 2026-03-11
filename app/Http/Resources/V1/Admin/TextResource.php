@@ -44,6 +44,9 @@ class TextResource extends JsonResource
             'edit_speaker_id' => $this->edit_speaker_id,
             'edit_speaker' => new UserResource($this->whenLoaded('editSpeaker')),
             'edit_speaker_gender' => $this->edit_speaker_gender,
+            'moderator_id' => $this->moderator_id,
+            'moderator' => new UserResource($this->whenLoaded('moderator')),
+            'is_correct' => $this->is_correct,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

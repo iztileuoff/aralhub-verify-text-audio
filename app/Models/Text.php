@@ -37,6 +37,8 @@ class Text extends Model
         'speak_finished_at',
         'edit_speaker_id',
         'edit_speaker_gender',
+        'moderator_id',
+        'is_correct',
     ];
 
     protected function casts(): array
@@ -67,6 +69,8 @@ class Text extends Model
             'speak_finished_at' => 'datetime',
             'edit_speaker_id' => 'integer',
             'edit_speaker_gender' => GenderEnum::class,
+            'moderator_id' => 'integer',
+            'is_correct' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -115,5 +119,10 @@ class Text extends Model
     public function editSpeaker(): BelongsTo
     {
         return $this->belongsTo(User::class, 'edit_speaker_id');
+    }
+
+    public function moderator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'moderator_id');
     }
 }

@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\TextController;
 use App\Http\Controllers\Api\V1\Admin\TextStatusesController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
+use App\Http\Controllers\Api\V1\Verify\ModeratorTextCheckController;
+use App\Http\Controllers\Api\V1\Verify\ModeratorTextController;
 use App\Http\Controllers\Api\V1\Verify\SpeakTextAudioCompleteController;
 use App\Http\Controllers\Api\V1\Verify\SpeakTextController;
 use App\Http\Controllers\Api\V1\Verify\TextCancelController;
@@ -72,4 +74,6 @@ Route::group([
     Route::post('speak/text/{text}/audio/complete', SpeakTextAudioCompleteController::class)->name('speak.text.audio.complete');
 
     // moderator
+    Route::get('moderator/text', ModeratorTextController::class)->name('moderator.text');
+    Route::post('moderator/text/{text}/check', ModeratorTextCheckController::class)->name('moderator.text.check');
 });

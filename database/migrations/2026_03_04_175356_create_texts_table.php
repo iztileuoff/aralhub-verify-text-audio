@@ -35,6 +35,8 @@ return new class extends Migration
             $table->timestamp('speak_finished_at')->nullable();
             $table->foreignId('edit_speaker_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('edit_speaker_gender')->nullable();
+            $table->foreignId('moderator_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->boolean('is_correct')->nullable();
             $table->timestamps();
         });
     }
