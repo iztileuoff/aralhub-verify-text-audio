@@ -28,6 +28,13 @@ return new class extends Migration
             $table->timestamp('edit_started_at')->nullable();
             $table->timestamp('edit_finished_at')->nullable();
             $table->foreignId('edit_cancelled_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('edit_audio_filename')->nullable();
+            $table->string('edit_converted_audio_filename')->nullable();
+            $table->unsignedInteger('edit_converted_audio_duration')->nullable();
+            $table->timestamp('speak_started_at')->nullable();
+            $table->timestamp('speak_finished_at')->nullable();
+            $table->foreignId('edit_speaker_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('edit_speaker_gender')->nullable();
             $table->timestamps();
         });
     }

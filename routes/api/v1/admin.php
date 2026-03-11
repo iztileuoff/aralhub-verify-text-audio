@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\TextController;
 use App\Http\Controllers\Api\V1\Admin\TextStatusesController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
+use App\Http\Controllers\Api\V1\Verify\SpeakTextAudioCompleteController;
+use App\Http\Controllers\Api\V1\Verify\SpeakTextController;
 use App\Http\Controllers\Api\V1\Verify\TextCancelController;
 use App\Http\Controllers\Api\V1\Verify\TextCompleteController;
 use App\Http\Controllers\Api\V1\Verify\TextController as VerifyTextController;
@@ -59,11 +61,15 @@ Route::group([
 ], function () {
     Route::get('users', VerifyUserController::class)->name('users');
 
+    // edit
     Route::get('text', VerifyTextController::class)->name('text');
     Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
     Route::patch('text/{text}/update', TextUpdateController::class)->name('text.update');
     Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
 
-    //    Route::get('edited/text');
-    //    Route::post('edited/text/{text}/audio/complete');
+    // speak
+    Route::get('speak/text', SpeakTextController::class)->name('speak.text');
+    Route::post('speak/text/{text}/audio/complete', SpeakTextAudioCompleteController::class)->name('speak.text.audio.complete');
+
+    // moderator
 });

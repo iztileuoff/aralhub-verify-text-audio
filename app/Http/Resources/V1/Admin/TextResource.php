@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\V1\Admin;
 
+use App\Enums\GenderEnum;
 use App\Models\Text;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -33,6 +34,14 @@ class TextResource extends JsonResource
             'edit_finished_at' => $this->edit_finished_at?->format('Y-m-d H:i:s'),
             'edit_cancelled_user_id' => $this->edit_cancelled_user_id,
             'edit_cancelled_user' => new UserResource($this->whenLoaded('editCancelledUser')),
+            'edit_audio_filename' => $this->edit_audio_filename,
+            'edit_converted_audio_filename' => $this->edit_converted_audio_filename,
+            'edit_converted_audio_duration' => $this->edit_converted_audio_duration,
+            'speak_started_at' => $this->speak_started_at?->format('Y-m-d H:i:s'),
+            'speak_finished_at' => $this->speak_finished_at?->format('Y-m-d H:i:s'),
+            'edit_speaker_id' => $this->edit_speaker_id,
+            'edit_speaker' => new UserResource($this->whenLoaded('editSpeaker')),
+            'edit_speaker_gender' => $this->edit_speaker_gender,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

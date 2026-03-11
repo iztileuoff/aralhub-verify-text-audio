@@ -28,6 +28,13 @@ class Text extends Model
         'edit_started_at',
         'edit_finished_at',
         'edit_cancelled_user_id',
+        'edit_audio_filename',
+        'edit_converted_audio_filename',
+        'edit_converted_audio_duration',
+        'speak_started_at',
+        'speak_finished_at',
+        'edit_speaker_id',
+        'edit_speaker_gender',
     ];
 
     protected function casts(): array
@@ -51,6 +58,13 @@ class Text extends Model
             'edit_started_at' => 'datetime',
             'edit_finished_at' => 'datetime',
             'edit_cancelled_user_id' => 'integer',
+            'edit_audio_filename' => 'string',
+            'edit_converted_audio_filename' => 'string',
+            'edit_converted_audio_duration' => 'integer',
+            'speak_started_at' => 'datetime',
+            'speak_finished_at' => 'datetime',
+            'edit_speaker_id' => 'integer',
+            'edit_speaker_gender' => GenderEnum::class,
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -69,5 +83,10 @@ class Text extends Model
     public function actions(): HasMany
     {
         return $this->hasMany(Action::class);
+    }
+
+    public function editSpeaker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'edit_speaker_id');
     }
 }

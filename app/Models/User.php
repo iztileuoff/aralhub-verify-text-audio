@@ -110,4 +110,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Action::class);
     }
+
+    public function editSpeakTexts(): HasMany
+    {
+        return $this->hasMany(Text::class, 'edit_speaker_id');
+    }
 }
