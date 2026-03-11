@@ -13,6 +13,7 @@ class SpeakTextController extends Controller
     {
         $text = Text::query()
             ->whereNull('speak_finished_at')
+            ->whereNotNull('edit_original_transcript')
             ->inRandomOrder()
             ->first();
 
