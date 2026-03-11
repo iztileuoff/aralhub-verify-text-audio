@@ -79,7 +79,7 @@ class Text extends Model
     {
         return Attribute::make(
             get: fn () => $this->edit_audio_filename
-                ? Storage::url($this->edit_audio_filename)
+                ? asset(Storage::url($this->edit_audio_filename))
                 : null,
         );
     }
@@ -91,7 +91,7 @@ class Text extends Model
     {
         return Attribute::make(
             get: fn () => $this->edit_converted_audio_filename
-                ? Storage::url($this->edit_converted_audio_filename)
+                ? asset(Storage::url($this->edit_converted_audio_filename))
                 : null,
         );
     }
