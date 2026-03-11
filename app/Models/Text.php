@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\GenderEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Text extends Model
 {
@@ -69,6 +71,31 @@ class Text extends Model
             'updated_at' => 'datetime',
         ];
     }
+
+    /**
+     * Get the URL for the edited audio file.
+     */
+    public function editAudioUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->edit_audio_filename
+                ? Storage::url($this->edit_audio_filename)
+                : null,
+        );
+    }
+
+    /**
+     * Get the URL for the edited audio file.
+     */
+    public function editConvertedAudioUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->edit_converted_audio_filename
+                ? Storage::url($this->edit_converted_audio_filename)
+                : null,
+        );
+    }
+
 
     public function editUser(): BelongsTo
     {
