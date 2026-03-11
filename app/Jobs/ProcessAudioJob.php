@@ -41,7 +41,7 @@ class ProcessAudioJob implements ShouldQueue
             '-ar', '16000',
             '-ac', '1',
             '-acodec', 'pcm_s16le',
-            '-af', 'silenceremove=start_periods=1:start_duration=0.1:start_threshold=-50dB:stop_periods=1:stop_duration=0.1:stop_threshold=-50dB,loudnorm=I=-16:TP=-1.5:LRA=11,adelay=500|500,apad=pad_dur=0.5',
+            '-af', 'highpass=f=80,lowpass=f=8000,silenceremove=start_periods=1:start_duration=0.1:start_threshold=-60dB:stop_periods=1:stop_duration=0.2:stop_threshold=-60dB,loudnorm=I=-16:TP=-1.5:LRA=11,adelay=500|500,apad=pad_dur=0.5',
             '-y',
             $outputPath,
         ]);
