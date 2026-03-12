@@ -37,6 +37,8 @@ return new class extends Migration
             $table->string('edit_speaker_gender')->nullable();
             $table->foreignId('moderator_id')->nullable()->constrained('users')->nullOnDelete();
             $table->boolean('is_correct')->nullable();
+            $table->timestamp('moderator_started_at')->nullable();
+            $table->timestamp('moderator_finished_at')->nullable();
             $table->timestamps();
         });
     }

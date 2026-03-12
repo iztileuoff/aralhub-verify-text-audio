@@ -18,9 +18,7 @@ class UserController extends Controller
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
             ->when($request->filled('specialization_id'), fn ($q) => $q->search($request->input('specialization_id')))
-            ->withCount(['finishedEditTexts' => function ($query) use ($date) {
-                $query->whereDate('edit_finished_at', '=', $date);
-            }])
+            ->withCount(['finishedEditTexts', 'todayFinishedEditTexts', 'finishedSpeakTexts', 'todayFinishedSpeakTexts', 'finishedModerationTexts', 'todayFinishedModerationTexts'])
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));
 

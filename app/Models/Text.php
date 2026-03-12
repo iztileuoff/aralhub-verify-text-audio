@@ -39,6 +39,8 @@ class Text extends Model
         'edit_speaker_gender',
         'moderator_id',
         'is_correct',
+        'moderator_started_at',
+        'moderator_finished_at',
     ];
 
     protected function casts(): array
@@ -71,6 +73,8 @@ class Text extends Model
             'edit_speaker_gender' => GenderEnum::class,
             'moderator_id' => 'integer',
             'is_correct' => 'boolean',
+            'moderator_started_at' => 'datetime',
+            'moderator_finished_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

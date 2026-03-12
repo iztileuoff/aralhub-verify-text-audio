@@ -13,7 +13,7 @@ class ProfileController extends Controller
     {
         $date = $request->input('date', now()->format('Y-m-d'));
 
-        return new ProfileResource(auth()->user()->loadCount(['finishedEditTexts', 'todayFinishedEditTexts']));
+        return new ProfileResource(auth()->user()->loadCount(['finishedEditTexts', 'todayFinishedEditTexts', 'finishedSpeakTexts', 'todayFinishedSpeakTexts', 'finishedModerationTexts', 'todayFinishedModerationTexts']));
     }
 
     public function update(UpdateProfileRequest $request)

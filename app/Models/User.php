@@ -106,6 +106,26 @@ class User extends Authenticatable
         return $this->hasMany(Text::class, 'edit_user_id')->whereNotNull('edit_finished_at')->whereDate('edit_finished_at', '=', now()->format('Y-m-d'));
     }
 
+    public function finishedSpeakTexts(): HasMany
+    {
+        return $this->hasMany(Text::class, 'edit_speaker_id')->whereNotNull('speak_finished_at');
+    }
+
+    public function todayFinishedSpeakTexts(): HasMany
+    {
+        return $this->hasMany(Text::class, 'edit_speaker_id')->whereNotNull('speak_finished_at')->whereDate('speak_finished_at', '=', now()->format('Y-m-d'));
+    }
+
+    public function finishedModerationTexts(): HasMany
+    {
+        return $this->hasMany(Text::class, 'moderator_id')->whereNotNull('is_correct');
+    }
+
+    public function todayFinishedModerationTexts(): HasMany
+    {
+        return $this->hasMany(Text::class, 'moderator_id')->whereNotNull('is_correct')->whereDate('moderator_finished_at', '=', now()->format('Y-m-d'));
+    }
+
     public function actions(): HasMany
     {
         return $this->hasMany(Action::class);
