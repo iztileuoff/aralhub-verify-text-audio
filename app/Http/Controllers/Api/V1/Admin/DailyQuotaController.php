@@ -49,14 +49,17 @@ class DailyQuotaController extends Controller
 
         $activeEditorsCount = User::query()
             ->where('role', RoleEnum::EDITOR->value)
+            ->where('is_active', true)
             ->count();
 
         $activeSpeakersCount  = User::query()
             ->where('role', RoleEnum::SPEAKER->value)
+            ->where('is_active', true)
             ->count();
 
         $activeModeratorsCount = User::query()
             ->where('role', RoleEnum::MODERATOR->value)
+            ->where('is_active', true)
             ->count();
 
         $audioFinishedTextsCount = Text::query()
