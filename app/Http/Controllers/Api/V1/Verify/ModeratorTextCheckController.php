@@ -17,6 +17,7 @@ class ModeratorTextCheckController extends Controller
 
         $text->is_correct = $request->input('is_correct');
         $text->moderator_id = $request->user()->id;
+        $text->moderator_finished_at = now();
         $text->save();
 
         return new TextResource($text);

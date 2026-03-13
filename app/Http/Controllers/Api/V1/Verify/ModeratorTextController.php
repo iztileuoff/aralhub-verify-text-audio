@@ -12,7 +12,20 @@ class ModeratorTextController extends Controller
     public function __invoke(Request $request)
     {
         $text = Text::query()
+            ->where('moderator_id', $request->user()->id)
+            ->whereNull('moderator_finished_at')
+            ->first();
+
+        if ($text) {
+            $text->moderator_started_at = now();
+            $text->save();
+
+            return new TextResource($text);
+        }
+
+        $text = Text::query()
             ->whereNotNull('speak_finished_at')
+            ->whereNull('moderator_started_at')
             ->whereNull('is_correct')
             ->first();
 
@@ -21,6 +34,9 @@ class ModeratorTextController extends Controller
                 'message' => 'Тексты для аудиозаписи отсутствуют.',
             ], 404);
         }
+
+        $text->moderator_started_at = now();
+        $text->moderator_id = $request->user()->id;
 
         return new TextResource($text);
     }

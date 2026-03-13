@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Admin\ActionController;
 use App\Http\Controllers\Api\V1\Admin\DailyQuotaController;
 use App\Http\Controllers\Api\V1\Admin\DatasetController;
 use App\Http\Controllers\Api\V1\Admin\FileController;
+use App\Http\Controllers\Api\V1\Admin\FinishedAudioTextController;
 use App\Http\Controllers\Api\V1\Admin\FinishedEditTextController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
 use App\Http\Controllers\Api\V1\Admin\LogoutController;
@@ -52,6 +53,7 @@ Route::group([
     Route::apiResource('actions', ActionController::class)->only('index');
 
     Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
+    Route::get('finished/audio/texts', FinishedAudioTextController::class)->name('finished.audio.texts');
 
     Route::post('dataset', DatasetController::class)->name('dataset');
 });

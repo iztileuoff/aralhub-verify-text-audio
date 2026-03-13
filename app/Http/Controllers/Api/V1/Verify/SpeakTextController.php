@@ -12,8 +12,21 @@ class SpeakTextController extends Controller
     public function __invoke(Request $request)
     {
         $text = Text::query()
+            ->where('edit_speaker_id', $request->user()->id)
+            ->whereNull('speak_finished_at')
+            ->first();
+
+        if ($text) {
+            $text->speak_started_at = now();
+            $text->save();
+
+            return new TextResource($text);
+        }
+
+        $text = Text::query()
             ->whereNull('speak_finished_at')
             ->whereNotNull('edit_original_transcript')
+            ->whereNotNull('speak_started_at')
             ->inRandomOrder()
             ->first();
 
@@ -24,6 +37,7 @@ class SpeakTextController extends Controller
         }
 
         $text->speak_started_at = now();
+        $text->edit_speaker_id = $request->user()->id;
         $text->save();
 
         return new TextResource($text);
