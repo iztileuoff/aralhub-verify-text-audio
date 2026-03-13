@@ -53,7 +53,7 @@ Route::group([
     Route::apiResource('actions', ActionController::class)->only('index');
 
     Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
-    Route::get('finished/audio/texts', FinishedAudioTextController::class)->name('finished.audio.texts');
+//    Route::get('finished/audio/texts', FinishedAudioTextController::class)->name('finished.audio.texts');
 
     Route::post('dataset', DatasetController::class)->name('dataset');
 });
