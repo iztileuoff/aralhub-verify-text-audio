@@ -26,7 +26,7 @@ class SpeakTextController extends Controller
         $text = Text::query()
             ->whereNull('speak_finished_at')
             ->whereNotNull('edit_original_transcript')
-            ->whereNotNull('speak_started_at')
+            ->whereNull('speak_started_at')
             ->inRandomOrder()
             ->first();
 
