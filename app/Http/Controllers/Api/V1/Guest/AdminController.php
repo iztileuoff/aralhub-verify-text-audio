@@ -14,6 +14,7 @@ class AdminController extends Controller
     {
         $admins = User::query()
             ->where('role', RoleEnum::ADMIN->value)
+            ->orderByDesc('id')
             ->get();
 
         return new UserCollection($admins);
