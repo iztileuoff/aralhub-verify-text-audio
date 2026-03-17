@@ -82,6 +82,21 @@ class DailyQuotaController extends Controller
                 ->count();
         });
 
+        $dailyQuotaAudiosCount = Cache::rememberForever(self::CACHE_KEY, function () {
+            return Text::query()
+                ->whereNull('speak_finished_at')
+                ->orWhere('speak_finished_at', '>=', today())
+                ->count();
+        });
+
+        $dailyQuotaCheckAudiosCount = Cache::rememberForever(self::CACHE_KEY, function () {
+            return Text::query()
+                ->whereNotNull('speak_finished_at')
+                ->whereNull('moderator_finished_at')
+                ->orWhere('moderator_finished_at', '>=', today())
+                ->count();
+        });
+
         return [
             'users_count' => $usersCount,
             'active_editors_count' => $activeEditorsCount,
@@ -93,9 +108,10 @@ class DailyQuotaController extends Controller
             'daily_quota_texts_count' => $dailyQuotaTextsCount,
             'audio_finished_texts_count' => $audioFinishedTextsCount,
             'audio_not_finished_texts_count' => $editFinishedTextsCount - $audioFinishedTextsCount,
+            'daily_quota_audios_count' => $dailyQuotaAudiosCount,
             'moderator_finished_audios_count' => $moderatorFinishedAudiosCount,
             'moderator_not_finished_audios_count' => $moderatorNotFinishedAudiosCount,
-            'quota_per_user' => $usersCount ? intdiv($dailyQuotaTextsCount, $usersCount) : 0,
+            'daily_quota_check_audios_count' => $dailyQuotaCheckAudiosCount,
         ];
     }
 }
