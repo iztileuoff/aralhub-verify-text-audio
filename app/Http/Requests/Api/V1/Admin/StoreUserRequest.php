@@ -23,6 +23,7 @@ class StoreUserRequest extends FormRequest
             'specialization_id' => ['required', Rule::exists('specializations', 'id')],
             'course' => ['nullable', 'integer'],
             'is_verified' => ['required', 'boolean'],
+            'admin_id' => ['nullable', Rule::exists('users', 'id')->where('role', RoleEnum::ADMIN->value)],
         ];
     }
 

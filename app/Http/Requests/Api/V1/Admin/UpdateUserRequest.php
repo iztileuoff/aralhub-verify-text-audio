@@ -23,6 +23,7 @@ class UpdateUserRequest extends FormRequest
             'specialization_id' => [Rule::exists('specializations', 'id')],
             'course' => ['nullable', 'integer'],
             'is_verified' => ['boolean'],
+            'admin_id' => ['nullable', Rule::exists('users', 'id')->where('role', RoleEnum::ADMIN->value)],
         ];
     }
 
