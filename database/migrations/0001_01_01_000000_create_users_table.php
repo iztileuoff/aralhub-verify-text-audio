@@ -24,6 +24,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('course')->nullable();
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_active')->default(false);
+            $table->unsignedBigInteger('admin_id')->nullable();
             $table->timestamps();
         });
 

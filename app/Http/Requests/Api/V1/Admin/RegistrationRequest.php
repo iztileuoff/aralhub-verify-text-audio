@@ -23,6 +23,7 @@ class RegistrationRequest extends FormRequest
             'specialization_id' => ['required', Rule::exists('specializations', 'id')],
             'course' => ['required', 'integer'],
             'is_verified' => ['nullable'],
+            'admin_id' => ['nullable', Rule::exists('users', 'id')->where('role', RoleEnum::ADMIN->value)],
         ];
     }
 
