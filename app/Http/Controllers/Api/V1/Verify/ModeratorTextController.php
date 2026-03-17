@@ -17,10 +17,9 @@ class ModeratorTextController extends Controller
             ->first();
 
         if ($text) {
-            $text->moderator_started_at = now();
+            $text->moderator_started_at = null;
+            $text->moderator_id = null;
             $text->save();
-
-            return new TextResource($text);
         }
 
         $text = Text::query()

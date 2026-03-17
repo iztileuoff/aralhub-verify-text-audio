@@ -17,10 +17,9 @@ class SpeakTextController extends Controller
             ->first();
 
         if ($text) {
-            $text->speak_started_at = now();
+            $text->speak_started_at = null;
+            $text->edit_speaker_id = null;
             $text->save();
-
-            return new TextResource($text);
         }
 
         $text = Text::query()
