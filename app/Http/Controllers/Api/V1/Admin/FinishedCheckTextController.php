@@ -17,7 +17,7 @@ class FinishedCheckTextController extends Controller
             ->when($request->filled('speaker_id'), fn ($q) => $q->where('edit_speaker_id', $request->input('speaker_id')))
             ->when($request->filled('moderator_id'), fn ($q) => $q->where('moderator_id', $request->input('moderator_id')))
             ->with(['editUser', 'editSpeaker', 'moderator'])
-            ->orderByDesc('')
+            ->orderByDesc('moderator_finished_at')
             ->paginate($request->input('per_page', 10));
 
         return new TextCollection($texts);
