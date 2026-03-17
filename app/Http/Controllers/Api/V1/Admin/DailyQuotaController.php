@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Cache;
 
 class DailyQuotaController extends Controller
 {
-    private const CACHE_KEY = 'daily_quota_data';
+    private const CACHE_KEY_TEXTS = 'daily_quota_texts';
+    private const CACHE_KEY_AUDIOS = 'daily_quota_audios';
+    private const CACHE_KEY_CHECK_AUDIOS = 'daily_quota_check_audios';
 
     public function show(Request $request)
     {
@@ -82,14 +84,14 @@ class DailyQuotaController extends Controller
                 ->count();
         });
 
-        $dailyQuotaAudiosCount = Cache::rememberForever(self::CACHE_KEY, function () {
+        $dailyQuotaAudiosCount = Cache::rememberForever(self::CACHE_KEY_AUDIOS, function () {
             return Text::query()
                 ->whereNull('speak_finished_at')
                 ->orWhere('speak_finished_at', '>=', today())
                 ->count();
         });
 
-        $dailyQuotaCheckAudiosCount = Cache::rememberForever(self::CACHE_KEY, function () {
+        $dailyQuotaCheckAudiosCount = Cache::rememberForever(self::CACHE_KEY_CHECK_AUDIOS, function () {
             return Text::query()
                 ->whereNotNull('speak_finished_at')
                 ->whereNull('moderator_finished_at')
