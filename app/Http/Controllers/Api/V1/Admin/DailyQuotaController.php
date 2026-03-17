@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Cache;
 
 class DailyQuotaController extends Controller
 {
-    private const CACHE_KEY = 'daily_quota_data';
-
     public function show(Request $request)
     {
         return response()->json([
@@ -75,21 +73,21 @@ class DailyQuotaController extends Controller
             ->whereNotNull('speak_finished_at')
             ->count();
 
-        $dailyQuotaTextsCount = Cache::rememberForever(self::CACHE_KEY, function () {
+        $dailyQuotaTextsCount = Cache::rememberForever('daily_quota_texts_data', function () {
             return Text::query()
                 ->whereNull('edit_finished_at')
                 ->orWhere('edit_finished_at', '>=', today())
                 ->count();
         });
 
-        $dailyQuotaAudiosCount = Cache::rememberForever(self::CACHE_KEY, function () {
+        $dailyQuotaAudiosCount = Cache::rememberForever('daily_quota_audios_data', function () {
             return Text::query()
                 ->whereNull('speak_finished_at')
                 ->orWhere('speak_finished_at', '>=', today())
                 ->count();
         });
 
-        $dailyQuotaCheckAudiosCount = Cache::rememberForever(self::CACHE_KEY, function () {
+        $dailyQuotaCheckAudiosCount = Cache::rememberForever('daily_quota_check_audios_data', function () {
             return Text::query()
                 ->whereNotNull('speak_finished_at')
                 ->whereNull('moderator_finished_at')
