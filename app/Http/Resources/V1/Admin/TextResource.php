@@ -34,7 +34,7 @@ class TextResource extends JsonResource
             'edit_finished_at' => $this->edit_finished_at?->format('Y-m-d H:i:s'),
             'edit_cancelled_user_id' => $this->edit_cancelled_user_id,
             'edit_cancelled_user' => new UserResource($this->whenLoaded('editCancelledUser')),
-            'audio' => new AudioResource($this->whenLoaded('audio')),
+//            'audio' => new AudioResource($this->whenLoaded('audio')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
