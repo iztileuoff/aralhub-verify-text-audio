@@ -24,7 +24,7 @@ class UserController extends Controller
             ->withCount(['todayFinishedEditTexts' => fn ($q) => $q->whereDate('edit_finished_at', '=', $date)])
             ->withCount(['todayFinishedSpeakTexts' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date)])
             ->withCount(['todayFinishedModerationTexts' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date)])
-            ->orderBy('today_finished_speak_texts_count', 'desc')
+            ->orderBy('date_finished_speak_audio_count', 'desc')
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));
 
