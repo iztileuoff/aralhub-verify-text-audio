@@ -108,7 +108,7 @@ class DailyQuotaController extends Controller
             'edit_not_finished_texts_count' => $editNotFinishedTextsCount,
             'daily_quota_texts_count' => $dailyQuotaTextsCount,
             'audio_finished_texts_count' => $audioFinishedTextsCount,
-            'audio_not_finished_texts_count' => $editFinishedTextsCount - $audioFinishedTextsCount,
+            'audio_not_finished_texts_count' => $editFinishedTextsCount * 3 - $audioFinishedTextsCount,
             'daily_quota_audios_count' => $dailyQuotaAudiosCount,
             'moderator_finished_audios_count' => $moderatorFinishedAudiosCount,
             'moderator_not_finished_audios_count' => $moderatorNotFinishedAudiosCount,
