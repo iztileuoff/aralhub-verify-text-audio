@@ -17,7 +17,7 @@ class TestCommand extends Command
     public function handle(): void
     {
         $texts = Text::query()
-            ->where('file_id', 4)
+            ->where('file_id', 5)
             ->get();
 
 //        foreach ($texts as $text) {
@@ -59,7 +59,7 @@ class TestCommand extends Command
 //                'edit_speaker_gender' => $text->edit_speaker_gender,
 //            ]);
 
-            $text->transcript_id = 100000 + $text->id;
+            $text->transcript_id = 200000 + $text->id;
             $text->save();
         }
 
