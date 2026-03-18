@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Verify;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\TextResource;
+use App\Models\Audio;
 use App\Models\Text;
 use Illuminate\Http\Request;
 
@@ -12,8 +13,8 @@ class SpeakTextController extends Controller
     public function __invoke(Request $request)
     {
         $text = Text::query()
-            ->where('edit_speaker_id', $request->user()->id)
-            ->whereNull('speak_finished_at')
+            ->where('edit_speaker_id', auth()->user()->id)
+            ->whereNotNull('speak_started_at')
             ->first();
 
         if ($text) {
@@ -23,9 +24,12 @@ class SpeakTextController extends Controller
         }
 
         $text = Text::query()
-            ->whereNull('speak_finished_at')
             ->whereNotNull('edit_original_transcript')
             ->whereNull('speak_started_at')
+            ->where('audio_count', '<', 3)
+            ->whereDoesntHave('audio', function ($q) {
+                $q->where('edit_speaker_id', auth()->user()->id);
+            })
             ->inRandomOrder()
             ->first();
 
@@ -36,7 +40,7 @@ class SpeakTextController extends Controller
         }
 
         $text->speak_started_at = now();
-        $text->edit_speaker_id = $request->user()->id;
+        $text->edit_speaker_id = auth()->user()->id;
         $text->save();
 
         return new TextResource($text);

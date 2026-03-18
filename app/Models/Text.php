@@ -41,6 +41,9 @@ class Text extends Model
         'is_correct',
         'moderator_started_at',
         'moderator_finished_at',
+        'audio_count',
+        'audio_male_count',
+        'audio_female_count',
     ];
 
     protected function casts(): array
@@ -75,6 +78,9 @@ class Text extends Model
             'is_correct' => 'boolean',
             'moderator_started_at' => 'datetime',
             'moderator_finished_at' => 'datetime',
+            'audio_count' => 'integer',
+            'audio_male_count' => 'integer',
+            'audio_female_count' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -128,5 +134,10 @@ class Text extends Model
     public function moderator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'moderator_id');
+    }
+
+    public function audio(): HasMany
+    {
+        return $this->hasMany(Audio::class);
     }
 }

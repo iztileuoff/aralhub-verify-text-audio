@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Verify;
 
+use App\Enums\GenderEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Verify\StoreSpeakTextRequest;
 use App\Http\Resources\V1\Admin\TextResource;
@@ -23,10 +24,20 @@ class SpeakTextAudioCompleteController extends Controller
 
         $path = $request->file('audio')->store('audio', 'public');
 
-        $text->edit_audio_filename = $path;
-        $text->speak_finished_at = now();
-        $text->edit_speaker_id = auth()->user()->id;
-        $text->edit_speaker_gender = auth()->user()->gender;
+        $text->audio()->create([
+            'edit_audio_filename' => $path,
+            'speak_started_at' => $text->speak_started_at,
+            'speak_finished_at' => now(),
+            'edit_speaker_id' => auth()->user()->id,
+            'edit_speaker_gender' => auth()->user()->gender,
+        ]);
+
+        $text->speak_started_at = null;
+        $text->edit_speaker_id = null;
+        $text->audio_count = $text->audio()->count();
+        $text->audio_male_count = $text->audio()->where('gender', GenderEnum::MALE->value)->count();
+        $text->audio_female_count = $text->audio()->where('gender', GenderEnum::FEMALE->value)->count();
+
         $text->save();
 
         ProcessAudioJob::dispatch($text->id, $path);

@@ -39,6 +39,9 @@ return new class extends Migration
             $table->boolean('is_correct')->nullable();
             $table->timestamp('moderator_started_at')->nullable();
             $table->timestamp('moderator_finished_at')->nullable();
+            $table->unsignedInteger('audio_count')->nullable();
+            $table->unsignedInteger('audio_male_count')->nullable();
+            $table->unsignedInteger('audio_female_count')->nullable();
             $table->timestamps();
         });
     }

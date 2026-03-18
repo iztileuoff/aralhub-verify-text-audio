@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Audio;
 use App\Models\Text;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -58,7 +59,18 @@ class ProcessAudioJob implements ShouldQueue
             return;
         }
 
-        $text->edit_converted_audio_filename = $convertedFileName;
+        $audio = Audio::query()
+            ->where('text_id', $this->textId)
+            ->where('edit_converted_audio_filename', $this->path)
+            ->first();
+
+        if (!$audio) {
+            Log::error('Audio not found. text_id: ' . $this->textId . ' path: ' . $this->path);
+
+            return;
+        }
+
+        $audio->edit_converted_audio_filename = $convertedFileName;
 
         // duration in samples
         $durProcess = new Process([
@@ -73,7 +85,7 @@ class ProcessAudioJob implements ShouldQueue
         $durProcess->run();
 
         if ($durProcess->isSuccessful()) {
-            $text->edit_converted_audio_duration = (int) trim($durProcess->getOutput());
+            $audio->edit_converted_audio_duration = (int) trim($durProcess->getOutput());
         }
 
         $text->save();
