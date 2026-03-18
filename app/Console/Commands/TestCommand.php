@@ -17,9 +17,10 @@ class TestCommand extends Command
     public function handle(): void
     {
         $texts = Text::query()
-            ->where('file_id', 3)
-            ->distinct()
-            ->get();
+            ->where('file_id', 1)
+            ->get()
+            ->unique('transcript_id')
+            ->values();
 
 //        foreach ($texts as $text) {
 //            // 1. Original Transcript (Оригинал как есть)
