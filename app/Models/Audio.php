@@ -78,4 +78,9 @@ class Audio extends Model
     {
         return $this->belongsTo(User::class, 'edit_speaker_id');
     }
+
+    public function moderator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'moderator_id');
+    }
 }
