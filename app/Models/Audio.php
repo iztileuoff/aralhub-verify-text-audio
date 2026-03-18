@@ -15,6 +15,7 @@ class Audio extends Model
         'edit_converted_audio_duration',
         'speak_started_at',
         'speak_finished_at',
+        'edit_speaker_id',
         'edit_speaker_gender',
         'moderator_id',
         'is_correct',
