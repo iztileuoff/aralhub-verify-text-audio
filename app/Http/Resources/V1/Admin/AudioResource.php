@@ -25,6 +25,11 @@ class AudioResource extends JsonResource
             'edit_speaker_id' => $this->edit_speaker_id,
             'edit_speaker' => new UserResource($this->whenLoaded('editSpeaker')),
             'edit_speaker_gender' => $this->edit_speaker_gender,
+            'moderator_id' => $this->moderator_id,
+            'moderator' => new UserResource($this->whenLoaded('moderator')),
+            'is_correct' => $this->is_correct,
+            'moderator_started_at' => $this->moderator_started_at?->format('Y-m-d H:i:s'),
+            'moderator_finished_at' => $this->moderator_finished_at?->format('Y-m-d H:i:s'),
         ];
     }
 }
