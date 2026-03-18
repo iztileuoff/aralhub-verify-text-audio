@@ -27,12 +27,13 @@ class SpeakTextController extends Controller
             ->whereNotNull('edit_original_transcript')
             ->whereNull('speak_started_at')
             ->where(function ($q) {
-                $q->where('audio_count', '<', 3)
-                    ->orWhereNull('audio_count');
+                $q->whereNull('audio_count')
+                    ->orWhere('audio_count', '<', 3);
             })
             ->whereDoesntHave('audio', function ($q) {
                 $q->where('edit_speaker_id', auth()->id());
             })
+            ->orderByRaw('audio_count IS NOT NULL') // NULL сначала
             ->inRandomOrder()
             ->first();
 
