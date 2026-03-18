@@ -14,9 +14,8 @@ class FinishedAudioTextController extends Controller
         $texts = Text::query()
             ->whereNotNull('speak_finished_at')
             ->when($request->filled('file_id'), fn ($q) => $q->where('file_id', $request->input('file_id')))
-            ->when($request->filled('speaker_id'), fn ($q) => $q->where('edit_speaker_id', $request->input('speaker_id')))
-            ->when($request->filled('moderator_id'), fn ($q) => $q->where('moderator_id', $request->input('moderator_id')))
-            ->with(['editUser', 'editSpeaker', 'moderator'])
+            ->when($request->filled('speaker_id'), fn ($q) => $q->whereHas('audio', fn ($q) => $q->where('edit_speaker_id', $request->input('speaker_id'))))
+            ->with(['editUser', 'audio.editSpeaker'])
             ->orderByDesc('speak_finished_at')
             ->paginate($request->input('per_page', 10));
 

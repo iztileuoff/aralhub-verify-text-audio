@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\GenderEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Audio extends Model
 {
@@ -43,8 +45,37 @@ class Audio extends Model
         ];
     }
 
+    /**
+     * Get the URL for the edited audio file.
+     */
+    public function editAudioUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->edit_audio_filename
+                ? asset(Storage::url($this->edit_audio_filename))
+                : null,
+        );
+    }
+
+    /**
+     * Get the URL for the edited audio file.
+     */
+    public function editConvertedAudioUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->edit_converted_audio_filename
+                ? asset(Storage::url($this->edit_converted_audio_filename))
+                : null,
+        );
+    }
+
     public function text(): BelongsTo
     {
         return $this->belongsTo(Text::class);
+    }
+
+    public function editSpeaker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'edit_speaker_id');
     }
 }
