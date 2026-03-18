@@ -17,7 +17,7 @@ class TestCommand extends Command
     public function handle(): void
     {
         $texts = Text::query()
-            ->whereDate('speak_finished_at', '<', '2026-03-18')
+            ->where('file_id', 4)
             ->get();
 
 //        foreach ($texts as $text) {
@@ -59,9 +59,7 @@ class TestCommand extends Command
 //                'edit_speaker_gender' => $text->edit_speaker_gender,
 //            ]);
 
-            $text->audio_count = $text->audio()->count();
-            $text->audio_male_count = $text->audio()->where('edit_speaker_gender', GenderEnum::MALE->value)->count();
-            $text->audio_female_count = $text->audio()->where('edit_speaker_gender', GenderEnum::FEMALE->value)->count();
+            $text->transcript_id = 100000 + $text->id;
             $text->save();
         }
 
