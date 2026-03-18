@@ -16,6 +16,7 @@ class ProfileController extends Controller
         return new ProfileResource(auth()->user()->loadCount([
             'finishedEditTexts', 'finishedSpeakTexts', 'finishedModerationTexts'
         ])->loadCount([
+            'dateFinishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
             'todayFinishedEditTexts'  => fn ($q) => $q->whereDate('edit_finished_at', '=', $date),
             'todayFinishedSpeakTexts' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date),
             'todayFinishedModerationTexts' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date)

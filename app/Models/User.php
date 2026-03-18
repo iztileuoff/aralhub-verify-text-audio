@@ -118,6 +118,11 @@ class User extends Authenticatable
         return $this->hasMany(Text::class, 'edit_speaker_id')->whereNotNull('speak_finished_at');
     }
 
+    public function dateFinishedSpeakAudio(): HasMany
+    {
+        return $this->hasMany(Audio::class, 'edit_speaker_id')->whereNotNull('speak_finished_at');
+    }
+
     public function finishedModerationTexts(): HasMany
     {
         return $this->hasMany(Text::class, 'moderator_id')->whereNotNull('is_correct');
