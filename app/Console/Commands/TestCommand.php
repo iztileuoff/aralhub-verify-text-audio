@@ -17,7 +17,7 @@ class TestCommand extends Command
     public function handle(): void
     {
         $texts = Text::query()
-            ->where('file_id', 2)
+            ->where('file_id', 3)
             ->distinct()
             ->get();
 
