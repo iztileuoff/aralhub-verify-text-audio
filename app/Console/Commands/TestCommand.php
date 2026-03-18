@@ -48,20 +48,21 @@ class TestCommand extends Command
 //        }
 
         foreach ($texts as $text) {
-            $audio = Audio::create([
-                'text_id' => $text->id,
-                'edit_audio_filename' => $text->edit_audio_filename,
-                'edit_converted_audio_filename' => $text->edit_converted_audio_filename,
-                'edit_converted_audio_duration' => $text->edit_converted_audio_duration,
-                'speak_started_at' => $text->speak_started_at,
-                'speak_finished_at' => $text->speak_finished_at,
-                'edit_speaker_id' => $text->edit_speaker_id,
-                'edit_speaker_gender' => $text->edit_speaker_gender,
-            ]);
+//            $audio = Audio::create([
+//                'text_id' => $text->id,
+//                'edit_audio_filename' => $text->edit_audio_filename,
+//                'edit_converted_audio_filename' => $text->edit_converted_audio_filename,
+//                'edit_converted_audio_duration' => $text->edit_converted_audio_duration,
+//                'speak_started_at' => $text->speak_started_at,
+//                'speak_finished_at' => $text->speak_finished_at,
+//                'edit_speaker_id' => $text->edit_speaker_id,
+//                'edit_speaker_gender' => $text->edit_speaker_gender,
+//            ]);
 
             $text->audio_count = $text->audio()->count();
             $text->audio_male_count = $text->audio()->where('edit_speaker_gender', GenderEnum::MALE->value)->count();
             $text->audio_female_count = $text->audio()->where('edit_speaker_gender', GenderEnum::FEMALE->value)->count();
+            $text->save();
         }
 
         $this->info('Success!');
