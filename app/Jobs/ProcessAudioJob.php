@@ -61,7 +61,7 @@ class ProcessAudioJob implements ShouldQueue
 
         $audio = Audio::query()
             ->where('text_id', $this->textId)
-            ->where('edit_converted_audio_filename', $this->path)
+            ->where('edit_audio_filename', $this->path)
             ->first();
 
         if (!$audio) {
