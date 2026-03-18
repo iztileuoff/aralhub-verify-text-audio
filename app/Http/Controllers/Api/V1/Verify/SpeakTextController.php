@@ -24,6 +24,7 @@ class SpeakTextController extends Controller
         }
 
         $text = Text::query()
+            ->where('is_main', true)
             ->whereNotNull('edit_original_transcript')
             ->whereNull('speak_started_at')
             ->where(function ($q) {

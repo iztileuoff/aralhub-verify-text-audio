@@ -44,6 +44,7 @@ class Text extends Model
         'audio_count',
         'audio_male_count',
         'audio_female_count',
+        'is_main',
     ];
 
     protected function casts(): array
@@ -81,6 +82,7 @@ class Text extends Model
             'audio_count' => 'integer',
             'audio_male_count' => 'integer',
             'audio_female_count' => 'integer',
+            'is_main' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
