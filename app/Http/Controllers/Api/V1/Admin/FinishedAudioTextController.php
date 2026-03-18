@@ -19,7 +19,7 @@ class FinishedAudioTextController extends Controller
             )
             ->when($request->filled('speaker_id'), fn ($q) =>
                 $q->whereHas('audio', fn ($q2) =>
-                    $q2->where('speaker_id', $request->input('speaker_id'))
+                    $q2->where('edit_speaker_id', $request->input('speaker_id'))
                 )
             )
             ->with(['editUser', 'audio.editSpeaker'])
