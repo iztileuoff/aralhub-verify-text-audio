@@ -12,7 +12,9 @@ class UserController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $date = $request->input('date', now()->format('Y-m-d'));
+        $date = $request->filled('date')
+            ? $request->input('date')
+            : now()->format('Y-m-d');
 
         $users = User::query()
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
