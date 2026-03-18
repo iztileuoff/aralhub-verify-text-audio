@@ -14,6 +14,7 @@ class AudioResource extends JsonResource
         return [
             'id' => $this->id,
             'text_id' => $this->text_id,
+            'text' => new TextResource($this->whenLoaded('text')),
             'edit_audio_filename' => $this->edit_audio_filename,
             'edit_audio_url' => $this->edit_audio_url,
             'edit_converted_audio_filename' => $this->edit_converted_audio_filename,

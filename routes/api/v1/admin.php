@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\TextController;
 use App\Http\Controllers\Api\V1\Admin\TextStatusesController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
+use App\Http\Controllers\Api\V1\Verify\ModeratorAudioCheckController;
+use App\Http\Controllers\Api\V1\Verify\ModeratorAudioController;
 use App\Http\Controllers\Api\V1\Verify\ModeratorTextCheckController;
 use App\Http\Controllers\Api\V1\Verify\ModeratorTextController;
 use App\Http\Controllers\Api\V1\Verify\SpeakTextAudioCompleteController;
@@ -80,4 +82,7 @@ Route::group([
     // moderator
     Route::get('moderator/text', ModeratorTextController::class)->name('moderator.text');
     Route::post('moderator/text/{text}/check', ModeratorTextCheckController::class)->name('moderator.text.check');
+
+    Route::get('moderator/audio', ModeratorAudioController::class)->name('moderator.audio');
+    Route::post('moderator/audio/{audio}/check', ModeratorAudioCheckController::class)->name('moderator.audio.check');
 });
