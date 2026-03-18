@@ -63,9 +63,13 @@ class DailyQuotaController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $audioFinishedTextsCount = Audio::query()
-            ->whereNotNull('speak_finished_at')
-            ->count();
+        $audioFinishedTextsCount = Text::query()
+            ->where('is_main', true)
+            ->sum('audio_count');
+
+        $audioNotFinishedTextsCount = Text::query()
+            ->where('is_main', true)
+            ->count() * 3 - $audioFinishedTextsCount;
 
         $moderatorFinishedAudiosCount = Text::query()
             ->whereNotNull('is_correct')
@@ -108,7 +112,7 @@ class DailyQuotaController extends Controller
             'edit_not_finished_texts_count' => $editNotFinishedTextsCount,
             'daily_quota_texts_count' => $dailyQuotaTextsCount,
             'audio_finished_texts_count' => $audioFinishedTextsCount,
-            'audio_not_finished_texts_count' => $editFinishedTextsCount * 3 - $audioFinishedTextsCount,
+            'audio_not_finished_texts_count' => $audioNotFinishedTextsCount,
             'daily_quota_audios_count' => $dailyQuotaAudiosCount,
             'moderator_finished_audios_count' => $moderatorFinishedAudiosCount,
             'moderator_not_finished_audios_count' => $moderatorNotFinishedAudiosCount,
