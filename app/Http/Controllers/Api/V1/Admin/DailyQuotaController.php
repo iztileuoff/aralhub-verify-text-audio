@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\UpdateProfileRequest;
+use App\Models\Audio;
 use App\Models\Text;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -21,7 +22,9 @@ class DailyQuotaController extends Controller
 
     public function update(UpdateProfileRequest $request)
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget('daily_quota_texts_data');
+        Cache::forget('daily_quota_audios_data');
+        Cache::forget('daily_quota_check_audios_data');
 
         return response()->json([
             'data' => $this->getDailyQuota(),
@@ -60,7 +63,7 @@ class DailyQuotaController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $audioFinishedTextsCount = Text::query()
+        $audioFinishedTextsCount = Audio::query()
             ->whereNotNull('speak_finished_at')
             ->count();
 
