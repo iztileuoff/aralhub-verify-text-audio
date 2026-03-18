@@ -88,6 +88,6 @@ class ProcessAudioJob implements ShouldQueue
             $audio->edit_converted_audio_duration = (int) trim($durProcess->getOutput());
         }
 
-        $text->save();
+        $audio->save();
     }
 }
