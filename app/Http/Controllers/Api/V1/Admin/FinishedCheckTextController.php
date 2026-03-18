@@ -14,7 +14,7 @@ class FinishedCheckTextController extends Controller
     public function __invoke(Request $request)
     {
         $audio = Audio::query()
-//            ->whereNotNull('is_correct')
+            ->whereNotNull('is_correct')
             ->when($request->filled('speaker_id'), fn ($q) => $q->where('edit_speaker_id', $request->input('speaker_id')))
             ->when($request->filled('moderator_id'), fn ($q) => $q->where('moderator_id', $request->input('moderator_id')))
             ->with(['text', 'editSpeaker', 'moderator'])
