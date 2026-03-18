@@ -35,8 +35,8 @@ class SpeakTextAudioCompleteController extends Controller
         $text->speak_started_at = null;
         $text->edit_speaker_id = null;
         $text->audio_count = $text->audio()->count();
-        $text->audio_male_count = $text->audio()->where('gender', GenderEnum::MALE->value)->count();
-        $text->audio_female_count = $text->audio()->where('gender', GenderEnum::FEMALE->value)->count();
+        $text->audio_male_count = $text->audio()->where('edit_speaker_gender', GenderEnum::MALE->value)->count();
+        $text->audio_female_count = $text->audio()->where('edit_speaker_gender', GenderEnum::FEMALE->value)->count();
 
         $text->save();
 
