@@ -34,6 +34,7 @@ class DailyQuotaController extends Controller
     private function getDailyQuota(): array
     {
         $textsCount = Text::query()
+            ->where('is_main', true)
             ->count();
 
         $editFinishedTextsCount = Text::query()
