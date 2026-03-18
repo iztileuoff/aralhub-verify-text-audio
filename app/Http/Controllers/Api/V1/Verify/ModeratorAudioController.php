@@ -39,6 +39,6 @@ class ModeratorAudioController extends Controller
         $audio->moderator_started_at = now();
         $audio->moderator_id = $request->user()->id;
 
-        return new AudioResource($audio);
+        return new AudioResource($audio->load('editSpeaker'));
     }
 }
