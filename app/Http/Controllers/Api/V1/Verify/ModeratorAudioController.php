@@ -28,6 +28,7 @@ class ModeratorAudioController extends Controller
             ->whereNotNull('speak_finished_at')
             ->whereNull('moderator_started_at')
             ->whereNull('is_correct')
+            ->inRandomOrder()
             ->first();
 
         if (! $audio) {
