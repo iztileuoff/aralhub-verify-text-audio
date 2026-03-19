@@ -12,7 +12,6 @@ class FinishedAudioTextController extends Controller
     public function __invoke(Request $request)
     {
         $texts = Text::query()
-            ->whereNotNull('speak_finished_at')
             ->when($request->filled('file_id'), fn ($q) =>
                 $q->where('file_id', $request->input('file_id'))
             )
