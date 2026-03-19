@@ -23,7 +23,7 @@ class UserController extends Controller
             ->when(auth()->user()->role === RoleEnum::ADMIN, fn ($q) => $q->where('admin_id', auth()->user()->id))
             ->withCount(['finishedEditTexts', 'finishedSpeakTexts', 'finishedModerationTexts'])
             ->withCount(['dateFinishedSpeakAudio' =>  fn ($q) => $q->whereDate('speak_finished_at', '=', $date)])
-            ->withCount(['dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderation_finished_at', '=', $date)])
+            ->withCount(['dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date)])
             ->withCount(['todayFinishedEditTexts' => fn ($q) => $q->whereDate('edit_finished_at', '=', $date)])
             ->withCount(['todayFinishedSpeakTexts' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date)])
             ->withCount(['todayFinishedModerationTexts' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date)])
