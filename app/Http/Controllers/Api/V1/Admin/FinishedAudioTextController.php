@@ -12,7 +12,6 @@ class FinishedAudioTextController extends Controller
     public function __invoke(Request $request)
     {
         $texts = Text::query()
-            ->withMax('audio', 'speak_finished_at')
             ->whereNotNull('speak_finished_at')
             ->when($request->filled('file_id'), fn ($q) =>
                 $q->where('file_id', $request->input('file_id'))
@@ -23,7 +22,6 @@ class FinishedAudioTextController extends Controller
                 )
             )
             ->with(['editUser', 'audio.editSpeaker'])
-            ->orderByDesc('audio_max_speak_finished_at') // 👈 magic column
             ->paginate($request->input('per_page', 10));
 
         return new TextCollection($texts);
