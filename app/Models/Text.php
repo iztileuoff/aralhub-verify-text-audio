@@ -140,6 +140,6 @@ class Text extends Model
 
     public function audio(): HasMany
     {
-        return $this->hasMany(Audio::class, 'edit_speaker_id');
+        return $this->hasMany(Audio::class);
     }
 }
