@@ -28,7 +28,7 @@ class ProfileResource extends JsonResource
             'finished_speak_texts_count' => $this->whenHas('finished_speak_texts_count'),
             'today_finished_speak_texts_count' => $this->whenHas('date_finished_speak_audio_count'),
             'finished_moderation_texts_count' => $this->whenHas('finished_moderation_texts_count'),
-            'today_finished_moderation_texts_count' => $this->whenHas('today_finished_moderation_texts_count'),
+            'today_finished_moderation_texts_count' => $this->whenHas('date_finished_moderation_audio_count'),
             'is_verified' => $this->is_verified,
             'is_active' => $this->is_active,
         ];
