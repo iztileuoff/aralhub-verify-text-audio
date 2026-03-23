@@ -28,13 +28,11 @@ class ExportCorrectAudioCommand extends Command
     {
         $filename = $this->option('filename');
         $path = storage_path('app/private/' . $filename);
-        
+
         // In Laravel 11/12 default storage is app/private or app/public. Lets just use app/
         $path = storage_path('app/' . $filename);
 
         $file = fopen($path, 'w');
-
-        fputcsv($file, ['audio_filename', 'converted_audio_filename', 'transcript'], "\t");
 
         $audios = Audio::query()
             ->with('text')
@@ -44,16 +42,20 @@ class ExportCorrectAudioCommand extends Command
         $count = 0;
 
         foreach ($audios as $audio) {
-            $transcript = $audio->text?->edit_normalized_transcript 
-                ?? $audio->text?->normalized_transcript 
+            $transcript = $audio->text?->edit_normalized_transcript
+                ?? $audio->text?->normalized_transcript
                 ?? $audio->text?->original_transcript;
 
             fputcsv($file, [
-                $audio->edit_audio_filename,
+                $audio->text?->id,
                 $audio->edit_converted_audio_filename,
-                $transcript,
+                $audio->text?->edit_original_transcript,
+                $audio->text?->edit_normalized_transcript,
+                $audio->text?->edit_tokenized_transcript,
+                $audio->edit_converted_audio_duration,
+                $audio->edit_speaker_gender,
             ], "\t");
-            
+
             $count++;
         }
 
