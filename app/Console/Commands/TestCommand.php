@@ -19,7 +19,7 @@ class TestCommand extends Command
     {
         Audio::cursor()->each(function ($audio) {
             if (!Storage::disk('public')->exists($audio->edit_converted_audio_filename)) {
-                $this->info($audio->edit_converted_audio_filename . PHP_EOL);
+                $this->info($audio->edit_audio_filename . PHP_EOL);
             }
         });
 
