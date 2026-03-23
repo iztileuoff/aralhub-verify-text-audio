@@ -49,7 +49,7 @@ class ExportCorrectAudioCommand extends Command
                 $audio->text?->edit_normalized_transcript,
                 $audio->text?->edit_tokenized_transcript,
                 $audio->edit_converted_audio_duration,
-                $audio->edit_speaker_gender,
+                $audio->edit_speaker_gender->value,
             ], "\t");
 
             $count++;
