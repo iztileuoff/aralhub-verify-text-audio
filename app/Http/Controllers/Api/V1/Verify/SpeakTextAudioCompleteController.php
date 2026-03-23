@@ -18,9 +18,9 @@ class SpeakTextAudioCompleteController extends Controller
             Storage::disk('public')->delete($text->edit_audio_filename);
         }
 
-        if ($text->edit_converted_audio_filename) {
-            Storage::disk('public')->delete($text->edit_converted_audio_filename);
-        }
+//        if ($text->edit_converted_audio_filename) {
+//            Storage::disk('public')->delete($text->edit_converted_audio_filename);
+//        }
 
         $path = $request->file('audio')->store('audio', 'public');
 
@@ -40,7 +40,7 @@ class SpeakTextAudioCompleteController extends Controller
 
         $text->save();
 
-        ProcessAudioJob::dispatch($text->id, $path);
+//        ProcessAudioJob::dispatch($text->id, $path);
 
         return new TextResource($text);
     }
