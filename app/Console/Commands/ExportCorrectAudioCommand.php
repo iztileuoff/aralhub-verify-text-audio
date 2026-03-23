@@ -42,10 +42,6 @@ class ExportCorrectAudioCommand extends Command
         $count = 0;
 
         foreach ($audios as $audio) {
-            $transcript = $audio->text?->edit_normalized_transcript
-                ?? $audio->text?->normalized_transcript
-                ?? $audio->text?->original_transcript;
-
             fputcsv($file, [
                 $audio->text?->id,
                 $audio->edit_converted_audio_filename,
