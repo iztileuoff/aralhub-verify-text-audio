@@ -17,12 +17,25 @@ class TestCommand extends Command
 
     public function handle(): void
     {
-        Audio::cursor()->each(function ($audio) {
-            if (!Storage::disk('public')->exists($audio->edit_audio_filename)) {
-                $this->info($audio->edit_audio_filename . PHP_EOL);
-            }
-        });
+        $copied = 0;
+        $missing = 0;
 
-        $this->info('Success!');
+        Audio::where('is_correct', true)
+            ->cursor()
+            ->each(function ($audio) use (&$copied, &$missing) {
+                $source = $audio->edit_converted_audio_filename;
+                $destination = 'correct_audio/' . basename($source);
+
+                if (Storage::disk('public')->exists($source)) {
+                    Storage::disk('public')->copy($source, $destination);
+                    $copied++;
+                } else {
+                    $missing++;
+                }
+            });
+
+        $this->info("Copied: {$copied}");
+        $this->warn("Missing: {$missing}");
+        $this->info('Done!');
     }
 }
