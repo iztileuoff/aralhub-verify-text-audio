@@ -44,9 +44,11 @@ class ExportCorrectAudioCommand extends Command
         foreach ($audios as $audio) {
             $clean = fn ($v) => str_replace('"', '', $v);
 
+            $audioFilename = preg_replace('#^audio_conv/#', '', $audio->edit_converted_audio_filename);
+
             $line = implode("\t", [
                 $audio->text?->id,
-                $audio->edit_converted_audio_filename,
+                $audioFilename,
                 $clean($audio->text?->edit_original_transcript),
                 $clean($audio->text?->edit_normalized_transcript),
                 $clean($audio->text?->edit_tokenized_transcript),
