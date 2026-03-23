@@ -42,15 +42,19 @@ class ExportCorrectAudioCommand extends Command
         $count = 0;
 
         foreach ($audios as $audio) {
-            fputcsv($file, [
+            $clean = fn ($v) => str_replace('"', '', $v);
+
+            $line = implode("\t", [
                 $audio->text?->id,
                 $audio->edit_converted_audio_filename,
-                $audio->text?->edit_original_transcript,
-                $audio->text?->edit_normalized_transcript,
-                $audio->text?->edit_tokenized_transcript,
+                $clean($audio->text?->edit_original_transcript),
+                $clean($audio->text?->edit_normalized_transcript),
+                $clean($audio->text?->edit_tokenized_transcript),
                 $audio->edit_converted_audio_duration,
                 $audio->edit_speaker_gender->value,
-            ], "\t");
+            ]);
+
+            fwrite($file, $line . PHP_EOL);
 
             $count++;
         }
