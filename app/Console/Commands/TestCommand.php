@@ -42,8 +42,15 @@ class TestCommand extends Command
             ->where('is_correct', true)
             ->sum('edit_converted_audio_duration');
 
-        $durationInSeconds = $totalSamplesCount / 16000;
+        $durationInSeconds = (int) ($totalSamplesCount / 16000);
 
-        $this->info("Total samples: {$totalSamplesCount} seconds. Duration in {$durationInSeconds} seconds.");
+        $hours = floor($durationInSeconds / 3600);
+        $minutes = floor(($durationInSeconds % 3600) / 60);
+        $seconds = $durationInSeconds % 60;
+
+        $formatted = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+
+        $this->info("Total samples: {$totalSamplesCount}");
+        $this->info("Duration: {$formatted}");
     }
 }
