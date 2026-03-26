@@ -28,11 +28,7 @@ class ModeratorAudioController extends Controller
             ->whereNotNull('speak_finished_at')
             ->whereNull('moderator_started_at')
             ->whereNull('is_correct')
-            ->orderByDesc(
-                Audio::selectRaw('COUNT(*)')
-                    ->whereColumn('edit_speaker_id', 'audio.edit_speaker_id')
-                    ->where('is_correct', true)
-            )
+            ->inRandomOrder()
             ->first();
 
         if (! $audio) {
