@@ -87,6 +87,7 @@ class ImportExcelFileCommand extends Command
                     'edit_user_id' => $userId,
                     'edit_started_at' => $now,
                     'edit_finished_at' => $now,
+                    'is_main' => true,
                 ]);
 
                 $imported++;
