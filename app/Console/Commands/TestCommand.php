@@ -22,6 +22,11 @@ class TestCommand extends Command
             ->whereDate('moderator_finished_at', '>', '2026-03-24 13:00:00')
             ->sum('edit_converted_audio_duration');
 
+        $count = Audio::query()
+            ->where('is_correct', true)
+            ->whereDate('moderator_finished_at', '>', '2026-03-24 13:00:00')
+            ->count();
+
         $durationInSeconds = (int) ($totalSamplesCount / 16000);
 
         $hours = floor($durationInSeconds / 3600);
@@ -30,6 +35,7 @@ class TestCommand extends Command
 
         $formatted = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
 
+        $this->info("Count: $count");
         $this->info("Total samples: {$totalSamplesCount}");
         $this->info("Duration: {$formatted}");
     }
