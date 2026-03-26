@@ -19,8 +19,7 @@ class TestCommand extends Command
     {
         $totalSamplesCount = Audio::query()
             ->where('is_correct', true)
-            ->whereDate('moderator_finished_at', '>', '2026-03-23 19:00:00')
-            ->whereDate('moderator_finished_at', '<=', '2026-03-24 13:00:00')
+            ->whereDate('moderator_finished_at', '>', '2026-03-24 13:00:00')
             ->sum('edit_converted_audio_duration');
 
         $durationInSeconds = (int) ($totalSamplesCount / 16000);
