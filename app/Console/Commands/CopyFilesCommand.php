@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CopyFilesCommand extends Command
 {
-    protected $signature = 'copy:files';
+    protected $signature = 'copy:converted-files';
 
     protected $description = 'Command description';
 
@@ -18,11 +18,12 @@ class CopyFilesCommand extends Command
         $missing = 0;
 
         Audio::where('is_correct', true)
-            ->whereDate('moderator_finished_at', '>', '2026-03-24 13:00:00')
+            ->whereDate('moderator_finished_at', '>', '2026-03-25 19:00:00')
+            ->whereDate('moderator_finished_at', '<=', '2026-03-28 13:00:00')
             ->cursor()
             ->each(function ($audio) use (&$copied, &$missing) {
-                $source = $audio->edit_converted_audio_filename;
-                $destination = 'correct_audio/' . basename($source);
+                $source = $audio->edit_audio_filename;
+                $destination = 'need_convert_audio/' . basename($source);
 
                 if (Storage::disk('public')->exists($source)) {
                     Storage::disk('public')->copy($source, $destination);
