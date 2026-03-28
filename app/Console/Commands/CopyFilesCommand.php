@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CopyFilesCommand extends Command
 {
-    protected $signature = 'copy:converted-files';
+    protected $signature = 'copy:files';
 
     protected $description = 'Command description';
 
