@@ -37,7 +37,7 @@ class ExportCorrectAudioCommand extends Command
         $audios = Audio::query()
             ->with('text')
             ->where('is_correct', true)
-            ->whereDate('moderator_finished_at', '>', '2026-03-24 13:00:00')
+            ->whereDate('moderator_finished_at', '>', '2026-03-26 13:00:00')
             ->lazy();
 
         $count = 0;
