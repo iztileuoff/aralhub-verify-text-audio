@@ -19,7 +19,6 @@ class CopyFilesCommand extends Command
 
         Audio::where('is_correct', true)
             ->whereDate('moderator_finished_at', '>', '2026-03-26 19:00:00')
-            ->whereDate('moderator_finished_at', '<=', '2026-03-28 13:00:00')
             ->cursor()
             ->each(function ($audio) use (&$copied, &$missing) {
                 $source = $audio->edit_audio_filename;
