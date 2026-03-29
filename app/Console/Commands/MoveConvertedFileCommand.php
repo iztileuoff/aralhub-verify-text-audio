@@ -18,7 +18,7 @@ class MoveConvertedFileCommand extends Command
 
         $sourcePath = 'output_wav';
         $targetPath = 'audio_conv';
-        $resultFile = storage_path('app/public/output_wav/result.txt');
+        $resultFile = storage_path('app/public/processed_results.txt');
 
         // counters
         $total = 0;
@@ -27,7 +27,7 @@ class MoveConvertedFileCommand extends Command
         $missingFile = 0;
 
         if (!file_exists($resultFile)) {
-            $this->error('result.txt not found');
+            $this->error('processed_results.txt not found');
             return;
         }
 
