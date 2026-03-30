@@ -34,7 +34,6 @@ class SpeakTextController extends Controller
             ->whereDoesntHave('audio', function ($q) {
                 $q->where('edit_speaker_id', auth()->id());
             })
-            ->orderByRaw('audio_count IS NOT NULL') // NULL сначала
             ->inRandomOrder()
             ->first();
 
