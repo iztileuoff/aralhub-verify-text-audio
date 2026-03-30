@@ -15,8 +15,7 @@ class DeleteIncorrectAudioCommand extends Command
     public function handle(): void
     {
         $audios = Audio::query()
-            ->where('edit_speaker_id', 259)
-            ->whereIn('text_id', [5294, 1125, 1019, 5961])
+            ->where('is_correct', false)
             ->get();
 
         $count = 0;
