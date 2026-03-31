@@ -70,7 +70,7 @@ class DailyQuotaController extends Controller
 
         $audioNotFinishedTextsCount = Text::query()
             ->where('is_main', true)
-            ->count() * 3 - $audioFinishedTextsCount;
+            ->count() * 6 - $audioFinishedTextsCount;
 
         $moderatorFinishedAudiosCount = Audio::query()
             ->whereHas('text', fn($q) => $q->where('is_main', true))
