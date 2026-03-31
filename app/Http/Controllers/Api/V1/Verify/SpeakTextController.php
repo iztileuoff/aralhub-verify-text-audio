@@ -48,7 +48,7 @@ class SpeakTextController extends Controller
             }
 
             if (!$id) {
-                foreach ([2, 3, 4, 5, 6] as $limit) {
+                foreach ([2, 3, 4, 5, 6, 7, 8, 9, 10] as $limit) {
                     $id = (clone $baseQuery)
                         ->where('audio_count', '<', $limit)
                         ->inRandomOrder()
