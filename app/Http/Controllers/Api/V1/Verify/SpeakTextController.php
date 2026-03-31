@@ -36,7 +36,7 @@ class SpeakTextController extends Controller
                 });
 
             $id = (clone $baseQuery)
-                ->whereNull('audio_count')
+                ->where('audio_count', 0)
                 ->inRandomOrder()
                 ->value('id');
 
