@@ -35,18 +35,20 @@ class SpeakTextController extends Controller
                     $q->where('edit_speaker_id', auth()->id());
                 });
 
-            // STEP 1: get ID (NULL priority)
             $id = (clone $baseQuery)
                 ->whereNull('audio_count')
                 ->inRandomOrder()
                 ->value('id');
 
-            // STEP 2: fallback < 3
             if (!$id) {
-                $id = (clone $baseQuery)
-                    ->where('audio_count', '<', 3)
-                    ->inRandomOrder()
-                    ->value('id');
+                foreach ([2, 3, 4, 5, 6] as $limit) {
+                    $id = (clone $baseQuery)
+                        ->where('audio_count', '<', $limit)
+                        ->inRandomOrder()
+                        ->value('id');
+
+                    if ($id) break;
+                }
             }
 
             if (!$id) {
@@ -55,12 +57,10 @@ class SpeakTextController extends Controller
                 ], 404);
             }
 
-            // lock exact row
             $text = Text::where('id', $id)
                 ->lockForUpdate()
                 ->first();
 
-            // assign
             $text->update([
                 'speak_started_at' => now(),
                 'edit_speaker_id' => auth()->id(),
