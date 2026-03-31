@@ -7,46 +7,66 @@ use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Audio;
 use App\Models\Text;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SpeakTextController extends Controller
 {
+    /**
+     * @throws \Throwable
+     */
     public function __invoke(Request $request)
     {
-        $text = Text::query()
-            ->where('edit_speaker_id', auth()->user()->id)
-            ->whereNotNull('speak_started_at')
-            ->first();
+        return DB::transaction(function () {
 
-        if ($text) {
-            $text->speak_started_at = null;
-            $text->edit_speaker_id = null;
-            $text->save();
-        }
+            // release previous
+            Text::query()
+                ->where('edit_speaker_id', auth()->id())
+                ->whereNotNull('speak_started_at')
+                ->update([
+                    'speak_started_at' => null,
+                    'edit_speaker_id' => null,
+                ]);
 
-        $text = Text::query()
-            ->where('is_main', true)
-            ->whereNotNull('edit_original_transcript')
-            ->whereNull('speak_started_at')
-            ->where(function ($q) {
-                $q->whereNull('audio_count')
-                    ->orWhere('audio_count', '<', 3);
-            })
-            ->whereDoesntHave('audio', function ($q) {
-                $q->where('edit_speaker_id', auth()->id());
-            })
-            ->inRandomOrder()
-            ->first();
+            $baseQuery = Text::query()
+                ->where('is_main', true)
+                ->whereNotNull('edit_original_transcript')
+                ->whereNull('speak_started_at')
+                ->whereDoesntHave('audio', function ($q) {
+                    $q->where('edit_speaker_id', auth()->id());
+                });
 
-        if (! $text) {
-            return response()->json([
-                'message' => 'Тексты для аудиозаписи отсутствуют.',
-            ], 404);
-        }
+            // STEP 1: get ID (NULL priority)
+            $id = (clone $baseQuery)
+                ->whereNull('audio_count')
+                ->inRandomOrder()
+                ->value('id');
 
-        $text->speak_started_at = now();
-        $text->edit_speaker_id = auth()->user()->id;
-        $text->save();
+            // STEP 2: fallback < 3
+            if (!$id) {
+                $id = (clone $baseQuery)
+                    ->where('audio_count', '<', 3)
+                    ->inRandomOrder()
+                    ->value('id');
+            }
 
-        return new TextResource($text);
+            if (!$id) {
+                return response()->json([
+                    'message' => 'Тексты для аудиозаписи отсутствуют.',
+                ], 404);
+            }
+
+            // lock exact row
+            $text = Text::where('id', $id)
+                ->lockForUpdate()
+                ->first();
+
+            // assign
+            $text->update([
+                'speak_started_at' => now(),
+                'edit_speaker_id' => auth()->id(),
+            ]);
+
+            return new TextResource($text);
+        });
     }
 }
