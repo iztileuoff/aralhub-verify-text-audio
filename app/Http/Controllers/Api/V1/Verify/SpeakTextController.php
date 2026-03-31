@@ -23,19 +23,27 @@ class SpeakTextController extends Controller
             $text->save();
         }
 
-        $text = Text::query()
+        $query = Text::query()
             ->where('is_main', true)
             ->whereNotNull('edit_original_transcript')
             ->whereNull('speak_started_at')
-            ->where(function ($q) {
-                $q->whereNull('audio_count')
-                    ->orWhere('audio_count', '<', 3);
-            })
             ->whereDoesntHave('audio', function ($q) {
                 $q->where('edit_speaker_id', auth()->id());
-            })
+            });
+
+        // 1. Try only NULL
+        $text = (clone $query)
+            ->whereNull('audio_count')
             ->inRandomOrder()
             ->first();
+
+        // 2. If none → fallback to < 3
+        if (!$text) {
+            $text = (clone $query)
+                ->where('audio_count', '<', 3)
+                ->inRandomOrder()
+                ->first();
+        }
 
         if (! $text) {
             return response()->json([
