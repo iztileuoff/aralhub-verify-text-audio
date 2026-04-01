@@ -4,11 +4,23 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use OpenSpout\Common\Exception\InvalidArgumentException;
+use OpenSpout\Common\Exception\IOException;
+use OpenSpout\Common\Exception\UnsupportedTypeException;
+use OpenSpout\Writer\Exception\WriterNotOpenedException;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class ExportReportUserController extends Controller
 {
+    /**
+     * @throws IOException
+     * @throws WriterNotOpenedException
+     * @throws UnsupportedTypeException
+     * @throws InvalidArgumentException
+     */
     public function __invoke(Request $request)
     {
         $request->validate([
@@ -21,20 +33,25 @@ class ExportReportUserController extends Controller
         $toDate = $request->input('to_date');
         $adminId = $request->input('admin_id');
 
-        $period = \Carbon\CarbonPeriod::create($fromDate, $toDate);
+        $period = collect(\Carbon\CarbonPeriod::create($fromDate, $toDate))->toArray();
+
         $counts = [];
         foreach ($period as $date) {
             $dateString = $date->format('Y-m-d');
-            $counts['dateFinishedSpeakAudio as count_' . str_replace('-', '_', $dateString)] = fn ($q) => $q->whereDate('speak_finished_at', $dateString);
+
+            $counts['dateFinishedSpeakAudio as count_' . str_replace('-', '_', $dateString)] =
+                function ($q) use ($dateString) {
+                    $q->whereDate('speak_finished_at', $dateString);
+                };
         }
 
-        $users = \App\Models\User::query()
+        $users = User::query()
             ->where('admin_id', $adminId)
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->withCount($counts)
             ->get();
 
-        return (new \Rap2hpoutre\FastExcel\FastExcel($users))->download('users-report.xlsx', function ($user) use ($period) {
+        return (new FastExcel($users))->download('users-report.xlsx', function ($user) use ($period) {
             $data = [
                 'ID' => $user->id,
                 'Full Name' => $user->first_name . ' ' . $user->last_name,
