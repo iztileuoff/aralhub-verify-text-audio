@@ -39,16 +39,15 @@ class ExportReportUserController extends Controller
         $toDate = $request->input('to_date');
         $adminId = $request->input('admin_id');
 
-        // ✅ Dates array (FIX for CarbonPeriod)
         $period = collect(CarbonPeriod::create($fromDate, $toDate))->toArray();
 
-        // ✅ Get users
+        // ✅ Users
         $users = User::query()
             ->where('admin_id', $adminId)
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->get();
 
-        // ✅ Aggregated query (FAST & CORRECT)
+        // ✅ Aggregated stats
         $audioStats = Audio::query()
             ->selectRaw('edit_speaker_id, DATE(speak_finished_at) as date, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
@@ -59,27 +58,72 @@ class ExportReportUserController extends Controller
             ->groupBy('edit_speaker_id', 'date')
             ->get();
 
-        // ✅ Build map: [user_id][date] => count
+        // ✅ Maps
         $statsMap = [];
+        $dayTotals = []; // total per day
+
         foreach ($audioStats as $row) {
             $statsMap[$row->edit_speaker_id][$row->date] = $row->total;
+
+            // sum per day
+            if (!isset($dayTotals[$row->date])) {
+                $dayTotals[$row->date] = 0;
+            }
+            $dayTotals[$row->date] += $row->total;
         }
 
-        // ✅ Export
-        return (new FastExcel($users))->download('users-report.xlsx', function ($user) use ($period, $statsMap) {
+        // ensure all dates exist in dayTotals
+        foreach ($period as $date) {
+            $dateString = $date->format('Y-m-d');
+            $dayTotals[$dateString] = $dayTotals[$dateString] ?? 0;
+        }
 
-            $data = [
+        // ✅ Prepare export rows
+        $rows = [];
+
+        foreach ($users as $user) {
+            $row = [
                 'ID' => $user->id,
                 'Full Name' => $user->first_name . ' ' . $user->last_name,
                 'Phone' => $user->phone,
             ];
 
+            $userTotal = 0;
+
             foreach ($period as $date) {
                 $dateString = $date->format('Y-m-d');
-                $data[$dateString] = $statsMap[$user->id][$dateString] ?? 0;
+                $count = $statsMap[$user->id][$dateString] ?? 0;
+
+                $row[$dateString] = $count;
+                $userTotal += $count;
             }
 
-            return $data;
-        });
+            // ✅ total per user
+            $row['TOTAL'] = $userTotal;
+
+            $rows[] = $row;
+        }
+
+        // ✅ Add summary row (totals per day)
+        $summaryRow = [
+            'ID' => '',
+            'Full Name' => 'TOTAL',
+            'Phone' => '',
+        ];
+
+        $grandTotal = 0;
+
+        foreach ($period as $date) {
+            $dateString = $date->format('Y-m-d');
+            $summaryRow[$dateString] = $dayTotals[$dateString];
+            $grandTotal += $dayTotals[$dateString];
+        }
+
+        $summaryRow['TOTAL'] = $grandTotal;
+
+        $rows[] = $summaryRow;
+
+        // ✅ Export
+        return (new FastExcel(collect($rows)))->download('users-report.xlsx');
     }
 }
