@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\ExportReportUserController;
 use App\Http\Controllers\Api\V1\Guest\AdminController;
 use App\Http\Controllers\Api\V1\Guest\AudioUpdateController;
 use App\Http\Controllers\Api\V1\Guest\AudioUploadController;
@@ -14,4 +15,5 @@ Route::group([
     Route::get('admins', AdminController::class);
     Route::post('audio/upload', AudioUploadController::class);
     Route::post('audio/update',  AudioUpdateController::class);
+    Route::get('export/report-users', ExportReportUserController::class);
 });
