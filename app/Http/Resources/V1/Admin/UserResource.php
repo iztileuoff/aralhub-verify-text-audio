@@ -25,6 +25,9 @@ class UserResource extends JsonResource
             'course' => $this->course,
             'is_verified' => $this->is_verified,
             'is_active' => $this->is_active,
+            'finished_edit_audio_count' => $this->whenHas('finished_speak_audio_count'),
+            'is_correct_true_audio_count' => $this->whenHas('is_correct_true_audio_count'),
+            'is_correct_false_audio_count' => $this->whenHas('is_correct_false_audio_count'),
         ];
     }
 }

@@ -20,6 +20,7 @@ class UserController extends Controller
             ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
             ->when($request->filled('specialization_id'), fn ($q) => $q->where('specialization_id', $request->input('specialization_id')))
             ->when(auth()->user()->role === RoleEnum::ADMIN, fn ($q) => $q->where('admin_id', auth()->user()->id))
+            ->withCount(['finishedSpeakAudio', 'isCorrectTrueAudio', 'isCorrectFalseAudio'])
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));
 
