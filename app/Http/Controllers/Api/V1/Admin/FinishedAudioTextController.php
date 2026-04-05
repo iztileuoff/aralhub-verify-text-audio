@@ -21,6 +21,7 @@ class FinishedAudioTextController extends Controller
                     $q2->where('edit_speaker_id', $request->input('speaker_id'))
                 )
             )
+            ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
             ->with(['editUser', 'audio.editSpeaker'])
             ->orderByDesc('audio_max_speak_finished_at') // 👈 magic column
             ->paginate($request->input('per_page', 10));
