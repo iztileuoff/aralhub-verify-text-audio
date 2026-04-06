@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Admin\LogoutController;
 use App\Http\Controllers\Api\V1\Admin\ProfileController;
 use App\Http\Controllers\Api\V1\Admin\RegistrationController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
+use App\Http\Controllers\Api\V1\Admin\SpecializationController;
 use App\Http\Controllers\Api\V1\Admin\TextController;
 use App\Http\Controllers\Api\V1\Admin\TextStatusesController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
@@ -55,6 +56,7 @@ Route::group([
     Route::apiResource('texts', TextController::class);
     Route::apiResource('files', FileController::class)->except('update');
     Route::apiResource('actions', ActionController::class)->only('index');
+    Route::apiResource('specializations', SpecializationController::class);
 
     Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
     Route::get('finished/audio/texts', FinishedAudioTextController::class)->name('finished.audio.texts');
