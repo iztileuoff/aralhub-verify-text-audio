@@ -13,6 +13,7 @@ class AdminController extends Controller
     public function __invoke(Request $request)
     {
         $admins = User::query()
+            ->where('id', 271)
             ->where('role', RoleEnum::ADMIN->value)
             ->orderByDesc('id')
             ->get();
