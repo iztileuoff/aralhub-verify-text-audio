@@ -22,7 +22,7 @@ class UpdateDurationCommand extends Command
 
             $audio = Audio::where('edit_audio_filename', "audio/{$filename}")->first();
 
-            if ($audio) {
+            if ($audio && $audio->edit_converted_audio_duration == null) {
                 $audio->update([
                     'edit_converted_audio_duration' => (int) $duration,
                 ]);
