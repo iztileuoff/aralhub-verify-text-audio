@@ -37,7 +37,8 @@ class ExportCorrectAudioCommand extends Command
         $audios = Audio::query()
             ->with('text')
             ->where('is_correct', true)
-            ->whereDate('moderator_finished_at', '>', '2026-03-26 13:00:00')
+            ->whereDate('moderator_finished_at', '>', '2026-03-29 13:00:00')
+            ->whereDate('moderator_finished_at', '<=', '2026-04-07 19:00:00')
             ->lazy();
 
         $count = 0;
@@ -45,7 +46,7 @@ class ExportCorrectAudioCommand extends Command
         foreach ($audios as $audio) {
             $clean = fn ($v) => str_replace('"', '', $v);
 
-            $audioFilename = preg_replace('#^audio_conv/#', '', $audio->edit_converted_audio_filename);
+            $audioFilename = preg_replace('#^audio/#', '', $audio->edit_audio_filename);
 
             $line = implode("\t", [
                 $audio->text?->id,
