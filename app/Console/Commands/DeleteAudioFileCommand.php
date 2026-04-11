@@ -21,12 +21,22 @@ class DeleteAudioFileCommand extends Command
         $count = 0;
 
         foreach ($audios as $audio) {
-            if ($audio->edit_audio_filename) {
-                Storage::delete($audio->edit_audio_filename);
+            $path = $audio->edit_audio_filename;
+
+            if (!Storage::disk('public')->exists($path)) {
+                $this->warn("File not found: $path");
+            } else {
+                Storage::disk('public')->delete($path);
+                $this->info("Deleted: $path");
             }
 
-            if ($audio->edit_converted_audio_filename) {
-                Storage::delete($audio->edit_converted_audio_filename);
+            $path = $audio->edit_converted_audio_filename;
+
+            if (!Storage::disk('public')->exists($path)) {
+                $this->warn("File not found: $path");
+            } else {
+                Storage::disk('public')->delete($path);
+                $this->info("Deleted: $path");
             }
 
             $count++;
