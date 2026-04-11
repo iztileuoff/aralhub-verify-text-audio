@@ -14,34 +14,30 @@ class DeleteAudioFileCommand extends Command
 
     public function handle(): void
     {
-        $audios = Audio::query()
-            ->whereDate('moderator_finished_at', '<=', '2026-04-07 19:00:00')
-            ->get();
-
         $count = 0;
 
-        foreach ($audios as $audio) {
-            $path = $audio->edit_audio_filename;
+        Audio::query()
+            ->where('moderator_finished_at', '<=', '2026-04-07 19:00:00')
+            ->chunk(500, function ($audios) use (&$count) {
 
-            if (!Storage::disk('public')->exists($path)) {
-                $this->warn("File not found: $path");
-            } else {
-                Storage::disk('public')->delete($path);
-                $this->info("Deleted: $path");
-            }
+                foreach ($audios as $audio) {
+                    foreach ([
+                                 $audio->edit_audio_filename,
+                                 $audio->edit_converted_audio_filename
+                             ] as $file) {
 
-            $path = $audio->edit_converted_audio_filename;
+                        if (empty($file)) {
+                            continue;
+                        }
 
-            if (!Storage::disk('public')->exists($path)) {
-                $this->warn("File not found: $path");
-            } else {
-                Storage::disk('public')->delete($path);
-                $this->info("Deleted: $path");
-            }
+                        if (Storage::disk('public')->exists($file)) {
+                            Storage::disk('public')->delete($file);
+                            $count++;
+                        }
+                    }
+                }
+            });
 
-            $count++;
-        }
-
-        $this->info("Done: deleted $count records.");
+        $this->info("Total deleted files: $count");
     }
 }
