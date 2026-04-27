@@ -42,8 +42,9 @@ class ExportReportAllUserController extends Controller
             ->where('admin_id', $adminId)
             ->withCount([
                 'finishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
-                'isCorrectTrueAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date),
-                'isCorrectFalseAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date)
+                'isCorrectTrueAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
+                'isCorrectFalseAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
+                'dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date),
             ])
             ->get();
 
