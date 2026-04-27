@@ -31,15 +31,20 @@ class ExportReportAllUserController extends Controller
                 'integer',
                 Rule::exists('users', 'id')->where('role', RoleEnum::ADMIN->value),
             ],
+            'date' => ['required', 'date_format:Y-m-d'],
         ]);
 
         $adminId = $request->input('admin_id');
+        $date = $request->input('date');
 
         // ✅ Users
         $users = User::query()
             ->where('admin_id', $adminId)
-            ->where('role', RoleEnum::SPEAKER->value)
-            ->withCount(['finishedSpeakAudio', 'isCorrectTrueAudio', 'isCorrectFalseAudio'])
+            ->withCount([
+                'finishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
+                'isCorrectTrueAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date),
+                'isCorrectFalseAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date)
+            ])
             ->get();
 
         return (new FastExcel($users))->download('users-report.xlsx');
