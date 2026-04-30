@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\V1\Guest;
 
-use App\Http\Resources\V1\Admin\SpecializationResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

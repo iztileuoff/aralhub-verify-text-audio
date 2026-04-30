@@ -54,7 +54,7 @@ class DailyQuotaController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $activeSpeakersCount  = User::query()
+        $activeSpeakersCount = User::query()
             ->where('role', RoleEnum::SPEAKER->value)
             ->where('is_active', true)
             ->count();
@@ -73,12 +73,12 @@ class DailyQuotaController extends Controller
             ->count() * 6 - $audioFinishedTextsCount;
 
         $moderatorFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn($q) => $q->where('is_main', true))
+            ->whereHas('text', fn ($q) => $q->where('is_main', true))
             ->whereNotNull('is_correct')
             ->count();
 
         $moderatorNotFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn($q) => $q->where('is_main', true))
+            ->whereHas('text', fn ($q) => $q->where('is_main', true))
             ->whereNull('is_correct')
             ->whereNotNull('speak_finished_at')
             ->count();

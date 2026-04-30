@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Verify;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\TextResource;
-use App\Models\Audio;
 use App\Models\Text;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,25 +39,27 @@ class SpeakTextController extends Controller
                 ->inRandomOrder()
                 ->value('id');
 
-            if (!$id) {
+            if (! $id) {
                 $id = (clone $baseQuery)
                     ->where('audio_count', 0)
                     ->inRandomOrder()
                     ->value('id');
             }
 
-            if (!$id) {
+            if (! $id) {
                 foreach ([2, 3, 4, 5, 6, 7, 8, 9, 10] as $limit) {
                     $id = (clone $baseQuery)
                         ->where('audio_count', '<', $limit)
                         ->inRandomOrder()
                         ->value('id');
 
-                    if ($id) break;
+                    if ($id) {
+                        break;
+                    }
                 }
             }
 
-            if (!$id) {
+            if (! $id) {
                 return response()->json([
                     'message' => 'Тексты для аудиозаписи отсутствуют.',
                 ], 404);

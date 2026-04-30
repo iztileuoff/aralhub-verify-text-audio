@@ -27,7 +27,7 @@ class UpdateDurationCommand extends Command
                     'edit_converted_audio_duration' => (int) $duration,
                 ]);
             } else {
-                $this->info("Not found: {$filename}" . PHP_EOL);
+                $this->info("Not found: {$filename}".PHP_EOL);
             }
         }
 

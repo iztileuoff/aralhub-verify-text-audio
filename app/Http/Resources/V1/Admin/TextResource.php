@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\V1\Admin;
 
-use App\Enums\GenderEnum;
 use App\Models\Text;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

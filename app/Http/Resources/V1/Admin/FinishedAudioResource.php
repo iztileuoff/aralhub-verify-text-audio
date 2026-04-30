@@ -20,7 +20,7 @@ class FinishedAudioResource extends JsonResource
             'normalized_transcript' => $this->text?->edit_normalized_transcript,
             'tokenized_transcript' => $this->text?->edit_tokenized_transcript,
             'speaker_gender' => $this->edit_speaker_gender,
-            'moderator_finished_at' => $this->moderator_finished_at
+            'moderator_finished_at' => $this->moderator_finished_at,
         ];
     }
 }

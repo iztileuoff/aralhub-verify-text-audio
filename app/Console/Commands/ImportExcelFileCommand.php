@@ -30,12 +30,13 @@ class ImportExcelFileCommand extends Command
         $userId = $this->option('user');
         $disk = Storage::disk('public');
 
-        if (!$disk->exists($filename)) {
+        if (! $disk->exists($filename)) {
             $this->error("File {$filename} not found in public disk.");
+
             return;
         }
 
-        $collection = (new FastExcel())->import($disk->path($filename));
+        $collection = (new FastExcel)->import($disk->path($filename));
 
         // Store the raw file in a specific directory
         $storedPath = "tsv_uploads/{$userId}/{$filename}";

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\UploadFileRequest;
-use App\Http\Resources\V1\Admin\FileCollection;
 use App\Http\Resources\V1\Admin\FileResource;
 use App\Jobs\ProcessTsvFileJob;
 use App\Models\File;
@@ -19,7 +18,7 @@ class FileController extends Controller
             ->with('user')
             ->paginate($request->input('per_page', 10));
 
-        return new FileCollection($files);
+        return FileResource::collection($files);
     }
 
     public function store(UploadFileRequest $request)

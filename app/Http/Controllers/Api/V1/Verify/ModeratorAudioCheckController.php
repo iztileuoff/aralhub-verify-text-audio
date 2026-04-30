@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Api\V1\Verify;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\AudioResource;
-use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Audio;
-use App\Models\Text;
 use Illuminate\Http\Request;
 
 class ModeratorAudioCheckController extends Controller

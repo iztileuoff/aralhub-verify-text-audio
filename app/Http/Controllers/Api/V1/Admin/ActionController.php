@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\Admin\ActionCollection;
+use App\Http\Resources\V1\Admin\ActionResource;
 use App\Models\Action;
 use Illuminate\Http\Request;
 
@@ -17,6 +17,6 @@ class ActionController extends Controller
             ->with(['user', 'text'])
             ->paginate($request->input('per_page', 10));
 
-        return new ActionCollection($actions);
+        return ActionResource::collection($actions);
     }
 }

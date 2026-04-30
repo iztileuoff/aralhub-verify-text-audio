@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Guest;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\Guest\SpecializationCollection;
+use App\Http\Resources\V1\Guest\SpecializationResource;
 use App\Models\Specialization;
 use Illuminate\Http\Request;
 
@@ -14,6 +14,6 @@ class SpecializationController extends Controller
         $specializations = Specialization::query()
             ->get();
 
-        return new SpecializationCollection($specializations);
+        return SpecializationResource::collection($specializations);
     }
 }

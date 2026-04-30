@@ -27,10 +27,10 @@ class ExportCorrectAudioCommand extends Command
     public function handle(): int
     {
         $filename = $this->option('filename');
-        $path = storage_path('app/private/' . $filename);
+        $path = storage_path('app/private/'.$filename);
 
         // In Laravel 11/12 default storage is app/private or app/public. Lets just use app/
-        $path = storage_path('app/' . $filename);
+        $path = storage_path('app/'.$filename);
 
         $file = fopen($path, 'w');
 
@@ -58,7 +58,7 @@ class ExportCorrectAudioCommand extends Command
                 $audio->edit_speaker_gender->value,
             ]);
 
-            fwrite($file, $line . PHP_EOL);
+            fwrite($file, $line.PHP_EOL);
 
             $count++;
         }

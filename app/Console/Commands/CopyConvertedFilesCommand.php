@@ -22,7 +22,7 @@ class CopyConvertedFilesCommand extends Command
             ->cursor()
             ->each(function ($audio) use (&$copied, &$missing) {
                 $source = $audio->edit_converted_audio_filename;
-                $destination = 'correct_audio/' . basename($source);
+                $destination = 'correct_audio/'.basename($source);
 
                 if (Storage::disk('public')->exists($source)) {
                     Storage::disk('public')->copy($source, $destination);

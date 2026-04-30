@@ -15,7 +15,7 @@ Route::group([
     Route::get('specializations', SpecializationController::class);
     Route::get('admins', AdminController::class);
     Route::post('audio/upload', AudioUploadController::class);
-    Route::post('audio/update',  AudioUpdateController::class);
+    Route::post('audio/update', AudioUpdateController::class);
     Route::get('export/report-users', ExportReportUserController::class);
     Route::get('export/report-all-users', ExportReportAllUserController::class);
 });

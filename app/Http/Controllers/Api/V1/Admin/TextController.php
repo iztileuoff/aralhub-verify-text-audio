@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Enums\TextStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\TextRequest;
-use App\Http\Resources\V1\Admin\TextCollection;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,7 +29,7 @@ class TextController extends Controller
             ->latest('edit_finished_at')
             ->paginate($request->input('per_page', 10));
 
-        return new TextCollection($texts);
+        return TextResource::collection($texts);
     }
 
     public function store(TextRequest $request)

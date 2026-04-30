@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\Admin\AudioCollection;
-use App\Http\Resources\V1\Admin\TextCollection;
+use App\Http\Resources\V1\Admin\AudioResource;
 use App\Models\Audio;
-use App\Models\Text;
 use Illuminate\Http\Request;
 
 class FinishedCheckTextController extends Controller
@@ -22,6 +20,6 @@ class FinishedCheckTextController extends Controller
             ->orderByDesc('moderator_finished_at')
             ->paginate($request->input('per_page', 10));
 
-        return new AudioCollection($audio);
+        return AudioResource::collection($audio);
     }
 }

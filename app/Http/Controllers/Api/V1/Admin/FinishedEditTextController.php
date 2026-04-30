@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\Admin\TextCollection;
+use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
 use Illuminate\Http\Request;
 
@@ -19,6 +19,6 @@ class FinishedEditTextController extends Controller
             ->orderByDesc('edit_finished_at')
             ->paginate($request->input('per_page', 10));
 
-        return new TextCollection($texts);
+        return TextResource::collection($texts);
     }
 }

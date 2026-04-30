@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1\Guest;
 
 use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\Guest\UserCollection;
+use App\Http\Resources\V1\Guest\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -18,6 +18,6 @@ class AdminController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return new UserCollection($admins);
+        return UserResource::collection($admins);
     }
 }

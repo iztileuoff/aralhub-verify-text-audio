@@ -21,7 +21,7 @@ class AudioUpdateController extends Controller
             ->where('edit_audio_filename', "audio/{$filename}")
             ->first();
 
-        if (!$audio) {
+        if (! $audio) {
             return response()->json([
                 'message' => 'Audio not found',
             ], 404);

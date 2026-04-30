@@ -26,8 +26,9 @@ class MoveConvertedFileCommand extends Command
         $notFoundInDb = 0;
         $missingFile = 0;
 
-        if (!file_exists($resultFile)) {
+        if (! file_exists($resultFile)) {
             $this->error('processed_results.txt not found');
+
             return;
         }
 
@@ -44,18 +45,20 @@ class MoveConvertedFileCommand extends Command
                 ->where('edit_audio_filename', "audio/{$filename}")
                 ->first();
 
-            if (!$audio) {
+            if (! $audio) {
                 $notFoundInDb++;
                 $this->warn("Audio not found in DB: {$filename}");
+
                 continue;
             }
 
             $sourceFile = "{$sourcePath}/{$filename}";
             $targetFile = "{$targetPath}/{$filename}";
 
-            if (!$disk->exists($sourceFile)) {
+            if (! $disk->exists($sourceFile)) {
                 $missingFile++;
                 $this->warn("File missing: {$filename}");
+
                 continue;
             }
 
@@ -72,7 +75,7 @@ class MoveConvertedFileCommand extends Command
 
         // summary
         $this->newLine();
-        $this->info("===== SUMMARY =====");
+        $this->info('===== SUMMARY =====');
         $this->info("Total lines: {$total}");
         $this->info("Moved: {$moved}");
         $this->warn("Not found in DB: {$notFoundInDb}");

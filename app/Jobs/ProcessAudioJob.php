@@ -10,14 +10,14 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Process\Process;
 
 class ProcessAudioJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-     // Включаем типизацию для надежности
+    // Включаем типизацию для надежности
     public function __construct(
         protected int $textId,
         protected string $path
@@ -27,13 +27,13 @@ class ProcessAudioJob implements ShouldQueue
     {
         $text = Text::find($this->textId);
 
-        if (!$text) {
+        if (! $text) {
             return;
         }
 
         $inputPath = Storage::disk('public')->path($this->path);
 
-        $convertedFileName = 'audio_conv/' . pathinfo($this->path, PATHINFO_FILENAME) . '.wav';
+        $convertedFileName = 'audio_conv/'.pathinfo($this->path, PATHINFO_FILENAME).'.wav';
         $outputPath = Storage::disk('public')->path($convertedFileName);
 
         $process = new Process([
@@ -50,10 +50,10 @@ class ProcessAudioJob implements ShouldQueue
         $process->setTimeout(120);
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
 
             Log::error('FFmpeg failed', [
-                'error' => $process->getErrorOutput()
+                'error' => $process->getErrorOutput(),
             ]);
 
             return;
@@ -64,8 +64,8 @@ class ProcessAudioJob implements ShouldQueue
             ->where('edit_audio_filename', $this->path)
             ->first();
 
-        if (!$audio) {
-            Log::error('Audio not found. text_id: ' . $this->textId . ' path: ' . $this->path);
+        if (! $audio) {
+            Log::error('Audio not found. text_id: '.$this->textId.' path: '.$this->path);
 
             return;
         }

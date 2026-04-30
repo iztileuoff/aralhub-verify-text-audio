@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Audio;
-use App\Models\Text;
 use Illuminate\Console\Command;
 
 class UpdateIsCorrectAudioCommand extends Command

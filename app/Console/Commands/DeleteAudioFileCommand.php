@@ -22,9 +22,9 @@ class DeleteAudioFileCommand extends Command
 
                 foreach ($audios as $audio) {
                     foreach ([
-                                 $audio->edit_audio_filename,
-                                 $audio->edit_converted_audio_filename
-                             ] as $file) {
+                        $audio->edit_audio_filename,
+                        $audio->edit_converted_audio_filename,
+                    ] as $file) {
 
                         if (empty($file)) {
                             continue;

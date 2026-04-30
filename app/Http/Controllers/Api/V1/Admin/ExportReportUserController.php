@@ -52,8 +52,8 @@ class ExportReportUserController extends Controller
             ->selectRaw('edit_speaker_id, DATE(speak_finished_at) as date, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
             ->whereBetween('speak_finished_at', [
-                $fromDate . ' 00:00:00',
-                $toDate . ' 23:59:59',
+                $fromDate.' 00:00:00',
+                $toDate.' 23:59:59',
             ])
             ->groupBy('edit_speaker_id', 'date')
             ->get();
@@ -66,7 +66,7 @@ class ExportReportUserController extends Controller
             $statsMap[$row->edit_speaker_id][$row->date] = $row->total;
 
             // sum per day
-            if (!isset($dayTotals[$row->date])) {
+            if (! isset($dayTotals[$row->date])) {
                 $dayTotals[$row->date] = 0;
             }
             $dayTotals[$row->date] += $row->total;
@@ -84,7 +84,7 @@ class ExportReportUserController extends Controller
         foreach ($users as $user) {
             $row = [
                 'ID' => $user->id,
-                'Full Name' => $user->first_name . ' ' . $user->last_name,
+                'Full Name' => $user->first_name.' '.$user->last_name,
                 'Phone' => $user->phone,
             ];
 

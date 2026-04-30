@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\StoreSpecializationRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateSpecializationRequest;
-use App\Http\Resources\V1\Admin\SpecializationCollection;
 use App\Http\Resources\V1\Admin\SpecializationResource;
 use App\Models\Specialization;
 use Illuminate\Http\Request;
@@ -17,7 +16,7 @@ class SpecializationController extends Controller
         $specializations = Specialization::query()
             ->get();
 
-        return new SpecializationCollection($specializations);
+        return SpecializationResource::collection($specializations);
     }
 
     public function store(StoreSpecializationRequest $request)
