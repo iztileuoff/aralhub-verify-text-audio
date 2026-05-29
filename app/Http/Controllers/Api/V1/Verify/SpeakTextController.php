@@ -17,14 +17,17 @@ class SpeakTextController extends Controller
     {
         return DB::transaction(function () {
 
-            // release previous
-            Text::query()
+            // resume previously held text
+            $heldText = Text::query()
                 ->where('edit_speaker_id', auth()->id())
                 ->whereNotNull('speak_started_at')
-                ->update([
-                    'speak_started_at' => null,
-                    'edit_speaker_id' => null,
-                ]);
+                ->first();
+
+            if ($heldText) {
+                $heldText->update(['speak_started_at' => now()]);
+
+                return new TextResource($heldText);
+            }
 
             $baseQuery = Text::query()
                 ->where('file_id', 8)
