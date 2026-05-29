@@ -53,19 +53,7 @@ class Audio extends Model
     {
         return Attribute::make(
             get: fn () => $this->edit_audio_filename
-                ? asset(Storage::url($this->edit_audio_filename))
-                : null,
-        );
-    }
-
-    /**
-     * Get the URL for the edited audio file.
-     */
-    public function editConvertedAudioUrl(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->edit_converted_audio_filename
-                ? asset(Storage::url($this->edit_converted_audio_filename))
+                ? Storage::disk('yandex-s3')->url($this->edit_audio_filename)
                 : null,
         );
     }
