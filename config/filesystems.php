@@ -60,6 +60,20 @@ return [
             'report' => false,
         ],
 
+        'yandex-s3' => [
+            'driver' => 's3',
+            'key' => env('YANDEX_ACCESS_KEY_ID'),
+            'secret' => env('YANDEX_SECRET_ACCESS_KEY'),
+            'region' => env('YANDEX_DEFAULT_REGION'),
+            'bucket' => env('YANDEX_BUCKET_NAME'),
+            'url' => env('YANDEX_STORAGE_URL'),
+            'endpoint' => env('YANDEX_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

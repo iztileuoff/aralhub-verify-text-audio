@@ -15,14 +15,14 @@ class SpeakTextAudioCompleteController extends Controller
     public function __invoke(StoreSpeakTextRequest $request, Text $text)
     {
         if ($text->edit_audio_filename) {
-            Storage::disk('public')->delete($text->edit_audio_filename);
+            Storage::disk('yandex-s3')->delete($text->edit_audio_filename);
         }
 
         //        if ($text->edit_converted_audio_filename) {
-        //            Storage::disk('public')->delete($text->edit_converted_audio_filename);
+        //            Storage::disk('yandex-s3')->delete($text->edit_converted_audio_filename);
         //        }
 
-        $path = $request->file('audio')->store('audio', 'public');
+        $path = $request->file('audio')->store('audio', 'yandex-s3');
 
         $text->audio()->create([
             'edit_audio_filename' => $path,
