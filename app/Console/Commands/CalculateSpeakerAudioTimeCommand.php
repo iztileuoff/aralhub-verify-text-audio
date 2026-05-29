@@ -32,6 +32,7 @@ class CalculateSpeakerAudioTimeCommand extends Command
         $rows = $speakers
             ->map(fn (User $speaker): ?array => $this->buildRow($speaker, $target))
             ->filter()
+            ->sortByDesc('audios')
             ->values();
 
         if ($rows->isEmpty()) {
