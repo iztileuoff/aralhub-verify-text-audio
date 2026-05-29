@@ -27,7 +27,9 @@ class SpeakTextController extends Controller
                 ]);
 
             $baseQuery = Text::query()
+                ->where('file_id', 8)
                 ->where('is_main', true)
+                ->where('has_text_error', false)
                 ->whereNotNull('edit_original_transcript')
                 ->whereNull('speak_started_at')
                 ->whereDoesntHave('audio', function ($q) {

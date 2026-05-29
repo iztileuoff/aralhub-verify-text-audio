@@ -46,6 +46,9 @@ class Text extends Model
         'audio_male_count',
         'audio_female_count',
         'is_main',
+        'has_text_error',
+        'text_error_reported_by',
+        'text_error_reported_at',
     ];
 
     protected function casts(): array
@@ -84,6 +87,9 @@ class Text extends Model
             'audio_male_count' => 'integer',
             'audio_female_count' => 'integer',
             'is_main' => 'boolean',
+            'has_text_error' => 'boolean',
+            'text_error_reported_by' => 'integer',
+            'text_error_reported_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -143,6 +149,11 @@ class Text extends Model
     public function moderator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'moderator_id');
+    }
+
+    public function textErrorReporter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'text_error_reported_by');
     }
 
     public function audio(): HasMany
