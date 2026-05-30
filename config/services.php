@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'storage-yandex-s3' => [
+        'url' => env('YANDEX_STORAGE_URL'),
+    ],
+
 ];

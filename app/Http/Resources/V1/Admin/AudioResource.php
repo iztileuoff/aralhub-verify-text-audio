@@ -18,7 +18,6 @@ class AudioResource extends JsonResource
             'edit_audio_filename' => $this->edit_audio_filename,
             'edit_audio_url' => $this->edit_audio_url,
             'edit_converted_audio_filename' => $this->edit_converted_audio_filename,
-            'edit_converted_audio_url' => $this->edit_converted_audio_url,
             'edit_converted_audio_duration' => $this->edit_converted_audio_duration,
             'speak_started_at' => $this->speak_started_at?->format('Y-m-d H:i:s'),
             'speak_finished_at' => $this->speak_finished_at?->format('Y-m-d H:i:s'),
