@@ -25,6 +25,7 @@ class DailyQuotaController extends Controller
         Cache::forget('daily_quota_texts_data');
         Cache::forget('daily_quota_audios_data');
         Cache::forget('daily_quota_check_audios_data');
+        Cache::forget('daily_quota_data');
 
         return response()->json([
             'data' => $this->getDailyQuota(),
@@ -32,6 +33,16 @@ class DailyQuotaController extends Controller
     }
 
     private function getDailyQuota(): array
+    {
+        return Cache::remember('daily_quota_data', now()->addHour(), function (): array {
+            return $this->buildDailyQuota();
+        });
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function buildDailyQuota(): array
     {
         $textsCount = Text::query()
             ->where('is_main', true)
