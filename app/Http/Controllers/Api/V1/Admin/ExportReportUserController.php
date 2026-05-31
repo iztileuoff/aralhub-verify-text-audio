@@ -28,22 +28,16 @@ class ExportReportUserController extends Controller
         $request->validate([
             'from_date' => ['required', 'date_format:Y-m-d'],
             'to_date' => ['required', 'date_format:Y-m-d'],
-            'admin_id' => [
-                'required',
-                'integer',
-                Rule::exists('users', 'id')->where('role', RoleEnum::ADMIN->value),
-            ],
         ]);
 
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
-        $adminId = $request->input('admin_id');
 
         $period = collect(CarbonPeriod::create($fromDate, $toDate))->toArray();
 
         // ✅ Users
         $users = User::query()
-            ->where('admin_id', $adminId)
+            ->where('is_verified', true)
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->get();
 
