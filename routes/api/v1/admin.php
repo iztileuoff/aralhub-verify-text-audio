@@ -12,7 +12,9 @@ use App\Http\Controllers\Api\V1\Admin\FinishedCheckTextController;
 use App\Http\Controllers\Api\V1\Admin\FinishedEditTextController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
 use App\Http\Controllers\Api\V1\Admin\LogoutController;
+use App\Http\Controllers\Api\V1\Admin\ProfileAudioReportController;
 use App\Http\Controllers\Api\V1\Admin\ProfileController;
+use App\Http\Controllers\Api\V1\Admin\ProfileModerationReportController;
 use App\Http\Controllers\Api\V1\Admin\RegistrationController;
 use App\Http\Controllers\Api\V1\Admin\ReportModeratorController;
 use App\Http\Controllers\Api\V1\Admin\ReportSpeakerController;
@@ -72,6 +74,9 @@ Route::group([
 
     Route::post('dataset', DatasetController::class)->name('dataset');
     Route::post('export/report-users', ExportReportUserController::class)->name('export.report-users');
+
+    Route::get('profile/audio/report', ProfileAudioReportController::class)->name('profile.audio.report');
+    Route::get('profile/moderation/report', ProfileModerationReportController::class)->name('profile.moderation.report');
 
     Route::get('report/speakers', ReportSpeakerController::class)->name('report.speakers');
     Route::get('report/moderators', ReportModeratorController::class)->name('report.moderators');
