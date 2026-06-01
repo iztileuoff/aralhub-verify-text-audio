@@ -56,6 +56,11 @@ class DailyQuotaController extends Controller
             ->where('file_id', 8)
             ->count();
 
+        $errorTextsCount = Text::query()
+            ->where('is_main', true)
+            ->where('file_id', 8)
+            ->where('has_text_error', true)
+            ->count();
 
         // $editFinishedTextsCount = Text::query()
         //     ->whereNotNull('edit_finished_at')
@@ -138,6 +143,7 @@ class DailyQuotaController extends Controller
             'active_speaker_count' => $activeSpeakersCount,
             'active_moderators_count' => $activeModeratorsCount,
             'texts_count' => $textsCount,
+            'error_texts_count' => $errorTextsCount,
             'edit_finished_texts_count' => $editFinishedTextsCount,
             'edit_not_finished_texts_count' => $editNotFinishedTextsCount,
             'daily_quota_texts_count' => $dailyQuotaTextsCount,
