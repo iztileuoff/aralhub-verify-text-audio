@@ -56,11 +56,6 @@ class DailyQuotaController extends Controller
             ->where('file_id', 8)
             ->count();
 
-        $reportedTextsCount = Text::query()
-            ->where('is_main', true)
-            ->where('file_id', 8)
-            ->where('is_reported', true)
-            ->count();
 
         // $editFinishedTextsCount = Text::query()
         //     ->whereNotNull('edit_finished_at')
