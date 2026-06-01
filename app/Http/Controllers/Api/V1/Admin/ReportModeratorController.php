@@ -17,13 +17,16 @@ class ReportModeratorController extends Controller
         $request->validate([
             'from_date' => ['required', 'date_format:Y-m-d'],
             'to_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:from_date'],
+            'is_verified' => ['sometimes', 'boolean'],
         ]);
 
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
+        $isVerified = $request->boolean('is_verified', true);
 
         $moderators = User::query()
             ->where('role', RoleEnum::MODERATOR->value)
+            ->where('is_verified', $isVerified)
             ->orderBy('id')
             ->get(['id', 'first_name', 'last_name', 'phone']);
 
