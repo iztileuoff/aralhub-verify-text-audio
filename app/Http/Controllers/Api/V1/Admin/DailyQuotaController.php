@@ -25,6 +25,7 @@ class DailyQuotaController extends Controller
         Cache::forget('daily_quota_texts_data');
         Cache::forget('daily_quota_audios_data');
         Cache::forget('daily_quota_check_audios_data');
+        Cache::forget('daily_quota_speakers_data');
         Cache::forget('daily_quota_data');
 
         return response()->json([
@@ -44,6 +45,12 @@ class DailyQuotaController extends Controller
      */
     private function buildDailyQuota(): array
     {
+        $speakersData = Cache::rememberForever('daily_quota_speakers_data', function () {
+            return User::query()
+                ->where('role', RoleEnum::SPEAKER->value)
+                ->count();
+        });
+
         $textsCount = Text::query()
             ->where('is_main', true)
             ->count();
@@ -117,6 +124,7 @@ class DailyQuotaController extends Controller
         });
 
         return [
+            'speakers_count' => $speakersData,
             'users_count' => $usersCount,
             'active_editors_count' => $activeEditorsCount,
             'active_speaker_count' => $activeSpeakersCount,
