@@ -6,6 +6,7 @@ use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Audio;
 use App\Models\User;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,15 +27,19 @@ class ReportModeratorController extends Controller
             ->orderBy('id')
             ->get(['id', 'first_name', 'last_name', 'phone']);
 
+        $dates = collect(CarbonPeriod::create($fromDate, $toDate))
+            ->map(fn ($date): string => $date->format('Y-m-d'))
+            ->all();
+
         $periodChecked = Audio::query()
-            ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
+            ->selectRaw('moderator_id, DATE(moderator_finished_at) as date, is_correct, COUNT(*) as total')
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
             ->whereBetween('moderator_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
             ])
-            ->groupBy('moderator_id', 'is_correct')
+            ->groupBy('moderator_id', 'date', 'is_correct')
             ->get();
 
         $totalChecked = Audio::query()
@@ -51,9 +56,9 @@ class ReportModeratorController extends Controller
 
         foreach ($periodChecked as $row) {
             if ($row->is_correct) {
-                $periodCorrect[$row->moderator_id] = $row->total;
+                $periodCorrect[$row->moderator_id][$row->date] = (int) $row->total;
             } else {
-                $periodIncorrect[$row->moderator_id] = $row->total;
+                $periodIncorrect[$row->moderator_id][$row->date] = (int) $row->total;
             }
         }
 
@@ -65,11 +70,26 @@ class ReportModeratorController extends Controller
             }
         }
 
-        $data = $moderators->map(function (User $moderator) use ($periodCorrect, $periodIncorrect, $totalCorrect, $totalIncorrect): array {
-            $periodCorrectCount = $periodCorrect[$moderator->id] ?? 0;
-            $periodIncorrectCount = $periodIncorrect[$moderator->id] ?? 0;
+        $data = $moderators->map(function (User $moderator) use ($dates, $periodCorrect, $periodIncorrect, $totalCorrect, $totalIncorrect): array {
             $totalCorrectCount = $totalCorrect[$moderator->id] ?? 0;
             $totalIncorrectCount = $totalIncorrect[$moderator->id] ?? 0;
+
+            $byDate = [];
+            $periodCorrectCount = 0;
+            $periodIncorrectCount = 0;
+
+            foreach ($dates as $date) {
+                $correct = $periodCorrect[$moderator->id][$date] ?? 0;
+                $incorrect = $periodIncorrect[$moderator->id][$date] ?? 0;
+                $byDate[] = [
+                    'date' => $date,
+                    'checked_count' => $correct + $incorrect,
+                    'correct_count' => $correct,
+                    'incorrect_count' => $incorrect,
+                ];
+                $periodCorrectCount += $correct;
+                $periodIncorrectCount += $incorrect;
+            }
 
             return [
                 'id' => $moderator->id,
@@ -79,6 +99,7 @@ class ReportModeratorController extends Controller
                     'checked_count' => $periodCorrectCount + $periodIncorrectCount,
                     'correct_count' => $periodCorrectCount,
                     'incorrect_count' => $periodIncorrectCount,
+                    'by_date' => $byDate,
                 ],
                 'total' => [
                     'checked_count' => $totalCorrectCount + $totalIncorrectCount,
