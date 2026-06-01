@@ -28,6 +28,8 @@ class UserResource extends JsonResource
             'finished_edit_audio_count' => $this->whenHas('finished_speak_audio_count'),
             'is_correct_true_audio_count' => $this->whenHas('is_correct_true_audio_count'),
             'is_correct_false_audio_count' => $this->whenHas('is_correct_false_audio_count'),
+            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
     }
 }
