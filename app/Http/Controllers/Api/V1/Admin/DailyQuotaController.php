@@ -53,15 +53,18 @@ class DailyQuotaController extends Controller
 
         $textsCount = Text::query()
             ->where('is_main', true)
+            ->where('file_id', 8)
             ->count();
 
-        $editFinishedTextsCount = Text::query()
-            ->whereNotNull('edit_finished_at')
-            ->count();
+        // $editFinishedTextsCount = Text::query()
+        //     ->whereNotNull('edit_finished_at')
+        //     ->count();
+        $editFinishedTextsCount = 0;
 
-        $editNotFinishedTextsCount = Text::query()
-            ->whereNull('edit_finished_at')
-            ->count();
+        // $editNotFinishedTextsCount = Text::query()
+        //     ->whereNull('edit_finished_at')
+        //     ->count();
+        $editNotFinishedTextsCount = 0;
 
         $usersCount = User::query()
             ->whereIn('role', [RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])
@@ -83,20 +86,24 @@ class DailyQuotaController extends Controller
             ->count();
 
         $audioFinishedTextsCount = Text::query()
+            ->where('file_id', 8)
             ->where('is_main', true)
             ->sum('audio_count');
 
         $audioNotFinishedTextsCount = Text::query()
+            ->where('file_id', 8)
             ->where('is_main', true)
-            ->count() * 6 - $audioFinishedTextsCount;
+            ->count() - $audioFinishedTextsCount;
 
         $moderatorFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn ($q) => $q->where('is_main', true))
+            ->whereHas('text', fn($q) => $q->where('is_main', true))
+            ->whereHas('text', fn($q) => $q->where('file_id', 8))
             ->whereNotNull('is_correct')
             ->count();
 
         $moderatorNotFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn ($q) => $q->where('is_main', true))
+            ->whereHas('text', fn($q) => $q->where('is_main', true))
+            ->whereHas('text', fn($q) => $q->where('file_id', 8))
             ->whereNull('is_correct')
             ->whereNotNull('speak_finished_at')
             ->count();
