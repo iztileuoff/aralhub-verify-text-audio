@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\ActionController;
 use App\Http\Controllers\Api\V1\Admin\DailyQuotaController;
 use App\Http\Controllers\Api\V1\Admin\DatasetController;
+use App\Http\Controllers\Api\V1\Admin\ErrorTextController;
 use App\Http\Controllers\Api\V1\Admin\ExportReportUserController;
 use App\Http\Controllers\Api\V1\Admin\FileController;
 use App\Http\Controllers\Api\V1\Admin\FinishedAudioController;
@@ -66,6 +67,8 @@ Route::group([
     Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
     Route::get('finished/audio/texts', FinishedAudioTextController::class)->name('finished.audio.texts');
     Route::get('finished/check/texts', FinishedCheckTextController::class)->name('finished.check.texts');
+
+    Route::get('error/texts', ErrorTextController::class)->name('error.texts');
 
     Route::post('dataset', DatasetController::class)->name('dataset');
     Route::post('export/report-users', ExportReportUserController::class)->name('export.report-users');
