@@ -31,7 +31,7 @@ class ProfileResource extends JsonResource
             'today_finished_moderation_texts_count' => $this->whenHas('date_finished_moderation_audio_count'),
             'is_verified' => $this->is_verified,
             'is_active' => $this->is_active,
-            'limit_speak_audio' => 400,
+            'limit_speak_audio' => 500,
             'limit_moderation_audio' => 500,
             'audio' => [
                 'written_count' => $this->whenHas('finished_speak_audio_count'),
