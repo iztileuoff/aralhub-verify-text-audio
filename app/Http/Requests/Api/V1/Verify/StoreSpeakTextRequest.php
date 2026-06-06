@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1\Verify;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
 
@@ -27,6 +28,22 @@ class StoreSpeakTextRequest extends FormRequest
                 'size' => $file->getSize(),
             ]);
         }
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        $file = $this->file('audio');
+
+        Log::warning('Audio validation failed (422)', [
+            'errors' => $validator->errors()->toArray(),
+            'original_name' => $file?->getClientOriginalName(),
+            'client_mime' => $file?->getClientMimeType(),
+            'detected_mime' => $file?->getMimeType(),
+            'extension' => $file?->getClientOriginalExtension(),
+            'size' => $file?->getSize(),
+        ]);
+
+        parent::failedValidation($validator);
     }
 
     public function authorize(): bool
