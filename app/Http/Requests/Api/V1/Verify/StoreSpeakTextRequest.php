@@ -11,7 +11,11 @@ class StoreSpeakTextRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'audio' => ['required', 'file', 'mimes:mp3,wav,m4a,ogg,aac'],
+            'audio' => [
+                'required',
+                'file',
+                'mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,audio/webm,video/webm',
+            ],
         ];
     }
 
