@@ -14,7 +14,7 @@ class StoreSpeakTextRequest extends FormRequest
             'audio' => [
                 'required',
                 'file',
-                'mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,audio/webm,video/webm',
+                'mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,video/mp4,audio/aac,audio/ogg,audio/webm,video/webm',
             ],
         ];
     }
