@@ -32,7 +32,7 @@ class ProfileResource extends JsonResource
             'is_verified' => $this->is_verified,
             'is_active' => $this->is_active,
             'limit_speak_audio' => 500,
-            'limit_moderation_audio' => 500,
+            'limit_moderation_audio' => 1000,
             'audio' => [
                 'written_count' => $this->whenHas('finished_speak_audio_count'),
                 'checked_count' => $this->whenHas('is_correct_true_audio_count', fn(): int => $this->is_correct_true_audio_count + $this->is_correct_false_audio_count),
