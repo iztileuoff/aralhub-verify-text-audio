@@ -37,6 +37,7 @@ class ExportReportCommand extends Command
     {
         $speakers = User::query()
             ->where('role', RoleEnum::SPEAKER->value)
+            ->where('is_verified', true)
             ->orderBy('id')
             ->get(['id', 'first_name', 'last_name', 'phone']);
 
@@ -84,6 +85,7 @@ class ExportReportCommand extends Command
     {
         $moderators = User::query()
             ->where('role', RoleEnum::MODERATOR->value)
+            ->where('is_verified', true)
             ->orderBy('id')
             ->get(['id', 'first_name', 'last_name', 'phone']);
 
