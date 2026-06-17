@@ -27,24 +27,23 @@ class ExportCorrectAudioCommand extends Command
     public function handle(): int
     {
         $filename = $this->option('filename');
-        $path = storage_path('app/private/'.$filename);
+        $path = storage_path('app/private/' . $filename);
 
         // In Laravel 11/12 default storage is app/private or app/public. Lets just use app/
-        $path = storage_path('app/'.$filename);
+        $path = storage_path('app/' . $filename);
 
         $file = fopen($path, 'w');
 
         $audios = Audio::query()
             ->with('text')
             ->where('is_correct', true)
-            ->whereDate('moderator_finished_at', '>', '2026-03-29 13:00:00')
-            ->whereDate('moderator_finished_at', '<=', '2026-04-07 19:00:00')
+            ->whereHas('text', fn($query) => $query->where('file_id', 8))
             ->lazy();
 
         $count = 0;
 
         foreach ($audios as $audio) {
-            $clean = fn ($v) => str_replace('"', '', $v);
+            $clean = fn($v) => str_replace('"', '', $v);
 
             $audioFilename = preg_replace('#^audio/#', '', $audio->edit_audio_filename);
 
@@ -58,7 +57,7 @@ class ExportCorrectAudioCommand extends Command
                 $audio->edit_speaker_gender->value,
             ]);
 
-            fwrite($file, $line.PHP_EOL);
+            fwrite($file, $line . PHP_EOL);
 
             $count++;
         }
