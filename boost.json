@@ -1,14 +1,13 @@
 {
     "agents": [
-        "junie",
-        "cursor",
-        "copilot",
         "claude_code",
-        "codex"
+        "opencode",
+        "gemini"
     ],
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
+    "nightwatch_mcp": false,
     "sail": false,
     "skills": [
         "pest-testing",
