@@ -20,7 +20,8 @@ class UpdateDurationCommand extends Command
         foreach ($lines as $line) {
             [$filename, $duration] = explode(';', $line);
 
-            $audio = Audio::where('edit_audio_filename', "audio/{$filename}")->first();
+            $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+            $audio = Audio::where('edit_audio_filename', 'like', "audio/{$filenameWithoutExt}.%")->first();
 
             if ($audio && $audio->edit_converted_audio_duration == null) {
                 $audio->update([
