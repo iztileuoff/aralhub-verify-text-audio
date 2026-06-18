@@ -66,10 +66,9 @@ class ExportReportCommand extends Command
 
         $speakers = User::query()
             ->where('role', RoleEnum::SPEAKER->value)
-            ->where('is_verified', true)
             ->whereIn('id', $totalWritten->keys())
             ->orderBy('id')
-            ->get(['id', 'first_name', 'last_name', 'phone']);
+            ->get(['id', 'first_name', 'last_name', 'phone', 'is_verified']);
 
         return $speakers->map(function (User $speaker) use ($totalWritten, $correctMap, $incorrectMap): array {
             $correct = $correctMap[$speaker->id] ?? 0;
@@ -79,6 +78,7 @@ class ExportReportCommand extends Command
                 'ID' => $speaker->id,
                 'Full Name' => trim($speaker->first_name.' '.$speaker->last_name),
                 'Phone' => $speaker->phone,
+                'Verified' => $speaker->is_verified ? 'Yes' : 'No',
                 'Written' => (int) ($totalWritten[$speaker->id] ?? 0),
                 'Checked' => $correct + $incorrect,
                 'Correct' => $correct,
@@ -115,10 +115,9 @@ class ExportReportCommand extends Command
 
         $moderators = User::query()
             ->where('role', RoleEnum::MODERATOR->value)
-            ->where('is_verified', true)
             ->whereIn('id', $moderatorIds)
             ->orderBy('id')
-            ->get(['id', 'first_name', 'last_name', 'phone']);
+            ->get(['id', 'first_name', 'last_name', 'phone', 'is_verified']);
 
         return $moderators->map(function (User $moderator) use ($correctMap, $incorrectMap): array {
             $correct = $correctMap[$moderator->id] ?? 0;
@@ -128,6 +127,7 @@ class ExportReportCommand extends Command
                 'ID' => $moderator->id,
                 'Full Name' => trim($moderator->first_name.' '.$moderator->last_name),
                 'Phone' => $moderator->phone,
+                'Verified' => $moderator->is_verified ? 'Yes' : 'No',
                 'Checked' => $correct + $incorrect,
                 'Correct' => $correct,
                 'Incorrect' => $incorrect,
