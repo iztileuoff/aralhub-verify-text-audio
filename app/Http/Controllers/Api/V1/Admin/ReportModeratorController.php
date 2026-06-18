@@ -7,28 +7,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Audio;
 use App\Models\User;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ReportModeratorController extends Controller
 {
+    private const int FILE_ID = 8;
+
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
             'from_date' => ['required', 'date_format:Y-m-d'],
             'to_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:from_date'],
-            'is_verified' => ['sometimes', 'boolean'],
         ]);
 
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
-        $isVerified = $request->boolean('is_verified', true);
-
-        $moderators = User::query()
-            ->where('role', RoleEnum::MODERATOR->value)
-            ->where('is_verified', $isVerified)
-            ->orderBy('id')
-            ->get(['id', 'first_name', 'last_name', 'phone']);
 
         $dates = collect(CarbonPeriod::create($fromDate, $toDate))
             ->map(fn ($date): string => $date->format('Y-m-d'))
@@ -38,6 +33,7 @@ class ReportModeratorController extends Controller
             ->selectRaw('moderator_id, DATE(moderator_finished_at) as date, is_correct, COUNT(*) as total')
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
             ->whereBetween('moderator_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
@@ -49,6 +45,7 @@ class ReportModeratorController extends Controller
             ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
             ->groupBy('moderator_id', 'is_correct')
             ->get();
 
@@ -72,6 +69,17 @@ class ReportModeratorController extends Controller
                 $totalIncorrect[$row->moderator_id] = $row->total;
             }
         }
+
+        $moderatorIds = array_values(array_unique([
+            ...array_keys($totalCorrect),
+            ...array_keys($totalIncorrect),
+        ]));
+
+        $moderators = User::query()
+            ->where('role', RoleEnum::MODERATOR->value)
+            ->whereIn('id', $moderatorIds)
+            ->orderBy('id')
+            ->get(['id', 'first_name', 'last_name', 'phone', 'is_verified']);
 
         $data = $moderators->map(function (User $moderator) use ($dates, $periodCorrect, $periodIncorrect, $totalCorrect, $totalIncorrect): array {
             $totalCorrectCount = $totalCorrect[$moderator->id] ?? 0;
@@ -98,6 +106,7 @@ class ReportModeratorController extends Controller
                 'id' => $moderator->id,
                 'full_name' => trim($moderator->first_name.' '.$moderator->last_name),
                 'phone' => $moderator->phone,
+                'is_verified' => $moderator->is_verified,
                 'period' => [
                     'checked_count' => $periodCorrectCount + $periodIncorrectCount,
                     'correct_count' => $periodCorrectCount,

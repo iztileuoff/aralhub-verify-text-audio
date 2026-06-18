@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Audio;
 use App\Models\User;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenSpout\Common\Exception\InvalidArgumentException;
 use OpenSpout\Common\Exception\IOException;
 use OpenSpout\Common\Exception\UnsupportedTypeException;
@@ -17,6 +17,8 @@ use Rap2hpoutre\FastExcel\FastExcel;
 
 class ExportReportUserController extends Controller
 {
+    private const int FILE_ID = 8;
+
     /**
      * @throws IOException
      * @throws WriterNotOpenedException
@@ -35,16 +37,11 @@ class ExportReportUserController extends Controller
 
         $period = collect(CarbonPeriod::create($fromDate, $toDate))->toArray();
 
-        // ✅ Users
-        $users = User::query()
-            ->where('is_verified', true)
-            ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
-            ->get();
-
         // ✅ Aggregated stats
         $audioStats = Audio::query()
             ->selectRaw('edit_speaker_id, DATE(speak_finished_at) as date, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
             ->whereBetween('speak_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
@@ -72,6 +69,12 @@ class ExportReportUserController extends Controller
             $dayTotals[$dateString] = $dayTotals[$dateString] ?? 0;
         }
 
+        // ✅ Users who spoke file_id=8 texts within the period
+        $users = User::query()
+            ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
+            ->whereIn('id', array_keys($statsMap))
+            ->get();
+
         // ✅ Prepare export rows
         $rows = [];
 
@@ -80,6 +83,7 @@ class ExportReportUserController extends Controller
                 'ID' => $user->id,
                 'Full Name' => $user->first_name.' '.$user->last_name,
                 'Phone' => $user->phone,
+                'Verified' => $user->is_verified ? 'Yes' : 'No',
             ];
 
             $userTotal = 0;
@@ -103,6 +107,7 @@ class ExportReportUserController extends Controller
             'ID' => '',
             'Full Name' => 'TOTAL',
             'Phone' => '',
+            'Verified' => '',
         ];
 
         $grandTotal = 0;
