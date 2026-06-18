@@ -6,12 +6,15 @@ use App\Enums\RoleEnum;
 use App\Models\Audio;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Rap2hpoutre\FastExcel\SheetCollection;
 
 class ExportReportCommand extends Command
 {
+    private const int FILE_ID = 8;
+
     protected $signature = 'report:export {--filename=report.xlsx}';
 
     protected $description = 'Export speakers and moderators report to an Excel file';
@@ -35,15 +38,10 @@ class ExportReportCommand extends Command
 
     private function buildSpeakersSheet(): Collection
     {
-        $speakers = User::query()
-            ->where('role', RoleEnum::SPEAKER->value)
-            ->where('is_verified', true)
-            ->orderBy('id')
-            ->get(['id', 'first_name', 'last_name', 'phone']);
-
         $totalWritten = Audio::query()
             ->selectRaw('edit_speaker_id, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
             ->groupBy('edit_speaker_id')
             ->pluck('total', 'edit_speaker_id');
 
@@ -51,6 +49,7 @@ class ExportReportCommand extends Command
             ->selectRaw('edit_speaker_id, is_correct, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
             ->whereNotNull('is_correct')
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
             ->groupBy('edit_speaker_id', 'is_correct')
             ->get();
 
@@ -64,6 +63,13 @@ class ExportReportCommand extends Command
                 $incorrectMap[$row->edit_speaker_id] = (int) $row->total;
             }
         }
+
+        $speakers = User::query()
+            ->where('role', RoleEnum::SPEAKER->value)
+            ->where('is_verified', true)
+            ->whereIn('id', $totalWritten->keys())
+            ->orderBy('id')
+            ->get(['id', 'first_name', 'last_name', 'phone']);
 
         return $speakers->map(function (User $speaker) use ($totalWritten, $correctMap, $incorrectMap): array {
             $correct = $correctMap[$speaker->id] ?? 0;
@@ -83,16 +89,11 @@ class ExportReportCommand extends Command
 
     private function buildModeratorsSheet(): Collection
     {
-        $moderators = User::query()
-            ->where('role', RoleEnum::MODERATOR->value)
-            ->where('is_verified', true)
-            ->orderBy('id')
-            ->get(['id', 'first_name', 'last_name', 'phone']);
-
         $totalChecked = Audio::query()
             ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
             ->groupBy('moderator_id', 'is_correct')
             ->get();
 
@@ -106,6 +107,18 @@ class ExportReportCommand extends Command
                 $incorrectMap[$row->moderator_id] = (int) $row->total;
             }
         }
+
+        $moderatorIds = array_values(array_unique([
+            ...array_keys($correctMap),
+            ...array_keys($incorrectMap),
+        ]));
+
+        $moderators = User::query()
+            ->where('role', RoleEnum::MODERATOR->value)
+            ->where('is_verified', true)
+            ->whereIn('id', $moderatorIds)
+            ->orderBy('id')
+            ->get(['id', 'first_name', 'last_name', 'phone']);
 
         return $moderators->map(function (User $moderator) use ($correctMap, $incorrectMap): array {
             $correct = $correctMap[$moderator->id] ?? 0;
