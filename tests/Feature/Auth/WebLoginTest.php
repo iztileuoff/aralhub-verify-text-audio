@@ -42,6 +42,25 @@ it('logs an admin in with valid credentials', function (RoleEnum $role) {
     'admin' => RoleEnum::ADMIN,
 ]);
 
+it('logs in regardless of the phone input format', function (string $input) {
+    $user = User::factory()->admin()->create([
+        'phone' => '998901234567',
+        'password' => 'secret-password',
+    ]);
+
+    $this->post('/login', [
+        'phone' => $input,
+        'password' => 'secret-password',
+    ])->assertRedirect('/dashboard');
+
+    expect(auth()->id())->toBe($user->id);
+})->with([
+    'leading plus' => '+998901234567',
+    'spaces and dashes' => '+998 90 123-45-67',
+    'bare subscriber' => '901234567',
+    'zero trunk prefix' => '0901234567',
+]);
+
 it('rejects login with an invalid password', function () {
     User::factory()->admin()->create([
         'phone' => '998901234567',

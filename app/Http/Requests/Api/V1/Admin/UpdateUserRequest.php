@@ -4,12 +4,15 @@ namespace App\Http\Requests\Api\V1\Admin;
 
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
+use App\Http\Requests\Concerns\NormalizesPhoneNumber;
 use App\Rules\UzPhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
+    use NormalizesPhoneNumber;
+
     public function rules(): array
     {
         return [

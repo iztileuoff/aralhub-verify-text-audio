@@ -23,7 +23,7 @@ class UserFactory extends Factory
             'role' => RoleEnum::EDITOR->value,
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
-            'phone' => fake()->unique()->numerify('+9989########'),
+            'phone' => '998'.fake()->unique()->numerify('#########'),
             'password' => 'password',
             'gender' => fake()->randomElement(GenderEnum::cases())->value,
             'age' => fake()->numberBetween(18, 60),
