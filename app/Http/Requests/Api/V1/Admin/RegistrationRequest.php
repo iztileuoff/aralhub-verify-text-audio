@@ -29,10 +29,18 @@ class RegistrationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $merge = [
             'role' => RoleEnum::SPEAKER->value,
             'is_verified' => false,
-        ]);
+        ];
+
+        $phone = $this->input('phone');
+
+        if (is_string($phone)) {
+            $merge['phone'] = UzPhoneRule::normalize($phone);
+        }
+
+        $this->merge($merge);
     }
 
     public function messages(): array
