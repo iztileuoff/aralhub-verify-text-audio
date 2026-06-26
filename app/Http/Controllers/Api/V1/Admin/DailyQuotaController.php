@@ -18,7 +18,9 @@ class DailyQuotaController extends Controller
 {
     private const CACHE_KEY = 'daily_quota_data';
 
-    private const CACHE_TTL_MINUTES = 60;
+    private const CACHE_FRESH_SECONDS = 3600;
+
+    private const CACHE_STALE_SECONDS = 7200;
 
     public function show(): JsonResponse
     {
@@ -41,9 +43,9 @@ class DailyQuotaController extends Controller
      */
     private function getDailyQuota(): array
     {
-        return Cache::remember(
+        return Cache::flexible(
             self::CACHE_KEY,
-            now()->addMinutes(self::CACHE_TTL_MINUTES),
+            [self::CACHE_FRESH_SECONDS, self::CACHE_STALE_SECONDS],
             fn (): array => $this->buildDailyQuota(),
         );
     }
