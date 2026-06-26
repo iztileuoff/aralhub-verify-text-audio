@@ -22,6 +22,7 @@ class Audio extends Model
         'edit_converted_audio_filename',
         'edit_converted_audio_duration',
         'exported_at',
+        'export_id',
         'speak_started_at',
         'speak_finished_at',
         'edit_speaker_id',
@@ -40,6 +41,7 @@ class Audio extends Model
             'edit_converted_audio_filename' => 'string',
             'edit_converted_audio_duration' => 'integer',
             'exported_at' => 'datetime',
+            'export_id' => 'integer',
             'speak_started_at' => 'datetime',
             'speak_finished_at' => 'datetime',
             'edit_speaker_id' => 'integer',
@@ -75,6 +77,11 @@ class Audio extends Model
     public function text(): BelongsTo
     {
         return $this->belongsTo(Text::class);
+    }
+
+    public function export(): BelongsTo
+    {
+        return $this->belongsTo(Export::class);
     }
 
     public function editSpeaker(): BelongsTo

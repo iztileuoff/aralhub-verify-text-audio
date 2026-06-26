@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Audio;
+use App\Models\Export;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -13,7 +14,7 @@ class ExportCorrectAudioCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'audio:export-correct {--filename=correct_audios.tsv} {--file-id=8} {--all}';
+    protected $signature = 'audio:export-correct {--filename=correct_audios.tsv} {--file-id=8} {--name=} {--all}';
 
     /**
      * The console command description.
@@ -69,24 +70,39 @@ class ExportCorrectAudioCommand extends Command
 
         fclose($file);
 
-        $this->markAsExported($exportedIds);
+        $export = null;
 
-        $this->info("Exported {$count} correct audios to {$path}.");
+        // A re-export (--all) is a raw dump; it must not touch the export tracking.
+        if (! $all && $count > 0) {
+            $export = Export::create([
+                'name' => $this->option('name'),
+                'filename' => $filename,
+                'exported_count' => $count,
+            ]);
+
+            $this->markAsExported($exportedIds, $export->id);
+        }
+
+        $suffix = $export ? " (export #{$export->id})" : '';
+        $this->info("Exported {$count} correct audios to {$path}.{$suffix}");
 
         return self::SUCCESS;
     }
 
     /**
-     * Stamp the exported audios with the current timestamp in batches.
+     * Link the exported audios to the export and stamp them, in batches.
      *
      * @param  array<int, int>  $ids
      */
-    private function markAsExported(array $ids): void
+    private function markAsExported(array $ids, int $exportId): void
     {
         foreach (array_chunk($ids, 1000) as $chunk) {
             Audio::query()
                 ->whereIn('id', $chunk)
-                ->update(['exported_at' => now()]);
+                ->update([
+                    'exported_at' => now(),
+                    'export_id' => $exportId,
+                ]);
         }
     }
 }

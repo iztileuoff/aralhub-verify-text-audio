@@ -16,7 +16,10 @@ it('backfills exported_at for existing audios that already have a converted dura
     $withDuration = Audio::factory()->create(['edit_converted_audio_duration' => 300]);
     $withoutDuration = Audio::factory()->create(['edit_converted_audio_duration' => null]);
 
-    Artisan::call('migrate:rollback', ['--step' => 1]);
+    // Roll back newest-first until the exported_at column is gone, keeping the audio rows.
+    while (Schema::hasColumn('audio', 'exported_at')) {
+        Artisan::call('migrate:rollback', ['--step' => 1]);
+    }
     expect(Schema::hasColumn('audio', 'exported_at'))->toBeFalse();
 
     Artisan::call('migrate');

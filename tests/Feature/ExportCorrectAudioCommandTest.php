@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Audio;
+use App\Models\Export;
 use App\Models\File;
 use App\Models\Text;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,7 +62,12 @@ it('exports only new correct audios and stamps them as exported', function () {
         ->not->toContain('incorrect.wav')
         ->not->toContain('noduration.wav');
 
-    expect($new->fresh()->exported_at)->not->toBeNull();
+    $export = Export::sole();
+
+    expect($export->filename)->toBe('test_correct.tsv')
+        ->and($export->exported_count)->toBe(1)
+        ->and($new->fresh()->exported_at)->not->toBeNull()
+        ->and($new->fresh()->export_id)->toBe($export->id);
 });
 
 it('skips already exported audios on re-run and re-exports everything with --all', function () {
@@ -81,9 +87,13 @@ it('skips already exported audios on re-run and re-exports everything with --all
     Artisan::call('audio:export-correct', $options);
     Artisan::call('audio:export-correct', $options);
 
-    expect(trim(file_get_contents(storage_path('app/test_correct.tsv'))))->toBe('');
+    // Second run had nothing new: empty tsv and no extra export record.
+    expect(trim(file_get_contents(storage_path('app/test_correct.tsv'))))->toBe('')
+        ->and(Export::count())->toBe(1);
 
     Artisan::call('audio:export-correct', $options + ['--all' => true]);
 
-    expect(file_get_contents(storage_path('app/test_correct.tsv')))->toContain('first.wav');
+    // --all re-dumps but does not create an export or change tracking.
+    expect(file_get_contents(storage_path('app/test_correct.tsv')))->toContain('first.wav')
+        ->and(Export::count())->toBe(1);
 });
