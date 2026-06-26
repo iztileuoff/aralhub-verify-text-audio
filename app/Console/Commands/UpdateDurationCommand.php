@@ -7,13 +7,13 @@ use Illuminate\Console\Command;
 
 class UpdateDurationCommand extends Command
 {
-    protected $signature = 'update:duration';
+    protected $signature = 'update:duration {--filename=result.txt}';
 
-    protected $description = 'Command description';
+    protected $description = 'Update converted audio durations from the Python script result file';
 
     public function handle(): void
     {
-        $path = storage_path('app/processed_results.txt');
+        $path = storage_path('app/'.$this->option('filename'));
 
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 

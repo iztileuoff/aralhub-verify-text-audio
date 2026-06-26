@@ -3,19 +3,25 @@
 namespace App\Models;
 
 use App\Enums\GenderEnum;
+use Database\Factories\AudioFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class Audio extends Model
 {
+    /** @use HasFactory<AudioFactory> */
+    use HasFactory;
+
     protected $fillable = [
         'text_id',
         'edit_audio_filename',
         'edit_converted_audio_filename',
         'edit_converted_audio_duration',
+        'exported_at',
         'speak_started_at',
         'speak_finished_at',
         'edit_speaker_id',
@@ -33,6 +39,7 @@ class Audio extends Model
             'edit_audio_filename' => 'string',
             'edit_converted_audio_filename' => 'string',
             'edit_converted_audio_duration' => 'integer',
+            'exported_at' => 'datetime',
             'speak_started_at' => 'datetime',
             'speak_finished_at' => 'datetime',
             'edit_speaker_id' => 'integer',
