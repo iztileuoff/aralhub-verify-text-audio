@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\GenderEnum;
+use Carbon\Carbon;
 use Database\Factories\AudioFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -72,6 +73,20 @@ class Audio extends Model
         return $query->when($search, function ($q) use ($search) {
             $q->where('text_id', $search);
         });
+    }
+
+    /**
+     * Constrain a datetime column to a single calendar day using an
+     * index-friendly range instead of wrapping the column in DATE().
+     */
+    public function scopeOnDate(Builder $query, string $column, Carbon|string $date): Builder
+    {
+        $day = $date instanceof Carbon ? $date : Carbon::parse($date);
+
+        return $query->whereBetween($column, [
+            $day->copy()->startOfDay(),
+            $day->copy()->endOfDay(),
+        ]);
     }
 
     public function text(): BelongsTo

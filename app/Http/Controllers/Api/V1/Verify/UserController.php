@@ -12,9 +12,11 @@ class UserController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $date = $request->filled('date')
-            ? $request->input('date')
-            : now()->format('Y-m-d');
+        $request->validate([
+            'date' => ['sometimes', 'date_format:Y-m-d'],
+        ]);
+
+        $date = $request->input('date', now()->format('Y-m-d'));
 
         $users = User::query()
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
@@ -22,11 +24,11 @@ class UserController extends Controller
             ->when($request->filled('specialization_id'), fn ($q) => $q->search($request->input('specialization_id')))
             ->when(auth()->user()->role === RoleEnum::ADMIN, fn ($q) => $q->where('admin_id', auth()->user()->id))
             ->withCount(['finishedEditTexts', 'finishedSpeakTexts', 'finishedModerationTexts'])
-            ->withCount(['dateFinishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date)])
-            ->withCount(['dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date)])
-            ->withCount(['todayFinishedEditTexts' => fn ($q) => $q->whereDate('edit_finished_at', '=', $date)])
-            ->withCount(['todayFinishedSpeakTexts' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date)])
-            ->withCount(['todayFinishedModerationTexts' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date)])
+            ->withCount(['dateFinishedSpeakAudio' => fn ($q) => $q->onDate('speak_finished_at', $date)])
+            ->withCount(['dateFinishedModerationAudio' => fn ($q) => $q->onDate('moderator_finished_at', $date)])
+            ->withCount(['todayFinishedEditTexts' => fn ($q) => $q->onDate('edit_finished_at', $date)])
+            ->withCount(['todayFinishedSpeakTexts' => fn ($q) => $q->onDate('speak_finished_at', $date)])
+            ->withCount(['todayFinishedModerationTexts' => fn ($q) => $q->onDate('moderator_finished_at', $date)])
             ->orderBy('date_finished_speak_audio_count', 'desc')
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));
