@@ -33,6 +33,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the user is an administrator.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'role' => RoleEnum::ADMIN->value,
+        ]);
+    }
+
+    /**
      * Indicate that the user is not verified.
      */
     public function unverified(): static
