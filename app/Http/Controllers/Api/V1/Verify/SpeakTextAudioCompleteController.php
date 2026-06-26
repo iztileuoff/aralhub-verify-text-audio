@@ -6,10 +6,12 @@ use App\Enums\GenderEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Verify\StoreSpeakTextRequest;
 use App\Http\Resources\V1\Admin\TextResource;
-use App\Jobs\ProcessAudioJob;
 use App\Models\Text;
 use Dedoc\Scramble\Attributes\Group;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 #[Group(name: 'Verify - Speaking', weight: 100)]
 class SpeakTextAudioCompleteController extends Controller
@@ -17,17 +19,29 @@ class SpeakTextAudioCompleteController extends Controller
     /**
      * Сохранить записанное аудио для текста.
      */
-    public function __invoke(StoreSpeakTextRequest $request, Text $text)
+    public function __invoke(StoreSpeakTextRequest $request, Text $text): JsonResponse
     {
+        try {
+            $path = $request->file('audio')->store('audio', 'yandex-s3');
+        } catch (Throwable $exception) {
+            report($exception);
+            $path = false;
+        }
+
+        if ($path === false) {
+            Log::error('Audio upload to Yandex S3 failed', [
+                'text_id' => $text->id,
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Не удалось загрузить аудио в хранилище. Попробуйте ещё раз.',
+            ], 503);
+        }
+
         if ($text->edit_audio_filename) {
             Storage::disk('yandex-s3')->delete($text->edit_audio_filename);
         }
-
-        //        if ($text->edit_converted_audio_filename) {
-        //            Storage::disk('yandex-s3')->delete($text->edit_converted_audio_filename);
-        //        }
-
-        $path = $request->file('audio')->store('audio', 'yandex-s3');
 
         $text->audio()->create([
             'edit_audio_filename' => $path,
@@ -45,8 +59,6 @@ class SpeakTextAudioCompleteController extends Controller
 
         $text->save();
 
-        //        ProcessAudioJob::dispatch($text->id, $path);
-
-        return new TextResource($text);
+        return (new TextResource($text))->response();
     }
 }

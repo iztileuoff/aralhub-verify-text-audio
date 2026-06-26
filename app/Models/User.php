@@ -83,9 +83,11 @@ class User extends Authenticatable
 
     public function scopeSearch(Builder $query, $search): void
     {
-        $query->where('first_name', 'like', "%$search%")
-            ->orWhere('last_name', 'like', "%$search%")
-            ->orWhere('phone', 'like', "%$search%");
+        $query->where(function (Builder $query) use ($search) {
+            $query->where('first_name', 'like', "%$search%")
+                ->orWhere('last_name', 'like', "%$search%")
+                ->orWhere('phone', 'like', "%$search%");
+        });
     }
 
     public function specialization(): BelongsTo

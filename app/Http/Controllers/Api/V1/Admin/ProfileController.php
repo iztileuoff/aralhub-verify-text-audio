@@ -23,11 +23,11 @@ class ProfileController extends Controller
             'finishedEditTexts', 'finishedSpeakTexts', 'finishedModerationTexts',
             'finishedSpeakAudio', 'isCorrectTrueAudio', 'isCorrectFalseAudio',
         ])->loadCount([
-            'dateFinishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date),
-            'dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date),
-            'todayFinishedEditTexts' => fn ($q) => $q->whereDate('edit_finished_at', '=', $date),
-            'todayFinishedSpeakTexts' => fn ($q) => $q->whereDate('speak_finished_at', '=', $date),
-            'todayFinishedModerationTexts' => fn ($q) => $q->whereDate('moderator_finished_at', '=', $date),
+            'dateFinishedSpeakAudio' => fn ($q) => $q->onDate('speak_finished_at', $date),
+            'dateFinishedModerationAudio' => fn ($q) => $q->onDate('moderator_finished_at', $date),
+            'todayFinishedEditTexts' => fn ($q) => $q->onDate('edit_finished_at', $date),
+            'todayFinishedSpeakTexts' => fn ($q) => $q->onDate('speak_finished_at', $date),
+            'todayFinishedModerationTexts' => fn ($q) => $q->onDate('moderator_finished_at', $date),
             'dateFinishedModerationAudio as moderation_correct_audio_count' => fn ($q) => $q->where('is_correct', true),
             'dateFinishedModerationAudio as moderation_incorrect_audio_count' => fn ($q) => $q->where('is_correct', false),
         ]));
