@@ -34,6 +34,7 @@ log "Maintenance mode on"
 
 log "Fetching latest code ($BRANCH)"
 git fetch --all --prune
+git checkout -f "$BRANCH"
 git reset --hard "origin/$BRANCH"
 
 log "Installing PHP dependencies"
@@ -59,8 +60,8 @@ log "Rebuilding caches"
 "$PHP_BIN" artisan optimize:clear
 "$PHP_BIN" artisan optimize
 
-log "Restarting queue workers"
-"$PHP_BIN" artisan queue:restart
+log "Restarting Pulse daemon"
+"$PHP_BIN" artisan pulse:restart || true
 
 log "Maintenance mode off"
 "$PHP_BIN" artisan up
