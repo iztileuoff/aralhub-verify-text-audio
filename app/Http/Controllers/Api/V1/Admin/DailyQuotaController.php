@@ -8,69 +8,54 @@ use App\Http\Requests\Api\V1\Admin\UpdateProfileRequest;
 use App\Models\Audio;
 use App\Models\Text;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
 class DailyQuotaController extends Controller
 {
-    public function show(Request $request)
+    private const CACHE_KEY = 'daily_quota_data';
+
+    private const CACHE_TTL_MINUTES = 60;
+
+    public function show(): JsonResponse
     {
         return response()->json([
             'data' => $this->getDailyQuota(),
         ]);
     }
 
-    public function update(UpdateProfileRequest $request)
+    public function update(UpdateProfileRequest $request): JsonResponse
     {
-        Cache::forget('daily_quota_texts_data');
-        Cache::forget('daily_quota_audios_data');
-        Cache::forget('daily_quota_check_audios_data');
-        Cache::forget('daily_quota_speakers_data');
-        Cache::forget('daily_quota_data');
+        Cache::forget(self::CACHE_KEY);
 
         return response()->json([
             'data' => $this->getDailyQuota(),
         ]);
-    }
-
-    private function getDailyQuota(): array
-    {
-        return Cache::remember('daily_quota_data', now()->addHour(), function (): array {
-            return $this->buildDailyQuota();
-        });
     }
 
     /**
-     * @return array<string, int>
+     * @return array<string, int|float|string>
+     */
+    private function getDailyQuota(): array
+    {
+        return Cache::remember(
+            self::CACHE_KEY,
+            now()->addMinutes(self::CACHE_TTL_MINUTES),
+            fn (): array => $this->buildDailyQuota(),
+        );
+    }
+
+    /**
+     * @return array<string, int|float|string>
      */
     private function buildDailyQuota(): array
     {
-        $speakersData = Cache::rememberForever('daily_quota_speakers_data', function () {
-            return User::query()
-                ->where('role', RoleEnum::SPEAKER->value)
-                ->count();
-        });
+        $today = today();
 
-        $textsCount = Text::query()
-            ->where('is_main', true)
-            ->where('file_id', 8)
+        $speakersCount = User::query()
+            ->where('role', RoleEnum::SPEAKER->value)
             ->count();
-
-        $errorTextsCount = Text::query()
-            ->where('is_main', true)
-            ->where('file_id', 8)
-            ->where('has_text_error', true)
-            ->count();
-
-        // $editFinishedTextsCount = Text::query()
-        //     ->whereNotNull('edit_finished_at')
-        //     ->count();
-        $editFinishedTextsCount = 0;
-
-        // $editNotFinishedTextsCount = Text::query()
-        //     ->whereNull('edit_finished_at')
-        //     ->count();
-        $editNotFinishedTextsCount = 0;
 
         $usersCount = User::query()
             ->whereIn('role', [RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])
@@ -91,53 +76,88 @@ class DailyQuotaController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $audioFinishedTextsCount = Text::query()
-            ->where('file_id', 8)
-            ->where('is_main', true)
-            ->sum('audio_count');
+        $textsCount = Text::query()->mainFile()->count();
 
-        $audioNotFinishedTextsCount = Text::query()
-            ->where('file_id', 8)
-            ->where('is_main', true)
-            ->count() - $audioFinishedTextsCount;
+        $errorTextsCount = Text::query()
+            ->mainFile()
+            ->where('has_text_error', true)
+            ->count();
+
+        $editFinishedTextsCount = Text::query()
+            ->whereNotNull('edit_finished_at')
+            ->count();
+
+        $editNotFinishedTextsCount = Text::query()
+            ->whereNull('edit_finished_at')
+            ->count();
+
+        $audioFinishedTextsCount = (int) Text::query()->mainFile()->sum('audio_count');
+
+        $audioNotFinishedTextsCount = $textsCount - $audioFinishedTextsCount;
 
         $moderatorFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn ($q) => $q->where('is_main', true))
-            ->whereHas('text', fn ($q) => $q->where('file_id', 8))
+            ->whereHas('text', fn (Builder $query) => $query->mainFile())
             ->whereNotNull('is_correct')
             ->count();
 
         $moderatorNotFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn ($q) => $q->where('is_main', true))
-            ->whereHas('text', fn ($q) => $q->where('file_id', 8))
+            ->whereHas('text', fn (Builder $query) => $query->mainFile())
             ->whereNull('is_correct')
             ->whereNotNull('speak_finished_at')
             ->count();
 
-        $dailyQuotaTextsCount = Cache::rememberForever('daily_quota_texts_data', function () {
-            return Text::query()
-                ->whereNull('edit_finished_at')
-                ->orWhere('edit_finished_at', '>=', today())
-                ->count();
-        });
+        $dailyQuotaTextsCount = Text::query()
+            ->where(function (Builder $query) use ($today): void {
+                $query->whereNull('edit_finished_at')
+                    ->orWhere('edit_finished_at', '>=', $today);
+            })
+            ->count();
 
-        $dailyQuotaAudiosCount = Cache::rememberForever('daily_quota_audios_data', function () {
-            return Text::query()
-                ->whereNull('speak_finished_at')
-                ->orWhere('speak_finished_at', '>=', today())
-                ->count();
-        });
+        $dailyQuotaAudiosCount = Text::query()
+            ->where(function (Builder $query) use ($today): void {
+                $query->whereNull('speak_finished_at')
+                    ->orWhere('speak_finished_at', '>=', $today);
+            })
+            ->count();
 
-        $dailyQuotaCheckAudiosCount = Cache::rememberForever('daily_quota_check_audios_data', function () {
-            return Text::query()
-                ->whereNotNull('speak_finished_at')
-                ->whereNull('moderator_finished_at')
-                ->orWhere('moderator_finished_at', '>=', today())
-                ->count();
-        });
+        $dailyQuotaCheckAudiosCount = Text::query()
+            ->whereNotNull('speak_finished_at')
+            ->where(function (Builder $query) use ($today): void {
+                $query->whereNull('moderator_finished_at')
+                    ->orWhere('moderator_finished_at', '>=', $today);
+            })
+            ->count();
+
+        $editFinishedTodayCount = Text::query()
+            ->where('edit_finished_at', '>=', $today)
+            ->count();
+
+        $speakFinishedTodayCount = Audio::query()
+            ->where('speak_finished_at', '>=', $today)
+            ->count();
+
+        $moderatorFinishedTodayCount = Audio::query()
+            ->where('moderator_finished_at', '>=', $today)
+            ->count();
+
+        $totalAudiosCount = Audio::query()
+            ->whereHas('text', fn (Builder $query) => $query->mainFile())
+            ->count();
+
+        $totalAudioDurationSeconds = (int) Audio::query()
+            ->whereHas('text', fn (Builder $query) => $query->mainFile())
+            ->sum('edit_converted_audio_duration');
+
+        $errorTextsPercent = $textsCount > 0
+            ? round($errorTextsCount / $textsCount * 100, 2)
+            : 0.0;
+
+        $audioProgressPercent = $textsCount > 0
+            ? round($audioFinishedTextsCount / $textsCount * 100, 2)
+            : 0.0;
 
         return [
-            'speakers_count' => $speakersData,
+            'speakers_count' => $speakersCount,
             'users_count' => $usersCount,
             'active_editors_count' => $activeEditorsCount,
             'active_speaker_count' => $activeSpeakersCount,
@@ -153,6 +173,15 @@ class DailyQuotaController extends Controller
             'moderator_finished_audios_count' => $moderatorFinishedAudiosCount,
             'moderator_not_finished_audios_count' => $moderatorNotFinishedAudiosCount,
             'daily_quota_check_audios_count' => $dailyQuotaCheckAudiosCount,
+            'edit_finished_today_count' => $editFinishedTodayCount,
+            'speak_finished_today_count' => $speakFinishedTodayCount,
+            'moderator_finished_today_count' => $moderatorFinishedTodayCount,
+            'total_audios_count' => $totalAudiosCount,
+            'total_audio_duration_seconds' => $totalAudioDurationSeconds,
+            'total_audio_duration_hours' => round($totalAudioDurationSeconds / 3600, 2),
+            'error_texts_percent' => $errorTextsPercent,
+            'audio_progress_percent' => $audioProgressPercent,
+            'generated_at' => now()->toIso8601String(),
         ];
     }
 }
