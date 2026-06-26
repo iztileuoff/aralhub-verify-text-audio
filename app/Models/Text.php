@@ -119,6 +119,15 @@ class Text extends Model
         });
     }
 
+    /**
+     * Limit the query to the main texts of the primary dataset file.
+     */
+    public function scopeMainFile(Builder $query): Builder
+    {
+        return $query->where('is_main', true)
+            ->where('file_id', config('dataset.main_file_id'));
+    }
+
     public function editUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'edit_user_id');

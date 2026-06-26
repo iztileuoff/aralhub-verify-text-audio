@@ -25,4 +25,15 @@ class TextFactory extends Factory
             'edit_tokenized_transcript' => fake()->sentence(),
         ];
     }
+
+    /**
+     * Indicate that the text belongs to the primary dataset file.
+     */
+    public function main(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'file_id' => config('dataset.main_file_id'),
+            'is_main' => true,
+        ]);
+    }
 }
