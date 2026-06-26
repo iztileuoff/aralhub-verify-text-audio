@@ -2,6 +2,7 @@
 
 use App\Enums\RoleEnum;
 use App\Models\Audio;
+use App\Models\Specialization;
 use App\Models\Text;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,4 +41,34 @@ it('rejects an invalid date format', function () {
     $this->getJson(route('admin.verify.users', ['date' => '20-06-2026']))
         ->assertUnprocessable()
         ->assertJsonValidationErrorFor('date');
+});
+
+it('filters users by their specialization', function () {
+    $wanted = Specialization::factory()->create();
+    $other = Specialization::factory()->create();
+
+    $matching = User::factory()->create(['role' => RoleEnum::SPEAKER->value, 'specialization_id' => $wanted->id]);
+    User::factory()->create(['role' => RoleEnum::SPEAKER->value, 'specialization_id' => $other->id]);
+
+    $ids = collect($this->getJson(route('admin.verify.users', ['specialization_id' => $wanted->id]))->json('data'))
+        ->pluck('id');
+
+    expect($ids->all())->toBe([$matching->id]);
+});
+
+it('rejects an unknown specialization_id', function () {
+    $this->getJson(route('admin.verify.users', ['specialization_id' => 999999]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrorFor('specialization_id');
+});
+
+it('keeps the super admin excluded when searching by name', function () {
+    $superAdmin = User::factory()->create(['role' => RoleEnum::SUPER_ADMIN->value, 'first_name' => 'Zenith']);
+    $speaker = User::factory()->create(['role' => RoleEnum::SPEAKER->value, 'first_name' => 'Zenith']);
+
+    $ids = collect($this->getJson(route('admin.verify.users', ['search' => 'Zenith']))->json('data'))
+        ->pluck('id');
+
+    expect($ids)->toContain($speaker->id)
+        ->not->toContain($superAdmin->id);
 });
