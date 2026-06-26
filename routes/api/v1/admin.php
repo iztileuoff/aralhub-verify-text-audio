@@ -52,10 +52,8 @@ Route::group([
     'as' => 'admin.',
     'middleware' => ['auth:sanctum'],
 ], function () {
-    Route::apiSingletons([
-        'profile' => ProfileController::class,
-        'daily/quota/texts' => DailyQuotaController::class,
-    ]);
+    Route::apiSingleton('profile', ProfileController::class);
+    Route::apiSingleton('daily/quota/texts', DailyQuotaController::class)->names('daily.quota.texts');
 
     Route::apiResource('roles', RoleController::class)->only('index');
     Route::apiResource('users', UserController::class);
