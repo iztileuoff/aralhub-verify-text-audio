@@ -19,7 +19,7 @@ it('exports only correct audios without a converted duration for the given file'
     $text = Text::factory()->create(['file_id' => $file->id]);
     $otherText = Text::factory()->create(['file_id' => $otherFile->id]);
 
-    Audio::factory()->create([
+    $candidate = Audio::factory()->create([
         'text_id' => $text->id,
         'edit_audio_filename' => 'audio/candidate.mp3',
         'is_correct' => true,
@@ -55,7 +55,7 @@ it('exports only correct audios without a converted duration for the given file'
     $contents = file_get_contents(storage_path('app/test_audio_filenames.txt'));
 
     expect($contents)
-        ->toContain('candidate.mp3')
+        ->toContain("{$candidate->id};candidate.mp3")
         ->not->toContain('audio/')
         ->not->toContain('incorrect.mp3')
         ->not->toContain('withduration.mp3')

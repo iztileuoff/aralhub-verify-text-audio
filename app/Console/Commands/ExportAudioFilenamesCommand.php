@@ -20,7 +20,7 @@ class ExportAudioFilenamesCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Export filenames of correct audios that still need a converted duration for the Python script';
+    protected $description = 'Export "id;filename" pairs of correct audios that still need a converted duration for the Python script';
 
     /**
      * Execute the console command.
@@ -44,7 +44,7 @@ class ExportAudioFilenamesCommand extends Command
         foreach ($audios as $audio) {
             $audioFilename = preg_replace('#^audio/#', '', $audio->edit_audio_filename);
 
-            fwrite($file, $audioFilename.PHP_EOL);
+            fwrite($file, $audio->id.';'.$audioFilename.PHP_EOL);
 
             $count++;
         }

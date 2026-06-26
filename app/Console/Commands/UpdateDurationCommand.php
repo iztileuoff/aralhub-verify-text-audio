@@ -9,7 +9,7 @@ class UpdateDurationCommand extends Command
 {
     protected $signature = 'update:duration {--filename=result.txt}';
 
-    protected $description = 'Update converted audio durations from the Python script result file';
+    protected $description = 'Update converted audio durations from the Python script result file ("id;duration" per line)';
 
     public function handle(): void
     {
@@ -18,17 +18,16 @@ class UpdateDurationCommand extends Command
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
         foreach ($lines as $line) {
-            [$filename, $duration] = explode(';', $line);
+            [$id, $duration] = explode(';', trim($line));
 
-            $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-            $audio = Audio::where('edit_audio_filename', 'like', "audio/{$filenameWithoutExt}.%")->first();
+            $audio = Audio::find((int) $id);
 
-            if ($audio && $audio->edit_converted_audio_duration == null) {
+            if ($audio && $audio->edit_converted_audio_duration === null) {
                 $audio->update([
                     'edit_converted_audio_duration' => (int) $duration,
                 ]);
             } else {
-                $this->info("Not found: {$filename}".PHP_EOL);
+                $this->info("Skipped (not found or already set): {$id}".PHP_EOL);
             }
         }
 
