@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1\Guest;
 
 use App\Http\Controllers\Controller;
 use App\Models\Audio;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Guest', weight: 120)]
 class AudioUploadController extends Controller
 {
     public function __invoke(Request $request)

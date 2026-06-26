@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Audio;
 use Carbon\CarbonPeriod;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Profile', weight: 20)]
 class ProfileReportController extends Controller
 {
     public function __invoke(Request $request): JsonResponse

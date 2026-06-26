@@ -8,10 +8,12 @@ use App\Http\Requests\Api\V1\Admin\UpdateProfileRequest;
 use App\Models\Audio;
 use App\Models\Text;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
+#[Group(name: 'Dashboard', weight: 30)]
 class DailyQuotaController extends Controller
 {
     private const CACHE_KEY = 'daily_quota_data';

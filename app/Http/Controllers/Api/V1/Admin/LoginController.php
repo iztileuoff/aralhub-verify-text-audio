@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\LoginRequest;
 use App\Http\Resources\V1\Admin\ProfileResource;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+#[Group(name: 'Authentication', weight: 10)]
 class LoginController extends Controller
 {
     public function __invoke(LoginRequest $request)

@@ -8,10 +8,15 @@ use App\Http\Requests\Api\V1\Verify\StoreSpeakTextRequest;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Jobs\ProcessAudioJob;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Support\Facades\Storage;
 
+#[Group(name: 'Verify - Speaking', weight: 100)]
 class SpeakTextAudioCompleteController extends Controller
 {
+    /**
+     * Сохранить записанное аудио для текста.
+     */
     public function __invoke(StoreSpeakTextRequest $request, Text $text)
     {
         if ($text->edit_audio_filename) {

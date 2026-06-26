@@ -4,10 +4,19 @@ namespace App\Enums;
 
 enum RoleEnum: int
 {
+    /** Полный доступ ко всем разделам и пользователям. */
     case SUPER_ADMIN = 1;
+
+    /** Управляет своими пользователями и контентом. */
     case ADMIN = 2;
+
+    /** Редактирует тексты. */
     case EDITOR = 3;
+
+    /** Озвучивает тексты (записывает аудио). */
     case SPEAKER = 4;
+
+    /** Проверяет тексты и аудио. */
     case MODERATOR = 5;
 
     public function getLabelText(): string

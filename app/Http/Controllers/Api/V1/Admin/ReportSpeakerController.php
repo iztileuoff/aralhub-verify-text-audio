@@ -7,10 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Audio;
 use App\Models\User;
 use Carbon\CarbonPeriod;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Reports & Exports', weight: 80)]
 class ReportSpeakerController extends Controller
 {
     private const int FILE_ID = 8;

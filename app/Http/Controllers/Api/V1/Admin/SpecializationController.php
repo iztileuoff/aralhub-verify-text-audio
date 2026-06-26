@@ -7,8 +7,10 @@ use App\Http\Requests\Api\V1\Admin\StoreSpecializationRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateSpecializationRequest;
 use App\Http\Resources\V1\Admin\SpecializationResource;
 use App\Models\Specialization;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Specializations', weight: 70)]
 class SpecializationController extends Controller
 {
     public function index(Request $request)

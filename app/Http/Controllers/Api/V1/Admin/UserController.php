@@ -8,8 +8,10 @@ use App\Http\Requests\Api\V1\Admin\StoreUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateUserRequest;
 use App\Http\Resources\V1\Admin\UserResource;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Users & Roles', weight: 40)]
 class UserController extends Controller
 {
     public function index(Request $request)

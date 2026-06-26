@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Api\V1\Verify;
 
 use App\Http\Controllers\Controller;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Verify - Speaking', weight: 100)]
 class SpeakTextErrorController extends Controller
 {
+    /**
+     * Пометить текст как ошибочный.
+     */
     public function __invoke(Request $request, Text $text): JsonResponse
     {
         $text->update([

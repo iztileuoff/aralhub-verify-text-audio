@@ -6,8 +6,10 @@ use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Guest\UserResource;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Guest', weight: 120)]
 class AdminController extends Controller
 {
     public function __invoke(Request $request)

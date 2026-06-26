@@ -7,9 +7,11 @@ use App\Http\Requests\Api\V1\Admin\UploadFileRequest;
 use App\Http\Resources\V1\Admin\FileResource;
 use App\Jobs\ProcessTsvFileJob;
 use App\Models\File;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+#[Group(name: 'Files & Datasets', weight: 60)]
 class FileController extends Controller
 {
     public function index(Request $request)
