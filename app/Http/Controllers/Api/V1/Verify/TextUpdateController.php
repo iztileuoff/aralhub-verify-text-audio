@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Action;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Verify - Editing', weight: 90)]
 class TextUpdateController extends Controller
 {
+    /**
+     * Обновить уже отредактированный текст.
+     */
     public function __invoke(Request $request, Text $text)
     {
         $request->validate([

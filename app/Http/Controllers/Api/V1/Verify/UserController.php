@@ -6,10 +6,15 @@ use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Verify\UserResource;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Verify - Editing', weight: 90)]
 class UserController extends Controller
 {
+    /**
+     * Список исполнителей с дневной статистикой выполненной работы.
+     */
     public function __invoke(Request $request)
     {
         $request->validate([

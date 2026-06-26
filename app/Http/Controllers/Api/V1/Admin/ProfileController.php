@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\UpdateProfileRequest;
 use App\Http\Resources\V1\Admin\ProfileResource;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Profile', weight: 20)]
 class ProfileController extends Controller
 {
     public function show(Request $request)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use OpenSpout\Common\Exception\InvalidArgumentException;
 use OpenSpout\Common\Exception\IOException;
@@ -11,6 +12,7 @@ use OpenSpout\Common\Exception\UnsupportedTypeException;
 use OpenSpout\Writer\Exception\WriterNotOpenedException;
 use Rap2hpoutre\FastExcel\FastExcel;
 
+#[Group(name: 'Reports & Exports', weight: 80)]
 class ExportReportAllUserController extends Controller
 {
     /**

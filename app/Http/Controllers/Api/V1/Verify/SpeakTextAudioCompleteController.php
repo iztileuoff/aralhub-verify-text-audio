@@ -7,13 +7,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Verify\StoreSpeakTextRequest;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
+#[Group(name: 'Verify - Speaking', weight: 100)]
 class SpeakTextAudioCompleteController extends Controller
 {
+    /**
+     * Сохранить записанное аудио для текста.
+     */
     public function __invoke(StoreSpeakTextRequest $request, Text $text): JsonResponse
     {
         try {

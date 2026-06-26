@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\TextRequest;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Texts', weight: 50)]
 class TextController extends Controller
 {
     public function index(Request $request)

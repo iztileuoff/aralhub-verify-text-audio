@@ -4,7 +4,10 @@ namespace App\Enums;
 
 enum GenderEnum: string
 {
+    /** Мужчина. */
     case MALE = 'MALE';
+
+    /** Женщина. */
     case FEMALE = 'FEMALE';
 
     public function getLabelText(): string

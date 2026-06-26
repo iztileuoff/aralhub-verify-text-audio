@@ -29,7 +29,24 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => '',
+        'description' => <<<'MD'
+            API платформы верификации текста и аудио (Aralhub).
+
+            ## Аутентификация
+            Большинство эндпоинтов защищены Laravel Sanctum. Получите токен через
+            `POST /api/admin/auth/login` и передавайте его в заголовке
+            `Authorization: Bearer <token>`. Эндпоинты группы **Guest** доступны без токена.
+
+            ## Формат ошибок
+            - `401` — не аутентифицирован;
+            - `403` — недостаточно прав;
+            - `404` — ресурс не найден;
+            - `422` — ошибка валидации (`{"message": "...", "errors": {"field": ["..."]}}`);
+            - `5xx` — внутренняя ошибка сервера.
+
+            ## Роли
+            `SUPER_ADMIN`, `ADMIN`, `EDITOR`, `SPEAKER`, `MODERATOR`.
+            MD,
     ],
 
     /*
@@ -39,7 +56,7 @@ return [
         /*
          * Define the title of the documentation's website. App name is used when this config is `null`.
          */
-        'title' => null,
+        'title' => 'Aralhub Verify API',
 
         /*
          * Define the theme of the documentation. Available options are `light`, `dark`, and `system`.
@@ -129,7 +146,7 @@ return [
 
     'middleware' => [
         'web',
-        //        RestrictedDocsAccess::class,
+        RestrictedDocsAccess::class,
     ],
 
     'extensions' => [],

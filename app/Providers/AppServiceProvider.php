@@ -26,8 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('viewApiDocs', function (User $user) {
-            return $user->can('viewApiDocs');
+        Gate::define('viewApiDocs', function (User $user): bool {
+            return in_array($user->role, [RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN], true);
         });
 
         Gate::define('viewPulse', function (User $user): bool {

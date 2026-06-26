@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\V1\Verify;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+#[Group(name: 'Verify - Speaking', weight: 100)]
 class SpeakTextController extends Controller
 {
     /**
+     * Получить следующий текст для озвучивания.
+     *
      * @throws \Throwable
      */
     public function __invoke(Request $request)

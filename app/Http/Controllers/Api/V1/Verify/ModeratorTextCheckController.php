@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Api\V1\Verify;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Verify - Moderation', weight: 110)]
 class ModeratorTextCheckController extends Controller
 {
+    /**
+     * Принять решение по тексту (корректен / некорректен).
+     */
     public function __invoke(Request $request, Text $text)
     {
         $request->validate([
