@@ -31,10 +31,10 @@ class ExportReportAllUserController extends Controller
         $users = User::query()
             ->where('is_verified', true)
             ->withCount([
-                'finishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
-                'isCorrectTrueAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
-                'isCorrectFalseAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
-                'dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date),
+                'finishedSpeakAudio' => fn ($q) => $q->onDate('speak_finished_at', $date),
+                'isCorrectTrueAudio' => fn ($q) => $q->onDate('speak_finished_at', $date),
+                'isCorrectFalseAudio' => fn ($q) => $q->onDate('speak_finished_at', $date),
+                'dateFinishedModerationAudio' => fn ($q) => $q->onDate('moderator_finished_at', $date),
             ])
             ->get();
 

@@ -152,6 +152,24 @@ it('aggregates audio totals, duration and today metrics for the main file', func
         ->and($data['moderator_not_finished_audios_count'])->toBe(1);
 });
 
+it('aggregates edit progress and daily-quota text counts', function () {
+    Text::factory()->main()->create(['edit_finished_at' => now(), 'audio_count' => 1]);
+    Text::factory()->main()->create(['edit_finished_at' => now()->subWeek(), 'audio_count' => 0]);
+    Text::factory()->main()->create(['edit_finished_at' => null, 'audio_count' => null]);
+
+    $data = $this->getJson(route('admin.daily.quota.texts.show'))->json('data');
+
+    expect($data['texts_count'])->toBe(3)
+        ->and($data['edit_finished_texts_count'])->toBe(2)
+        ->and($data['edit_not_finished_texts_count'])->toBe(1)
+        ->and($data['edit_finished_today_count'])->toBe(1)
+        ->and($data['audio_finished_texts_count'])->toBe(1)
+        ->and($data['audio_not_finished_texts_count'])->toBe(2)
+        ->and((float) $data['audio_progress_percent'])->toBe(33.33)
+        ->and($data['daily_quota_texts_count'])->toBe(2)
+        ->and($data['daily_quota_audios_count'])->toBe(3);
+});
+
 it('rebuilds the cached quota only when refreshed via update', function () {
     Text::factory()->main()->create();
 
