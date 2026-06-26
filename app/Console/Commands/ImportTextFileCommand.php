@@ -31,7 +31,7 @@ class ImportTextFileCommand extends Command
 
         $lines = array_values(array_filter(
             array_map('trim', preg_split('/\r\n|\r|\n/', $disk->get($filename))),
-            fn(string $line): bool => $line !== '',
+            fn (string $line): bool => $line !== '',
         ));
 
         // Store the raw file in a specific directory
@@ -69,7 +69,7 @@ class ImportTextFileCommand extends Command
                     // mb_str_split корректно разбивает каракалпакские символы (қ, ө, ұ и т.д.)
                     $chars = mb_str_split($word);
 
-                    return implode(' ', $chars) . ' |';
+                    return implode(' ', $chars).' |';
                 }, $words);
 
                 $editTokenizedTranscript = implode(' ', $tokenizedParts);

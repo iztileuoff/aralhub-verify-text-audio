@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
-use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenSpout\Common\Exception\InvalidArgumentException;
 use OpenSpout\Common\Exception\IOException;
 use OpenSpout\Common\Exception\UnsupportedTypeException;
@@ -33,10 +31,10 @@ class ExportReportAllUserController extends Controller
         $users = User::query()
             ->where('is_verified', true)
             ->withCount([
-                'finishedSpeakAudio' => fn($q) => $q->whereDate('speak_finished_at', $date),
-                'isCorrectTrueAudio' => fn($q) => $q->whereDate('speak_finished_at', $date),
-                'isCorrectFalseAudio' => fn($q) => $q->whereDate('speak_finished_at', $date),
-                'dateFinishedModerationAudio' => fn($q) => $q->whereDate('moderator_finished_at', $date),
+                'finishedSpeakAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
+                'isCorrectTrueAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
+                'isCorrectFalseAudio' => fn ($q) => $q->whereDate('speak_finished_at', $date),
+                'dateFinishedModerationAudio' => fn ($q) => $q->whereDate('moderator_finished_at', $date),
             ])
             ->get();
 

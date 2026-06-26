@@ -102,14 +102,14 @@ class DailyQuotaController extends Controller
             ->count() - $audioFinishedTextsCount;
 
         $moderatorFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn($q) => $q->where('is_main', true))
-            ->whereHas('text', fn($q) => $q->where('file_id', 8))
+            ->whereHas('text', fn ($q) => $q->where('is_main', true))
+            ->whereHas('text', fn ($q) => $q->where('file_id', 8))
             ->whereNotNull('is_correct')
             ->count();
 
         $moderatorNotFinishedAudiosCount = Audio::query()
-            ->whereHas('text', fn($q) => $q->where('is_main', true))
-            ->whereHas('text', fn($q) => $q->where('file_id', 8))
+            ->whereHas('text', fn ($q) => $q->where('is_main', true))
+            ->whereHas('text', fn ($q) => $q->where('file_id', 8))
             ->whereNull('is_correct')
             ->whereNotNull('speak_finished_at')
             ->count();

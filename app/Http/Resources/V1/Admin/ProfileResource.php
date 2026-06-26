@@ -35,12 +35,12 @@ class ProfileResource extends JsonResource
             'limit_moderation_audio' => 1000,
             'audio' => [
                 'written_count' => $this->whenHas('finished_speak_audio_count'),
-                'checked_count' => $this->whenHas('is_correct_true_audio_count', fn(): int => $this->is_correct_true_audio_count + $this->is_correct_false_audio_count),
+                'checked_count' => $this->whenHas('is_correct_true_audio_count', fn (): int => $this->is_correct_true_audio_count + $this->is_correct_false_audio_count),
                 'correct_count' => $this->whenHas('is_correct_true_audio_count'),
                 'incorrect_count' => $this->whenHas('is_correct_false_audio_count'),
             ],
             'moderation' => [
-                'checked_count' => $this->whenHas('moderation_correct_audio_count', fn(): int => $this->moderation_correct_audio_count + $this->moderation_incorrect_audio_count),
+                'checked_count' => $this->whenHas('moderation_correct_audio_count', fn (): int => $this->moderation_correct_audio_count + $this->moderation_incorrect_audio_count),
                 'correct_count' => $this->whenHas('moderation_correct_audio_count'),
                 'incorrect_count' => $this->whenHas('moderation_incorrect_audio_count'),
             ],
