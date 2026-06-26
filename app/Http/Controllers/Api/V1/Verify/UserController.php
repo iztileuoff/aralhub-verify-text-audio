@@ -14,6 +14,7 @@ class UserController extends Controller
     {
         $request->validate([
             'date' => ['sometimes', 'date_format:Y-m-d'],
+            'specialization_id' => ['sometimes', 'integer', 'exists:specializations,id'],
         ]);
 
         $date = $request->input('date', now()->format('Y-m-d'));
@@ -21,7 +22,7 @@ class UserController extends Controller
         $users = User::query()
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
-            ->when($request->filled('specialization_id'), fn ($q) => $q->search($request->input('specialization_id')))
+            ->when($request->filled('specialization_id'), fn ($q) => $q->where('specialization_id', $request->input('specialization_id')))
             ->when(auth()->user()->role === RoleEnum::ADMIN, fn ($q) => $q->where('admin_id', auth()->user()->id))
             ->withCount(['finishedEditTexts', 'finishedSpeakTexts', 'finishedModerationTexts'])
             ->withCount(['dateFinishedSpeakAudio' => fn ($q) => $q->onDate('speak_finished_at', $date)])
