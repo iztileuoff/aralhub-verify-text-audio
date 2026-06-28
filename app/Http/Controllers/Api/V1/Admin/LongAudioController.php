@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Admin\LongAudioRequest;
 use App\Http\Resources\V1\Admin\LongAudioResource;
 use App\Models\Audio;
 use Dedoc\Scramble\Attributes\Group;
+use Illuminate\Database\Eloquent\Builder;
 
 #[Group(name: 'Texts', weight: 50)]
 class LongAudioController extends Controller
@@ -15,6 +16,7 @@ class LongAudioController extends Controller
     {
         $audio = Audio::query()
             ->pendingSplit()
+            ->whereHas('text', fn (Builder $query): Builder => $query->where('file_id', config('dataset.main_file_id')))
             ->with('text:id,edit_original_transcript,edit_normalized_transcript,edit_tokenized_transcript')
             ->orderBy('id', $request->input('direction', 'asc'))
             ->paginate($request->input('per_page') ?? 10);
