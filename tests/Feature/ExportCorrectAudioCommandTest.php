@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AudioSplitStatusEnum;
 use App\Models\Audio;
 use App\Models\Export;
 use App\Models\File;
@@ -68,6 +69,39 @@ it('exports only new correct audios and stamps them as exported', function () {
         ->and($export->exported_count)->toBe(1)
         ->and($new->fresh()->exported_at)->not->toBeNull()
         ->and($new->fresh()->export_id)->toBe($export->id);
+});
+
+it('excludes audios at or beyond the 30s limit but exports their shorter split parts', function () {
+    $file = File::factory()->create();
+    $text = Text::factory()->create(['file_id' => $file->id]);
+
+    Audio::factory()->create([
+        'text_id' => $text->id,
+        'edit_audio_filename' => 'audio/toolong.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES,
+        'split_status' => AudioSplitStatusEnum::SPLIT,
+        'exported_at' => null,
+    ]);
+
+    Audio::factory()->create([
+        'text_id' => $text->id,
+        'edit_audio_filename' => 'audio/half.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES - 1,
+        'exported_at' => null,
+    ]);
+
+    Artisan::call('audio:export-correct', [
+        '--filename' => 'test_correct.tsv',
+        '--file-id' => $file->id,
+    ]);
+
+    $contents = file_get_contents(storage_path('app/test_correct.tsv'));
+
+    expect($contents)
+        ->toContain('half.wav')
+        ->not->toContain('toolong.wav');
 });
 
 it('skips already exported audios on re-run and re-exports everything with --all', function () {

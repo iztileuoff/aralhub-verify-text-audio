@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AudioSplitStatusEnum;
 use App\Enums\GenderEnum;
 use Carbon\Carbon;
 use Database\Factories\AudioFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Audio extends Model
@@ -17,8 +19,18 @@ class Audio extends Model
     /** @use HasFactory<AudioFactory> */
     use HasFactory;
 
+    /** Частота дискретизации всех конвертированных аудио. */
+    public const SAMPLE_RATE = 16000;
+
+    /** Максимальная длительность одного аудио для STT, в секундах. */
+    public const STT_MAX_DURATION_SECONDS = 30;
+
+    /** Порог длительности STT в сэмплах (edit_converted_audio_duration хранится в сэмплах). */
+    public const STT_MAX_DURATION_SAMPLES = self::SAMPLE_RATE * self::STT_MAX_DURATION_SECONDS;
+
     protected $fillable = [
         'text_id',
+        'parent_audio_id',
         'edit_audio_filename',
         'edit_converted_audio_filename',
         'edit_converted_audio_duration',
@@ -30,6 +42,7 @@ class Audio extends Model
         'edit_speaker_gender',
         'moderator_id',
         'is_correct',
+        'split_status',
         'moderator_started_at',
         'moderator_finished_at',
     ];
@@ -38,6 +51,7 @@ class Audio extends Model
     {
         return [
             'text_id' => 'integer',
+            'parent_audio_id' => 'integer',
             'edit_audio_filename' => 'string',
             'edit_converted_audio_filename' => 'string',
             'edit_converted_audio_duration' => 'integer',
@@ -49,6 +63,7 @@ class Audio extends Model
             'edit_speaker_gender' => GenderEnum::class,
             'moderator_id' => 'integer',
             'is_correct' => 'boolean',
+            'split_status' => AudioSplitStatusEnum::class,
             'moderator_started_at' => 'datetime',
             'moderator_finished_at' => 'datetime',
             'created_at' => 'datetime',
@@ -76,6 +91,32 @@ class Audio extends Model
     }
 
     /**
+     * Limit the query to audios that exceed the STT length limit and still
+     * need processing (not yet split or marked unsplittable).
+     */
+    public function scopePendingSplit(Builder $query): Builder
+    {
+        return $query
+            ->where('edit_converted_audio_duration', '>=', self::STT_MAX_DURATION_SAMPLES)
+            ->whereNotIn('split_status', [
+                AudioSplitStatusEnum::SPLIT,
+                AudioSplitStatusEnum::UNSPLITTABLE,
+            ]);
+    }
+
+    /**
+     * Limit the query to audios within the STT length limit (or without a
+     * known duration yet); excludes long audios that must be split first.
+     */
+    public function scopeWithinSttLimit(Builder $query): Builder
+    {
+        return $query->where(function (Builder $inner): void {
+            $inner->whereNull('edit_converted_audio_duration')
+                ->orWhere('edit_converted_audio_duration', '<', self::STT_MAX_DURATION_SAMPLES);
+        });
+    }
+
+    /**
      * Constrain a datetime column to a single calendar day using an
      * index-friendly range instead of wrapping the column in DATE().
      */
@@ -92,6 +133,22 @@ class Audio extends Model
     public function text(): BelongsTo
     {
         return $this->belongsTo(Text::class);
+    }
+
+    /**
+     * The original long audio this audio was split from.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Audio::class, 'parent_audio_id');
+    }
+
+    /**
+     * The shorter audios this long audio was split into.
+     */
+    public function splitParts(): HasMany
+    {
+        return $this->hasMany(Audio::class, 'parent_audio_id');
     }
 
     public function export(): BelongsTo
