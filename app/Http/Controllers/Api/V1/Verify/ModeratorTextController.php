@@ -28,6 +28,7 @@ class ModeratorTextController extends Controller
         }
 
         $text = Text::query()
+            ->excludingSplitParts()
             ->whereNotNull('speak_finished_at')
             ->whereNull('moderator_started_at')
             ->whereNull('is_correct')

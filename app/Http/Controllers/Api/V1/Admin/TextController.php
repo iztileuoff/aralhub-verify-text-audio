@@ -17,6 +17,7 @@ class TextController extends Controller
     public function index(Request $request)
     {
         $texts = Text::query()
+            ->excludingSplitParts()
             ->when($request->filled('file_id'), fn ($q) => $q->where('file_id', $request->input('file_id')))
             ->when($request->filled('edit_user_id'), fn ($q) => $q->where('edit_user_id', $request->input('edit_user_id')))
             ->when($request->filled('text_status'), function (Builder $query) use ($request) {

@@ -52,6 +52,7 @@ class Text extends Model
         'audio_male_count',
         'audio_female_count',
         'is_main',
+        'is_split_part',
         'has_text_error',
         'text_error_reported_by',
         'text_error_reported_at',
@@ -93,6 +94,7 @@ class Text extends Model
             'audio_male_count' => 'integer',
             'audio_female_count' => 'integer',
             'is_main' => 'boolean',
+            'is_split_part' => 'boolean',
             'has_text_error' => 'boolean',
             'text_error_reported_by' => 'integer',
             'text_error_reported_at' => 'datetime',
@@ -141,6 +143,15 @@ class Text extends Model
     {
         return $query->where('is_main', true)
             ->where('file_id', config('dataset.main_file_id'));
+    }
+
+    /**
+     * Exclude the child texts created for split audio halves; they are not
+     * dataset texts and must stay out of work queues, lists and counters.
+     */
+    public function scopeExcludingSplitParts(Builder $query): Builder
+    {
+        return $query->where('is_split_part', false);
     }
 
     public function editUser(): BelongsTo

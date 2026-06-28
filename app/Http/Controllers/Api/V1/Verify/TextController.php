@@ -29,6 +29,7 @@ class TextController extends Controller
         }
 
         $text = Text::query()
+            ->excludingSplitParts()
             ->whereNotNull('filter_original_transcript')
             ->whereNull('edit_user_id')
             ->inRandomOrder()
