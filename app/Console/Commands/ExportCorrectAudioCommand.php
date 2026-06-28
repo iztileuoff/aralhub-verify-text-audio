@@ -40,6 +40,7 @@ class ExportCorrectAudioCommand extends Command
             ->where('is_correct', true)
             ->whereHas('text', fn (Builder $query) => $query->where('file_id', $fileId))
             ->whereNotNull('edit_converted_audio_duration')
+            ->withinSttLimit()
             ->when(! $all, fn (Builder $query) => $query->whereNull('exported_at'))
             ->lazy();
 
