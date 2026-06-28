@@ -170,6 +170,23 @@ it('aggregates edit progress and daily-quota text counts', function () {
         ->and($data['daily_quota_audios_count'])->toBe(3);
 });
 
+it('excludes split-part texts from the quota counters', function () {
+    Text::factory()->main()->create(['edit_finished_at' => null, 'audio_count' => null]);
+
+    // Child text produced by an audio split: must not inflate any text counter.
+    Text::factory()->create([
+        'is_split_part' => true,
+        'edit_finished_at' => null,
+        'speak_finished_at' => null,
+    ]);
+
+    $data = $this->getJson(route('admin.daily.quota.texts.show'))->json('data');
+
+    expect($data['edit_not_finished_texts_count'])->toBe(1)
+        ->and($data['daily_quota_texts_count'])->toBe(1)
+        ->and($data['daily_quota_audios_count'])->toBe(1);
+});
+
 it('rebuilds the cached quota only when refreshed via update', function () {
     Text::factory()->main()->create();
 

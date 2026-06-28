@@ -37,6 +37,7 @@ class SpeakTextController extends Controller
             }
 
             $baseQuery = Text::query()
+                ->excludingSplitParts()
                 ->where('file_id', config('dataset.main_file_id'))
                 ->where('is_main', true)
                 ->where('has_text_error', false)

@@ -76,6 +76,7 @@ class DailyQuotaController extends Controller
             ->first();
 
         $textStats = Text::query()
+            ->excludingSplitParts()
             ->selectRaw(
                 'SUM(CASE WHEN is_main = 1 AND file_id = ? THEN 1 ELSE 0 END) as texts_count, '.
                 'SUM(CASE WHEN is_main = 1 AND file_id = ? AND has_text_error = 1 THEN 1 ELSE 0 END) as error_texts_count, '.

@@ -63,6 +63,8 @@ it('splits a long audio into two shorter audios with their own texts', function 
         ->and($parts[0]->text->edit_original_transcript)->toBe('first half')
         ->and($parts[1]->text->edit_original_transcript)->toBe('second half')
         ->and($parts[0]->text->file_id)->toBe($file->id)
+        ->and($parts[0]->text->is_split_part)->toBeTrue()
+        ->and($parts[1]->text->is_split_part)->toBeTrue()
         ->and($parts[0]->text->id)->not->toBe($text->id);
 
     Storage::disk('yandex-s3')->assertExists($parts[0]->edit_audio_filename);

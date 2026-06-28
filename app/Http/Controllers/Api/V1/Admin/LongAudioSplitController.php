@@ -50,6 +50,7 @@ class LongAudioSplitController extends Controller
             foreach ($parts as $index => $part) {
                 $text = Text::create([
                     'file_id' => $audio->text?->file_id,
+                    'is_split_part' => true,
                     'edit_original_transcript' => $part['original_transcript'],
                     'edit_normalized_transcript' => $part['normalized_transcript'] ?? null,
                     'edit_tokenized_transcript' => $part['tokenized_transcript'] ?? null,
