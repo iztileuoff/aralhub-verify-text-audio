@@ -3,6 +3,7 @@
 use App\Enums\AudioSplitStatusEnum;
 use App\Enums\RoleEnum;
 use App\Models\Audio;
+use App\Models\File;
 use App\Models\Text;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,21 +15,24 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Storage::fake('yandex-s3');
 
+    $this->file = File::factory()->create();
+    config(['dataset.main_file_id' => $this->file->id]);
+
     Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::ADMIN->value]));
 });
 
 it('lists only audios at or beyond the 30s sample threshold', function () {
-    $atThreshold = Audio::factory()->create([
+    $atThreshold = Audio::factory()->for(Text::factory()->main(), 'text')->create([
         'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES,
     ]);
-    $beyondThreshold = Audio::factory()->create([
+    $beyondThreshold = Audio::factory()->for(Text::factory()->main(), 'text')->create([
         'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES + 16000,
     ]);
 
-    Audio::factory()->create([
+    Audio::factory()->for(Text::factory()->main(), 'text')->create([
         'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES - 1,
     ]);
-    Audio::factory()->create(['edit_converted_audio_duration' => null]);
+    Audio::factory()->for(Text::factory()->main(), 'text')->create(['edit_converted_audio_duration' => null]);
 
     $ids = $this->getJson(route('admin.long.audio'))
         ->assertOk()
@@ -38,16 +42,16 @@ it('lists only audios at or beyond the 30s sample threshold', function () {
 });
 
 it('excludes audios already split or marked unsplittable', function () {
-    $pending = Audio::factory()->create([
+    $pending = Audio::factory()->for(Text::factory()->main(), 'text')->create([
         'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES,
         'split_status' => AudioSplitStatusEnum::PENDING,
     ]);
 
-    Audio::factory()->create([
+    Audio::factory()->for(Text::factory()->main(), 'text')->create([
         'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES,
         'split_status' => AudioSplitStatusEnum::SPLIT,
     ]);
-    Audio::factory()->create([
+    Audio::factory()->for(Text::factory()->main(), 'text')->create([
         'edit_converted_audio_duration' => Audio::STT_MAX_DURATION_SAMPLES,
         'split_status' => AudioSplitStatusEnum::UNSPLITTABLE,
     ]);
@@ -59,8 +63,20 @@ it('excludes audios already split or marked unsplittable', function () {
     expect($ids)->toBe([$pending->id]);
 });
 
+it('excludes pending-split audios whose text belongs to another file', function () {
+    $mainAudio = Audio::factory()->pendingSplit()->for(Text::factory()->main(), 'text')->create();
+
+    Audio::factory()->pendingSplit()->create();
+
+    $ids = $this->getJson(route('admin.long.audio'))
+        ->assertOk()
+        ->json('data.*.id');
+
+    expect($ids)->toBe([$mainAudio->id]);
+});
+
 it('returns duration in samples and seconds plus the text transcript', function () {
-    $text = Text::factory()->create([
+    $text = Text::factory()->main()->create([
         'edit_original_transcript' => 'orig',
         'edit_normalized_transcript' => 'norm',
         'edit_tokenized_transcript' => 'tok',
@@ -84,7 +100,7 @@ it('returns duration in samples and seconds plus the text transcript', function 
 });
 
 it('respects the per_page parameter', function () {
-    Audio::factory()->count(3)->pendingSplit()->create();
+    Audio::factory()->count(3)->pendingSplit()->for(Text::factory()->main(), 'text')->create();
 
     $response = $this->getJson(route('admin.long.audio', ['per_page' => 2]))->assertOk();
 
