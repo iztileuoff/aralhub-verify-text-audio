@@ -22,6 +22,7 @@ class LongAudioResource extends JsonResource
             'original_transcript' => $this->text?->edit_original_transcript,
             'normalized_transcript' => $this->text?->edit_normalized_transcript,
             'tokenized_transcript' => $this->text?->edit_tokenized_transcript,
+            'parts' => self::collection($this->whenLoaded('splitParts')),
         ];
     }
 }

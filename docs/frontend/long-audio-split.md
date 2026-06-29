@@ -140,6 +140,89 @@ POST /api/v1/admin/long/audio/{audio}/unsplittable
 
 ---
 
+## 4. Просмотр результатов (проверка разрезания)
+
+```
+GET /api/v1/admin/long/audio/processed?status=split&per_page=10&direction=desc&page=1
+```
+
+Возвращает уже **обработанные** длинные аудио — для проверки, что разрезание сделано правильно:
+разрезанные (`SPLIT`) приходят вместе со своими 2 частями, а помеченные `UNSPLITTABLE` — с пустым `parts`.
+
+> **Область:** как и список из шага 1 — только аудио основного датасета (`file_id` основного файла).
+
+**Query-параметры (все опциональны):**
+
+| Параметр | Тип | По умолчанию | Примечание |
+|----------|-----|--------------|------------|
+| `status` | string | — (оба) | `split` / `unsplittable`; без параметра — оба статуса |
+| `per_page` | int | 10 | макс. 1000 |
+| `direction` | string | `asc` | `asc` / `desc` (по `id`) |
+| `page` | int | 1 | |
+
+**Ответ `200`** (пагинация Laravel). Каждая запись — оригинал длинного аудио + массив `parts`:
+
+```json
+{
+  "data": [
+    {
+      "id": 123,
+      "text_id": 456,
+      "audio_filename": "abc123.wav",
+      "audio_url": "https://storage.yandexcloud.net/.../audio/abc123.wav",
+      "duration": 512000,
+      "duration_seconds": 32.0,
+      "split_status": "SPLIT",
+      "original_transcript": "полный исходный текст ...",
+      "normalized_transcript": "...",
+      "tokenized_transcript": "...",
+      "parts": [
+        {
+          "id": 901,
+          "text_id": 902,
+          "audio_filename": "part1.wav",
+          "audio_url": "https://storage.yandexcloud.net/.../audio/part1.wav",
+          "duration": 280000,
+          "duration_seconds": 17.5,
+          "split_status": "NONE",
+          "original_transcript": "первая половина текста",
+          "normalized_transcript": "...",
+          "tokenized_transcript": "..."
+        },
+        {
+          "id": 903,
+          "text_id": 904,
+          "audio_filename": "part2.wav",
+          "audio_url": "https://storage.yandexcloud.net/.../audio/part2.wav",
+          "duration": 232000,
+          "duration_seconds": 14.5,
+          "split_status": "NONE",
+          "original_transcript": "вторая половина текста",
+          "normalized_transcript": "...",
+          "tokenized_transcript": "..."
+        }
+      ]
+    }
+  ],
+  "links": { "...": "..." },
+  "meta": { "current_page": 1, "per_page": 10, "total": 12, "last_page": 2 }
+}
+```
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| (поля оригинала) | | те же, что в списке шага 1 |
+| `split_status` | string | здесь всегда `SPLIT` или `UNSPLITTABLE` |
+| `parts` | array | части разрезанного аудио; у `SPLIT` — 2 элемента, у `UNSPLITTABLE` — `[]` |
+| `parts[].audio_url` | string\|null | проигрывать каждую часть и сверять с оригиналом |
+| `parts[].duration` / `duration_seconds` | int / float | длительность части (сэмплы / секунды) |
+| `parts[].original_transcript` и др. | string\|null | текст соответствующей части |
+
+Сценарий проверки: проиграть оригинал (`audio_url`), затем по очереди обе части из `parts`,
+сверить их транскрипты и суммарную длительность с оригиналом.
+
+---
+
 ## Пользовательский сценарий
 
 1. Открыть список (`GET long/audio`).
