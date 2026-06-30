@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Admin\FinishedEditTextController;
 use App\Http\Controllers\Api\V1\Admin\LoginController;
 use App\Http\Controllers\Api\V1\Admin\LogoutController;
 use App\Http\Controllers\Api\V1\Admin\LongAudioController;
+use App\Http\Controllers\Api\V1\Admin\LongAudioPartTextUpdateController;
 use App\Http\Controllers\Api\V1\Admin\LongAudioProcessedController;
 use App\Http\Controllers\Api\V1\Admin\LongAudioSplitController;
 use App\Http\Controllers\Api\V1\Admin\LongAudioUnsplittableController;
@@ -85,6 +86,7 @@ Route::group([
 
     Route::get('long/audio', LongAudioController::class)->name('long.audio');
     Route::get('long/audio/processed', LongAudioProcessedController::class)->name('long.audio.processed');
+    Route::patch('long/audio/part/{text}/text', LongAudioPartTextUpdateController::class)->name('long.audio.part.text.update');
     Route::post('long/audio/{audio}/split', LongAudioSplitController::class)->name('long.audio.split');
     Route::post('long/audio/{audio}/unsplittable', LongAudioUnsplittableController::class)->name('long.audio.unsplittable');
 });
