@@ -15,12 +15,21 @@ class ExportReportCommand extends Command
 {
     private const int FILE_ID = 8;
 
-    protected $signature = 'report:export {--filename=report.xlsx}';
+    protected $signature = 'report:export
+        {--filename=report.xlsx : Output Excel filename}
+        {--exported=all : Export status filter — all, 1 (exported only), or 0 (not exported only)}';
 
     protected $description = 'Export speakers and moderators report to an Excel file';
 
+    /** Export status filter: true = exported only, false = not exported only, null = all. */
+    private ?bool $exportedOnly = null;
+
     public function handle(): int
     {
+        if (! $this->resolveExportedFilter()) {
+            return self::INVALID;
+        }
+
         $filename = $this->option('filename');
         $path = storage_path('app/'.$filename);
 
@@ -36,20 +45,59 @@ class ExportReportCommand extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * Read and validate the --exported option into $exportedOnly.
+     * Returns false (and prints an error) on an invalid value.
+     */
+    private function resolveExportedFilter(): bool
+    {
+        $value = (string) $this->option('exported');
+
+        if (! in_array($value, ['all', '1', '0'], true)) {
+            $this->error('The --exported option must be one of: all, 1, 0.');
+
+            return false;
+        }
+
+        $this->exportedOnly = match ($value) {
+            '1' => true,
+            '0' => false,
+            default => null,
+        };
+
+        return true;
+    }
+
+    /**
+     * Constrain a query to the selected export status, if any.
+     */
+    private function applyExportedFilter(Builder $query): Builder
+    {
+        return match ($this->exportedOnly) {
+            true => $query->whereNotNull('exported_at'),
+            false => $query->whereNull('exported_at'),
+            default => $query,
+        };
+    }
+
     private function buildSpeakersSheet(): Collection
     {
-        $totalWritten = Audio::query()
-            ->selectRaw('edit_speaker_id, COUNT(*) as total')
-            ->whereNotNull('speak_finished_at')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+        $totalWritten = $this->applyExportedFilter(
+            Audio::query()
+                ->selectRaw('edit_speaker_id, COUNT(*) as total')
+                ->whereNotNull('speak_finished_at')
+                ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+        )
             ->groupBy('edit_speaker_id')
             ->pluck('total', 'edit_speaker_id');
 
-        $totalChecked = Audio::query()
-            ->selectRaw('edit_speaker_id, is_correct, COUNT(*) as total')
-            ->whereNotNull('speak_finished_at')
-            ->whereNotNull('is_correct')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+        $totalChecked = $this->applyExportedFilter(
+            Audio::query()
+                ->selectRaw('edit_speaker_id, is_correct, COUNT(*) as total')
+                ->whereNotNull('speak_finished_at')
+                ->whereNotNull('is_correct')
+                ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+        )
             ->groupBy('edit_speaker_id', 'is_correct')
             ->get();
 
@@ -89,11 +137,13 @@ class ExportReportCommand extends Command
 
     private function buildModeratorsSheet(): Collection
     {
-        $totalChecked = Audio::query()
-            ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
-            ->whereNotNull('moderator_finished_at')
-            ->whereNotNull('is_correct')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+        $totalChecked = $this->applyExportedFilter(
+            Audio::query()
+                ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
+                ->whereNotNull('moderator_finished_at')
+                ->whereNotNull('is_correct')
+                ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+        )
             ->groupBy('moderator_id', 'is_correct')
             ->get();
 
