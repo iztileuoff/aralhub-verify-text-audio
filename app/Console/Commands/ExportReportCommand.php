@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\RoleEnum;
 use App\Models\Audio;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -17,16 +18,20 @@ class ExportReportCommand extends Command
 
     protected $signature = 'report:export
         {--filename=report.xlsx : Output Excel filename}
-        {--exported=all : Export status filter — all, 1 (exported only), or 0 (not exported only)}';
+        {--exported=all : Export status filter — all, 1 (exported only), or 0 (not exported only)}
+        {--registered-from= : Include only users registered (created_at) on/after this date (YYYY-MM-DD)}';
 
     protected $description = 'Export speakers and moderators report to an Excel file';
 
     /** Export status filter: true = exported only, false = not exported only, null = all. */
     private ?bool $exportedOnly = null;
 
+    /** Inclusive lower bound on user registration date (users.created_at); null = no bound. */
+    private ?Carbon $registeredFrom = null;
+
     public function handle(): int
     {
-        if (! $this->resolveExportedFilter()) {
+        if (! $this->resolveExportedFilter() || ! $this->resolveRegisteredFilter()) {
             return self::INVALID;
         }
 
@@ -69,6 +74,35 @@ class ExportReportCommand extends Command
     }
 
     /**
+     * Read and validate the --registered-from option into $registeredFrom.
+     * Returns false (and prints an error) on a malformed date.
+     */
+    private function resolveRegisteredFilter(): bool
+    {
+        $value = $this->option('registered-from');
+
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        try {
+            $date = Carbon::createFromFormat('Y-m-d', $value)->startOfDay();
+        } catch (\Throwable) {
+            $date = null;
+        }
+
+        if ($date === null || $date->format('Y-m-d') !== $value) {
+            $this->error('The --registered-from option must be a valid date in YYYY-MM-DD format.');
+
+            return false;
+        }
+
+        $this->registeredFrom = $date;
+
+        return true;
+    }
+
+    /**
      * Constrain a query to the selected export status, if any.
      */
     private function applyExportedFilter(Builder $query): Builder
@@ -78,6 +112,16 @@ class ExportReportCommand extends Command
             false => $query->whereNull('exported_at'),
             default => $query,
         };
+    }
+
+    /**
+     * Constrain a user query to those registered on/after $registeredFrom, if set.
+     */
+    private function applyRegisteredFilter(Builder $query): Builder
+    {
+        return $this->registeredFrom
+            ? $query->where('created_at', '>=', $this->registeredFrom)
+            : $query;
     }
 
     private function buildSpeakersSheet(): Collection
@@ -112,9 +156,11 @@ class ExportReportCommand extends Command
             }
         }
 
-        $speakers = User::query()
-            ->where('role', RoleEnum::SPEAKER->value)
-            ->whereIn('id', $totalWritten->keys())
+        $speakers = $this->applyRegisteredFilter(
+            User::query()
+                ->where('role', RoleEnum::SPEAKER->value)
+                ->whereIn('id', $totalWritten->keys())
+        )
             ->orderBy('id')
             ->get(['id', 'first_name', 'last_name', 'phone', 'is_verified']);
 
@@ -163,9 +209,11 @@ class ExportReportCommand extends Command
             ...array_keys($incorrectMap),
         ]));
 
-        $moderators = User::query()
-            ->where('role', RoleEnum::MODERATOR->value)
-            ->whereIn('id', $moderatorIds)
+        $moderators = $this->applyRegisteredFilter(
+            User::query()
+                ->where('role', RoleEnum::MODERATOR->value)
+                ->whereIn('id', $moderatorIds)
+        )
             ->orderBy('id')
             ->get(['id', 'first_name', 'last_name', 'phone', 'is_verified']);
 
