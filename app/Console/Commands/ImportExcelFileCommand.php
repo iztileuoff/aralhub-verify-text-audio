@@ -18,6 +18,7 @@ class ImportExcelFileCommand extends Command
         {filename : Name of the file on the public disk}
         {--user=1 : Owner of the created File record}
         {--file-id= : Append to an existing dataset file instead of creating a new one}
+        {--label= : Human-readable dataset name, e.g. "v3"; on append it renames the dataset}
         {--chunk=1000 : Rows per bulk insert}';
 
     protected $description = 'Import an Excel/CSV file and create records';
@@ -63,10 +64,14 @@ class ImportExcelFileCommand extends Command
         $storedPath = "tsv_uploads/{$userId}/{$filename}";
         $disk->copy($filename, $storedPath);
 
+        $label = $this->option('label');
+        $label = $label === null || $label === '' ? null : trim($label);
+
         $file = $appendTo !== null
             ? File::query()->findOrFail($appendTo)
             : File::create([
                 'filename' => $filename,
+                'label' => $label,
                 'path' => $storedPath,
                 'mime_type' => $disk->mimeType($filename),
                 'size' => $disk->size($filename),
@@ -131,13 +136,21 @@ class ImportExcelFileCommand extends Command
                 $imported += count($chunk);
             }
 
-            $file->update([
+            $attributes = [
                 'status' => File::STATUS_COMPLETED,
                 'rows_total' => $appendTo === null
                     ? $collection->count()
                     : (int) $file->rows_total + $collection->count(),
                 'rows_imported' => (int) $file->rows_imported + $imported,
-            ]);
+            ];
+
+            // On append the label is optional: given, it renames the dataset;
+            // omitted, the existing name stays.
+            if ($label !== null) {
+                $attributes['label'] = $label;
+            }
+
+            $file->update($attributes);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -245,10 +258,12 @@ class ImportExcelFileCommand extends Command
         int $known,
         ?int $appendTo,
     ): void {
+        $name = $file->label ? "{$file->label} — {$file->filename}" : $file->filename;
+
         $this->newLine();
         $this->line($appendTo === null
-            ? "Created file #{$file->id} ({$file->filename})."
-            : "Appended to file #{$file->id} ({$file->filename}).");
+            ? "Created file #{$file->id} ({$name})."
+            : "Appended to file #{$file->id} ({$name}).");
 
         $this->table(['', 'Rows'], [
             ['In the spreadsheet', $total],

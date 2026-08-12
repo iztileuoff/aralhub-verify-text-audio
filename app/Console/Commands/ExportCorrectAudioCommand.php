@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Audio;
 use App\Models\Export;
+use App\Models\File;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -17,7 +18,7 @@ class ExportCorrectAudioCommand extends Command
     protected $signature = 'audio:export-correct
         {--filename=correct_audios.tsv : Output file under storage/app/}
         {--file-id= : Dataset file to export; defaults to the active dataset}
-        {--name= : Optional label stored on the created Export}
+        {--name= : Export group name; defaults to "<dataset label> batch YYYY-MM"}
         {--all : Re-dump everything ready, ignoring exported_at}';
 
     /**
@@ -80,7 +81,7 @@ class ExportCorrectAudioCommand extends Command
         // A re-export (--all) is a raw dump; it must not touch the export tracking.
         if (! $all && $count > 0) {
             $export = Export::create([
-                'name' => $this->option('name'),
+                'name' => $this->resolveName($fileId),
                 'filename' => $filename,
                 'exported_count' => $count,
             ]);
@@ -88,7 +89,9 @@ class ExportCorrectAudioCommand extends Command
             $this->markAsExported($exportedIds, $export->id);
         }
 
-        $suffix = $export ? " (export #{$export->id})" : '';
+        $suffix = $export
+            ? ' (export #'.$export->id.($export->name ? ": {$export->name}" : '').')'
+            : '';
         $this->info("Exported {$count} correct audios to {$path}.{$suffix}");
 
         return self::SUCCESS;
@@ -106,6 +109,22 @@ class ExportCorrectAudioCommand extends Command
         return $option === null || $option === ''
             ? (int) config('dataset.main_file_id')
             : (int) $option;
+    }
+
+    /**
+     * Name of the export group: the --name option, or the convention
+     * "<dataset label> batch YYYY-MM" so that groups say which dataset and
+     * which month they came from without anyone having to remember a flag.
+     */
+    private function resolveName(int $fileId): ?string
+    {
+        $name = $this->option('name');
+
+        if ($name !== null && $name !== '') {
+            return $name;
+        }
+
+        return File::query()->find($fileId)?->exportGroupName();
     }
 
     /**

@@ -34,6 +34,32 @@ orphaned by earlier runs are still in the bucket and have to be swept separately
 
 ---
 
+## Datasets
+
+Every text belongs to a `File` — one uploaded dataset. Exactly one of them is **active**, and all
+work queues, counters and reports are scoped to it: `DATASET_MAIN_FILE_ID` (`config/dataset.php`,
+read by `Text::scopeMainFile()` and `Audio::scopeMainFile()`). Switching datasets is a change of
+that variable followed by `optimize:clear` — `config:cache` alone leaves the dashboard cache stale.
+
+`files.label` is the human-readable name of a dataset (`v3`), used to tell datasets apart in the
+admin panel and to name their export groups. It is set at import time and editable afterwards:
+
+```bash
+php artisan import:excel-file 207.xlsx --label="v3"              # new dataset
+php artisan import:excel-file 208.xlsx --file-id=10 --label="v3" # next batch of the same one
+```
+
+```
+PATCH /api/v1/admin/files/{file}   { "label": "v3" }   # rename; null clears it
+GET   /api/v1/admin/dataset                            # the active dataset, without paging the list
+GET   /api/v1/admin/files                              # every dataset, each with is_active
+```
+
+`is_active` is **derived** from `DATASET_MAIN_FILE_ID`, not stored — a stored flag could drift out
+of step with the config and make the admin panel show one dataset while every query used another.
+
+---
+
 ## Audio export pipeline
 
 The dataset is produced in a repeatable cycle. Step 2 runs in a separate Python app; everything
@@ -116,7 +142,7 @@ Exports verified audios to a tab-separated dataset and records the export.
 | ------------- | --------------------- | ------------------------------------------------------------------ |
 | `--filename`  | `correct_audios.tsv`  | Output file under `storage/app/`.                                  |
 | `--file-id`   | active dataset        | Only audios whose `text.file_id` matches.                          |
-| `--name`      | _(none)_              | Optional label stored on the created `Export`.                     |
+| `--name`      | `<label> batch YYYY-MM` | Export group name; the default is built from the dataset's `label`. |
 | `--all`       | off                   | Re-dump **everything** ready, ignoring `exported_at` (see below).  |
 
 - **Selects:** `is_correct = true` **AND** `text.file_id = {file-id}` **AND**
@@ -125,8 +151,11 @@ Exports verified audios to a tab-separated dataset and records the export.
   `text_id`, `<basename>.wav`, `edit_original_transcript`, `edit_normalized_transcript`,
   `edit_tokenized_transcript`, `edit_converted_audio_duration`, `edit_speaker_gender`.
 - **Tracking:** a normal run (with new rows) creates a new `Export` record (`filename`,
-  `exported_count`, optional `name`) and stamps each exported audio with `exported_at = now()` and
+  `exported_count`, `name`) and stamps each exported audio with `exported_at = now()` and
   `export_id = <new export>`.
+- **Group naming:** without `--name` the group is named after the dataset and the month —
+  `"v3 batch 2026-08"` for a file labelled `v3`, `"file 8 batch 2026-08"` for one with no label.
+  That is the convention; `--name` overrides it for one-off exports.
 - **`--all`:** a raw re-dump for ad-hoc needs — it writes the `.tsv` but does **not** create an
   `Export` or touch `exported_at` / `export_id`, so history is preserved.
 
@@ -158,6 +187,9 @@ One-time backfill that organises pre-existing exported audios into export groups
 
 `exports` table: `id`, `name`, `filename`, `exported_count`, timestamps. Each `audio:export-correct`
 run creates one record (`Export hasMany Audio`).
+
+`files` table: the uploaded datasets. `label` is the human-readable name; `is_active` is not a
+column but an accessor comparing `id` with `config('dataset.main_file_id')`.
 
 ---
 

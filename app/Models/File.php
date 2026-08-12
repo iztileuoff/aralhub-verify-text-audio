@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Database\Factories\FileFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +29,7 @@ class File extends Model
 
     protected $fillable = [
         'filename',
+        'label',
         'path',
         'mime_type',
         'size',
@@ -41,6 +44,7 @@ class File extends Model
     {
         return [
             'filename' => 'string',
+            'label' => 'string',
             'path' => 'string',
             'mime_type' => 'string',
             'size' => 'integer',
@@ -50,6 +54,40 @@ class File extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether this file is the dataset the whole pipeline currently works on.
+     *
+     * Derived from `config('dataset.main_file_id')` rather than stored, so the
+     * admin panel cannot show one dataset as active while the queues, counters
+     * and reports are filtered by another.
+     *
+     * @return Attribute<bool, never>
+     */
+    protected function isActive(): Attribute
+    {
+        return Attribute::get(fn (): bool => $this->id === (int) config('dataset.main_file_id'));
+    }
+
+    /**
+     * Limit the query to the active dataset.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereKey((int) config('dataset.main_file_id'));
+    }
+
+    /**
+     * Name of the export group this dataset produces, e.g. "v3 batch 2026-08".
+     * A dataset without a label falls back to its id, so the group still says
+     * which dataset it came from.
+     */
+    public function exportGroupName(): string
+    {
+        $label = $this->label ?: "file {$this->id}";
+
+        return $label.' batch '.now()->format('Y-m');
     }
 
     public function user(): BelongsTo

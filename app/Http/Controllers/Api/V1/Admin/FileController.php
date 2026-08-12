@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Admin\UpdateFileRequest;
 use App\Http\Requests\Api\V1\Admin\UploadFileRequest;
 use App\Http\Resources\V1\Admin\FileResource;
 use App\Jobs\ProcessTsvFileJob;
@@ -52,6 +53,17 @@ class FileController extends Controller
 
     public function show(File $file)
     {
+        return new FileResource($file->load('user'));
+    }
+
+    /**
+     * Rename a dataset. Only the label is editable — the uploaded file itself,
+     * its rows and its import status are history.
+     */
+    public function update(UpdateFileRequest $request, File $file)
+    {
+        $file->update($request->validated());
+
         return new FileResource($file->load('user'));
     }
 
