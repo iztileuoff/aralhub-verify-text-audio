@@ -49,6 +49,11 @@ php artisan import:excel-file 207.xlsx --label="v3"              # new dataset
 php artisan import:excel-file 208.xlsx --file-id=10 --label="v3" # next batch of the same one
 ```
 
+⚠️ A batch cut out of a master sheet often arrives **without a header row**, and then its
+first data row is read as the header — the `text` column is never found and the row is lost.
+`import:excel-file` refuses such a file; add the header
+(`id, role, intent, text, script, style, contains, words, needs_native_review`) and re-run.
+
 ```
 PATCH /api/v1/admin/files/{file}   { "label": "v3" }   # rename; null clears it
 GET   /api/v1/admin/dataset                            # the active dataset, without paging the list

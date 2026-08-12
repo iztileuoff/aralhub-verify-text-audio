@@ -152,6 +152,20 @@ it('renames the dataset when a label comes with an append', function () {
     expect($file->refresh()->label)->toBe('v3.1');
 });
 
+it('refuses a file whose header row is missing instead of importing nothing', function () {
+    // The customer's batches are cut out of a master sheet, and the cut drops
+    // the header: the first data row would be eaten as one.
+    $exit = importSheet(
+        [['kaa-002500', 'Ekinshi']],
+        [],
+        "kaa-002499,Birinshi\n",
+    );
+
+    expect($exit)->toBe(2)
+        ->and(File::count())->toBe(0)
+        ->and(Text::count())->toBe(0);
+});
+
 it('refuses to append to a file that does not exist', function () {
     $exit = importSheet([['kaa-000001', 'Birinshi']], ['--file-id' => 999]);
 
