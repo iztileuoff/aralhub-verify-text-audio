@@ -50,6 +50,15 @@ class ImportExcelFileCommand extends Command
 
         $collection = (new FastExcel)->import($disk->path($filename));
 
+        if ($collection->isNotEmpty() && ! $this->hasColumn((array) $collection->first(), 'text')) {
+            $this->error("No \"text\" column in {$filename}.");
+            $this->line('A batch cut out of the master file often arrives without a header row, and');
+            $this->line('then its first data row is read as the header. Add the header row and re-run:');
+            $this->line('id, role, intent, text, script, style, contains, words, needs_native_review');
+
+            return self::INVALID;
+        }
+
         $fileIdOption = $this->option('file-id');
         $appendTo = $fileIdOption === null || $fileIdOption === '' ? null : (int) $fileIdOption;
 
@@ -186,6 +195,24 @@ class ImportExcelFileCommand extends Command
         }
 
         return null;
+    }
+
+    /**
+     * Whether the sheet carries a column with this name at all. Without it a
+     * headerless file imports as "every row skipped — empty text", which reads
+     * like the file is empty rather than misaligned by one row.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function hasColumn(array $row, string $name): bool
+    {
+        foreach (array_keys($row) as $key) {
+            if (mb_strtolower(trim((string) $key)) === $name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
