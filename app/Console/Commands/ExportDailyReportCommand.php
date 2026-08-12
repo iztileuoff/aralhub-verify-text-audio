@@ -15,8 +15,6 @@ use Rap2hpoutre\FastExcel\SheetCollection;
 
 class ExportDailyReportCommand extends Command
 {
-    private const int FILE_ID = 8;
-
     protected $signature = 'report:daily
         {--filename=daily-report.xlsx : Output Excel filename}
         {--from=2026-06-20 : Inclusive start date of the daily breakdown (YYYY-MM-DD)}
@@ -37,11 +35,16 @@ class ExportDailyReportCommand extends Command
      */
     private array $days = [];
 
+    /** Id of the dataset file the report is scoped to. */
+    private int $mainFileId;
+
     public function handle(): int
     {
         if (! $this->resolveDateRange()) {
             return self::INVALID;
         }
+
+        $this->mainFileId = (int) config('dataset.main_file_id');
 
         $filename = $this->option('filename');
         $path = storage_path('app/'.$filename);
@@ -94,6 +97,7 @@ class ExportDailyReportCommand extends Command
 
         $this->from = $from;
         $this->to = $to;
+        $this->days = [];
 
         for ($cursor = $from->copy(); $cursor->lte($to); $cursor->addDay()) {
             $this->days[] = $cursor->format('Y-m-d');
@@ -128,7 +132,7 @@ class ExportDailyReportCommand extends Command
             ->whereNotNull('speak_finished_at')
             ->where('speak_finished_at', '>=', $this->from)
             ->where('speak_finished_at', '<', $this->to->copy()->addDay())
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $this->mainFileId))
             ->groupBy('edit_speaker_id', 'day')
             ->get();
 
@@ -147,7 +151,7 @@ class ExportDailyReportCommand extends Command
             ->whereNotNull('moderator_finished_at')
             ->where('moderator_finished_at', '>=', $this->from)
             ->where('moderator_finished_at', '<', $this->to->copy()->addDay())
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $this->mainFileId))
             ->groupBy('moderator_id', 'day')
             ->get();
 

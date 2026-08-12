@@ -15,8 +15,6 @@ use Illuminate\Http\Request;
 #[Group(name: 'Reports & Exports', weight: 80)]
 class ReportModeratorController extends Controller
 {
-    private const int FILE_ID = 8;
-
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
@@ -26,6 +24,7 @@ class ReportModeratorController extends Controller
 
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
+        $mainFileId = config('dataset.main_file_id');
 
         $dates = collect(CarbonPeriod::create($fromDate, $toDate))
             ->map(fn ($date): string => $date->format('Y-m-d'))
@@ -35,7 +34,7 @@ class ReportModeratorController extends Controller
             ->selectRaw('moderator_id, DATE(moderator_finished_at) as date, is_correct, COUNT(*) as total')
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $mainFileId))
             ->whereBetween('moderator_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
@@ -47,7 +46,7 @@ class ReportModeratorController extends Controller
             ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $mainFileId))
             ->groupBy('moderator_id', 'is_correct')
             ->get();
 
