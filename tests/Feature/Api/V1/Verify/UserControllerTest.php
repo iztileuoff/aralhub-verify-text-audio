@@ -62,6 +62,25 @@ it('counts only work on the active dataset file', function () {
         ->and($row['finished_speak_texts_count'])->toBe(1);
 });
 
+it('orders speakers by the audio they finished on the date', function () {
+    $quiet = User::factory()->create(['role' => RoleEnum::SPEAKER->value]);
+    $busy = User::factory()->create(['role' => RoleEnum::SPEAKER->value]);
+    $idle = User::factory()->create(['role' => RoleEnum::SPEAKER->value]);
+
+    $text = Text::factory()->main()->create();
+
+    Audio::factory()->count(2)->create(['text_id' => $text->id, 'edit_speaker_id' => $busy->id, 'speak_finished_at' => '2026-06-20 10:00:00']);
+    Audio::factory()->create(['text_id' => $text->id, 'edit_speaker_id' => $quiet->id, 'speak_finished_at' => '2026-06-20 10:00:00']);
+
+    // Work on another day must not lift the speaker up the list.
+    Audio::factory()->count(5)->create(['text_id' => $text->id, 'edit_speaker_id' => $idle->id, 'speak_finished_at' => '2026-06-19 10:00:00']);
+
+    $data = $this->getJson(route('admin.verify.users', ['date' => '2026-06-20']))->json('data');
+
+    expect(collect($data)->pluck('id')->all())->toBe([$busy->id, $quiet->id, $idle->id])
+        ->and(collect($data)->pluck('today_finished_speak_texts_count')->all())->toBe([2, 1, 0]);
+});
+
 it('rejects an invalid date format', function () {
     $this->getJson(route('admin.verify.users', ['date' => '20-06-2026']))
         ->assertUnprocessable()
