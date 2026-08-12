@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\DB;
 #[Group(name: 'Verify - Speaking', weight: 100)]
 class SpeakTextController extends Controller
 {
-    private const MAX_AUDIO_COUNT = 10;
-
     /**
      * Получить следующий текст для озвучивания.
      *
@@ -37,6 +35,8 @@ class SpeakTextController extends Controller
                 return new TextResource($heldText);
             }
 
+            // A speaker is never offered a text they have already recorded, so
+            // every audio of a text comes from a different voice.
             $baseQuery = Text::query()
                 ->mainFile()
                 ->excludingSplitParts()
@@ -52,7 +52,7 @@ class SpeakTextController extends Controller
             if (! $id) {
                 $lowestAudioCount = (clone $baseQuery)
                     ->whereNotNull('audio_count')
-                    ->where('audio_count', '<', self::MAX_AUDIO_COUNT)
+                    ->where('audio_count', '<', (int) config('dataset.max_audio_per_text'))
                     ->orderBy('audio_count')
                     ->value('audio_count');
 

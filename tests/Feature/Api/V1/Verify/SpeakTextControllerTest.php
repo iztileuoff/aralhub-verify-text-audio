@@ -112,6 +112,27 @@ it('skips texts the speaker has already recorded an audio for', function () {
     expect($id)->toBe($target->id);
 });
 
+it('stops handing out a text once it has enough recordings', function () {
+    config(['dataset.max_audio_per_text' => 3]);
+
+    Text::factory()->main()->create(['audio_count' => 3]);
+    $target = Text::factory()->main()->create(['audio_count' => 2]);
+
+    $id = $this->getJson(route('admin.verify.speak.text'))->assertOk()->json('data.id');
+
+    expect($id)->toBe($target->id);
+});
+
+it('follows the configured recording limit', function () {
+    config(['dataset.max_audio_per_text' => 5]);
+
+    $target = Text::factory()->main()->create(['audio_count' => 4]);
+
+    $id = $this->getJson(route('admin.verify.speak.text'))->assertOk()->json('data.id');
+
+    expect($id)->toBe($target->id);
+});
+
 it('returns 404 when there are no texts to record', function () {
     Text::factory()->main()->create(['audio_count' => 10]);
 
