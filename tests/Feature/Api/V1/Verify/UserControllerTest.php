@@ -2,6 +2,7 @@
 
 use App\Enums\RoleEnum;
 use App\Models\Audio;
+use App\Models\File;
 use App\Models\Specialization;
 use App\Models\Text;
 use App\Models\User;
@@ -11,23 +12,27 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->file = File::factory()->create();
+    config(['dataset.main_file_id' => $this->file->id]);
+
     Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::SUPER_ADMIN->value]));
 });
 
 it('counts only the work finished on the requested date', function () {
     $speaker = User::factory()->create(['role' => RoleEnum::SPEAKER->value]);
+    $text = Text::factory()->main()->create();
 
     // Speak audio on the target day, including the inclusive day boundaries.
-    Audio::factory()->create(['edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 00:00:00']);
-    Audio::factory()->create(['edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 23:59:59']);
+    Audio::factory()->create(['text_id' => $text->id, 'edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 00:00:00']);
+    Audio::factory()->create(['text_id' => $text->id, 'edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 23:59:59']);
 
     // Adjacent days must be excluded.
-    Audio::factory()->create(['edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-19 23:59:59']);
-    Audio::factory()->create(['edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-21 00:00:00']);
+    Audio::factory()->create(['text_id' => $text->id, 'edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-19 23:59:59']);
+    Audio::factory()->create(['text_id' => $text->id, 'edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-21 00:00:00']);
 
     // Edited texts: one on the day, one outside it.
-    Text::factory()->create(['edit_user_id' => $speaker->id, 'edit_finished_at' => '2026-06-20 12:00:00']);
-    Text::factory()->create(['edit_user_id' => $speaker->id, 'edit_finished_at' => '2026-06-18 12:00:00']);
+    Text::factory()->main()->create(['edit_user_id' => $speaker->id, 'edit_finished_at' => '2026-06-20 12:00:00']);
+    Text::factory()->main()->create(['edit_user_id' => $speaker->id, 'edit_finished_at' => '2026-06-18 12:00:00']);
 
     $data = $this->getJson(route('admin.verify.users', ['date' => '2026-06-20']))->json('data');
 
@@ -35,6 +40,26 @@ it('counts only the work finished on the requested date', function () {
 
     expect($row['today_finished_speak_texts_count'])->toBe(2)
         ->and($row['today_finished_edit_texts_count'])->toBe(1);
+});
+
+it('counts only work on the active dataset file', function () {
+    $speaker = User::factory()->create(['role' => RoleEnum::SPEAKER->value]);
+
+    $mainText = Text::factory()->main()->create();
+    $otherText = Text::factory()->create();
+
+    Audio::factory()->create(['text_id' => $mainText->id, 'edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 10:00:00']);
+    Audio::factory()->count(3)->create(['text_id' => $otherText->id, 'edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 10:00:00']);
+
+    Text::factory()->main()->create(['edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 10:00:00']);
+    Text::factory()->count(3)->create(['edit_speaker_id' => $speaker->id, 'speak_finished_at' => '2026-06-20 10:00:00']);
+
+    $data = $this->getJson(route('admin.verify.users', ['date' => '2026-06-20']))->json('data');
+
+    $row = collect($data)->firstWhere('id', $speaker->id);
+
+    expect($row['today_finished_speak_texts_count'])->toBe(1)
+        ->and($row['finished_speak_texts_count'])->toBe(1);
 });
 
 it('rejects an invalid date format', function () {
