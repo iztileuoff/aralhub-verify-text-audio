@@ -32,11 +32,15 @@ An audio is exported only after Python returns a duration for it; audios recorde
 `edit_converted_audio_duration = NULL` and simply wait for the next cycle. `exported_at` guarantees
 nothing is exported twice and nothing ready is missed.
 
+Which dataset the pipeline works on is the **active dataset**: `config('dataset.main_file_id')`,
+set by `DATASET_MAIN_FILE_ID` in `.env` (default `8`). Every command below defaults to it; passing
+`--file-id` explicitly is how the backlog of a previous dataset gets finished off after a switch.
+
 ### Run order
 
 ```bash
 # 1. Produce the work list for Python (id;filename per line)
-php artisan audio:export-filenames --filename=audio_filenames.txt --file-id=8
+php artisan audio:export-filenames --filename=audio_filenames.txt
 
 #    → Python reads audio_filenames.txt, writes storage/app/result.txt (id;duration per line)
 
@@ -44,7 +48,10 @@ php artisan audio:export-filenames --filename=audio_filenames.txt --file-id=8
 php artisan update:duration --filename=result.txt
 
 # 4. Export the new, ready audios to .tsv (creates an Export record)
-php artisan audio:export-correct --filename=correct_audios.tsv --file-id=8 --name="batch 2026-06"
+php artisan audio:export-correct --filename=correct_audios.tsv --name="batch 2026-06"
+
+# Finishing off the backlog of a previous dataset: pass its id explicitly
+php artisan audio:export-correct --file-id=8 --name="v2 final"
 ```
 
 ---
@@ -58,7 +65,7 @@ Dumps the audios that still need a duration so the Python script can process the
 | Option        | Default                | Description                                  |
 | ------------- | ---------------------- | -------------------------------------------- |
 | `--filename`  | `audio_filenames.txt`  | Output file under `storage/app/`.            |
-| `--file-id`   | `8`                    | Only audios whose `text.file_id` matches.    |
+| `--file-id`   | active dataset         | Only audios whose `text.file_id` matches.    |
 
 - **Selects:** `is_correct = true` **AND** `text.file_id = {file-id}` **AND** `edit_converted_audio_duration IS NULL`.
 - **Output:** one line per audio — `id;filename`, where `filename` is `edit_audio_filename` without
@@ -84,7 +91,7 @@ Exports verified audios to a tab-separated dataset and records the export.
 | Option        | Default               | Description                                                         |
 | ------------- | --------------------- | ------------------------------------------------------------------ |
 | `--filename`  | `correct_audios.tsv`  | Output file under `storage/app/`.                                  |
-| `--file-id`   | `8`                   | Only audios whose `text.file_id` matches.                          |
+| `--file-id`   | active dataset        | Only audios whose `text.file_id` matches.                          |
 | `--name`      | _(none)_              | Optional label stored on the created `Export`.                     |
 | `--all`       | off                   | Re-dump **everything** ready, ignoring `exported_at` (see below).  |
 

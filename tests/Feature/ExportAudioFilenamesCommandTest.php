@@ -61,3 +61,41 @@ it('exports only correct audios without a converted duration for the given file'
         ->not->toContain('withduration.mp3')
         ->not->toContain('otherfile.mp3');
 });
+
+it('falls back to the active dataset when --file-id is omitted', function () {
+    $active = File::factory()->create();
+    config(['dataset.main_file_id' => $active->id]);
+
+    $activeText = Text::factory()->main()->create();
+    $legacyText = Text::factory()->create();
+
+    Audio::factory()->create([
+        'text_id' => $activeText->id,
+        'edit_audio_filename' => 'audio/active.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => null,
+    ]);
+
+    Audio::factory()->create([
+        'text_id' => $legacyText->id,
+        'edit_audio_filename' => 'audio/legacy.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => null,
+    ]);
+
+    Artisan::call('audio:export-filenames', ['--filename' => 'test_audio_filenames.txt']);
+
+    expect(file_get_contents(storage_path('app/test_audio_filenames.txt')))
+        ->toContain('active.mp3')
+        ->not->toContain('legacy.mp3');
+
+    // An explicit id still reaches the previous dataset — that is how its backlog is finished.
+    Artisan::call('audio:export-filenames', [
+        '--filename' => 'test_audio_filenames.txt',
+        '--file-id' => $legacyText->file_id,
+    ]);
+
+    expect(file_get_contents(storage_path('app/test_audio_filenames.txt')))
+        ->toContain('legacy.mp3')
+        ->not->toContain('active.mp3');
+});
