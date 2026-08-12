@@ -28,6 +28,7 @@ class ModeratorAudioController extends Controller
         }
 
         $audio = Audio::query()
+            ->mainFile()
             ->whereNotNull('speak_finished_at')
             ->whereNull('moderator_started_at')
             ->whereNull('is_correct')

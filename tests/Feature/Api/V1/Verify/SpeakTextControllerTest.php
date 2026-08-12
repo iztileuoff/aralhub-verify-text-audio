@@ -38,6 +38,20 @@ it('resumes the text the speaker has already started over picking a new one', fu
     expect($id)->toBe($held->id);
 });
 
+it('does not resume a held text left over from another dataset file', function () {
+    // Held from before the dataset switch: speak_started_at is still set on it.
+    Text::factory()->create([
+        'speak_started_at' => now()->subDay(),
+        'edit_speaker_id' => $this->speaker->id,
+    ]);
+
+    $target = Text::factory()->main()->create();
+
+    $id = $this->getJson(route('admin.verify.speak.text'))->assertOk()->json('data.id');
+
+    expect($id)->toBe($target->id);
+});
+
 it('prefers a never-recorded text (null audio count) over partially recorded ones', function () {
     Text::factory()->main()->create(['audio_count' => 4]);
     $target = Text::factory()->main()->create(['audio_count' => null]);

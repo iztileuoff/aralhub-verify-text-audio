@@ -28,6 +28,7 @@ class ModeratorTextController extends Controller
         }
 
         $text = Text::query()
+            ->mainFile()
             ->excludingSplitParts()
             ->whereNotNull('speak_finished_at')
             ->whereNull('moderator_started_at')

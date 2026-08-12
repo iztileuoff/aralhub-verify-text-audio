@@ -24,8 +24,9 @@ class SpeakTextController extends Controller
     {
         return DB::transaction(function () {
 
-            // resume previously held text
+            // resume previously held text, but only while it belongs to the active dataset
             $heldText = Text::query()
+                ->mainFile()
                 ->where('edit_speaker_id', auth()->id())
                 ->whereNotNull('speak_started_at')
                 ->first();
@@ -37,9 +38,8 @@ class SpeakTextController extends Controller
             }
 
             $baseQuery = Text::query()
+                ->mainFile()
                 ->excludingSplitParts()
-                ->where('file_id', config('dataset.main_file_id'))
-                ->where('is_main', true)
                 ->where('has_text_error', false)
                 ->whereNotNull('edit_original_transcript')
                 ->whereNull('speak_started_at')
