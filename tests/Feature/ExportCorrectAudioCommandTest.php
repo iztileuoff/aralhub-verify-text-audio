@@ -145,6 +145,50 @@ it('falls back to the active dataset when --file-id is omitted', function () {
         ->and(Export::count())->toBe(2);
 });
 
+it('names the export group after the dataset and the month', function () {
+    $file = File::factory()->create(['label' => 'v3']);
+    $text = Text::factory()->create(['file_id' => $file->id]);
+
+    Audio::factory()->create([
+        'text_id' => $text->id,
+        'edit_audio_filename' => 'audio/first.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => 100,
+        'exported_at' => null,
+    ]);
+
+    Artisan::call('audio:export-correct', [
+        '--filename' => 'test_correct.tsv',
+        '--file-id' => $file->id,
+    ]);
+
+    expect(Export::sole()->name)->toBe('v3 batch '.now()->format('Y-m'));
+});
+
+it('falls back to the dataset id when it has no label, and yields to an explicit --name', function () {
+    $file = File::factory()->create(['label' => null]);
+    $text = Text::factory()->create(['file_id' => $file->id]);
+
+    $record = fn (string $name) => Audio::factory()->create([
+        'text_id' => $text->id,
+        'edit_audio_filename' => "audio/{$name}.mp3",
+        'is_correct' => true,
+        'edit_converted_audio_duration' => 100,
+        'exported_at' => null,
+    ]);
+
+    $options = ['--filename' => 'test_correct.tsv', '--file-id' => $file->id];
+
+    $record('first');
+    Artisan::call('audio:export-correct', $options + ['--name' => 'v2 final']);
+
+    $record('second');
+    Artisan::call('audio:export-correct', $options);
+
+    expect(Export::query()->pluck('name')->all())
+        ->toBe(['v2 final', "file {$file->id} batch ".now()->format('Y-m')]);
+});
+
 it('skips already exported audios on re-run and re-exports everything with --all', function () {
     $file = File::factory()->create();
     $text = Text::factory()->create(['file_id' => $file->id]);

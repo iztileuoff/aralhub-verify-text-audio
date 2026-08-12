@@ -134,6 +134,24 @@ it('drops rows repeated inside one batch', function () {
     expect(Text::count())->toBe(1);
 });
 
+it('labels the dataset it creates', function () {
+    importSheet([['kaa-000001', 'Birinshi']], ['--label' => 'v3']);
+
+    expect(File::sole()->label)->toBe('v3');
+});
+
+it('renames the dataset when a label comes with an append', function () {
+    importSheet([['kaa-000001', 'Birinshi']], ['--label' => 'v3']);
+
+    $file = File::sole();
+
+    importSheet([['kaa-000002', 'Ekinshi']], ['--file-id' => $file->id]);
+    expect($file->refresh()->label)->toBe('v3');
+
+    importSheet([['kaa-000003', 'Úshinshi']], ['--file-id' => $file->id, '--label' => 'v3.1']);
+    expect($file->refresh()->label)->toBe('v3.1');
+});
+
 it('refuses to append to a file that does not exist', function () {
     $exit = importSheet([['kaa-000001', 'Birinshi']], ['--file-id' => 999]);
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\ActionController;
+use App\Http\Controllers\Api\V1\Admin\ActiveDatasetController;
 use App\Http\Controllers\Api\V1\Admin\DailyQuotaController;
 use App\Http\Controllers\Api\V1\Admin\DatasetController;
 use App\Http\Controllers\Api\V1\Admin\ErrorTextController;
@@ -64,7 +65,7 @@ Route::group([
     Route::apiResource('users', UserController::class);
     Route::apiResource('text-statuses', TextStatusesController::class)->only('index');
     Route::apiResource('texts', TextController::class);
-    Route::apiResource('files', FileController::class)->except('update');
+    Route::apiResource('files', FileController::class);
     Route::apiResource('actions', ActionController::class)->only('index');
     Route::apiResource('specializations', SpecializationController::class);
 
@@ -74,6 +75,7 @@ Route::group([
 
     Route::get('error/texts', ErrorTextController::class)->name('error.texts');
 
+    Route::get('dataset', ActiveDatasetController::class)->name('dataset.active');
     Route::post('dataset', DatasetController::class)->name('dataset');
     Route::post('export/report-users', ExportReportUserController::class)->name('export.report-users');
 

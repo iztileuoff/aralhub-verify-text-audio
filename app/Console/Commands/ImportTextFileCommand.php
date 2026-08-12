@@ -14,6 +14,7 @@ class ImportTextFileCommand extends Command
     protected $signature = 'import:text-file
         {filename : Name of the file on the public disk}
         {--user=1 : Owner of the created File record}
+        {--label= : Human-readable dataset name, e.g. "v3"}
         {--chunk=1000 : Rows per bulk insert}';
 
     protected $description = 'Import a plain text file (one transcript per line) and create records';
@@ -49,9 +50,12 @@ class ImportTextFileCommand extends Command
         $storedPath = "txt_uploads/{$userId}/{$filename}";
         $disk->copy($filename, $storedPath);
 
+        $label = $this->option('label');
+
         // Create a File record immediately so the user can track it
         $file = File::create([
             'filename' => $filename,
+            'label' => $label === null || $label === '' ? null : trim($label),
             'path' => $storedPath,
             'mime_type' => $disk->mimeType($filename),
             'size' => $disk->size($filename),

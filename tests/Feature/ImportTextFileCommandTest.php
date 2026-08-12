@@ -79,6 +79,18 @@ it('skips blank lines', function () {
         ->and(File::sole()->rows_total)->toBe(2);
 });
 
+it('labels the dataset it creates', function () {
+    importLines(['Birinshi qatar.'], ['--label' => 'v3']);
+
+    expect(File::sole()->label)->toBe('v3');
+});
+
+it('leaves the label null when none is given', function () {
+    importLines(['Birinshi qatar.']);
+
+    expect(File::sole()->label)->toBeNull();
+});
+
 it('rejects a non-positive chunk size before touching the database', function () {
     $exit = importLines(['Birinshi qatar.'], ['--chunk' => 0]);
 
