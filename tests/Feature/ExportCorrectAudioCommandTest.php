@@ -104,6 +104,47 @@ it('excludes audios at or beyond the 30s limit but exports their shorter split p
         ->not->toContain('toolong.wav');
 });
 
+it('falls back to the active dataset when --file-id is omitted', function () {
+    $active = File::factory()->create();
+    config(['dataset.main_file_id' => $active->id]);
+
+    $activeText = Text::factory()->main()->create();
+    $legacyText = Text::factory()->create();
+
+    Audio::factory()->create([
+        'text_id' => $activeText->id,
+        'edit_audio_filename' => 'audio/active.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => 100,
+        'exported_at' => null,
+    ]);
+
+    Audio::factory()->create([
+        'text_id' => $legacyText->id,
+        'edit_audio_filename' => 'audio/legacy.mp3',
+        'is_correct' => true,
+        'edit_converted_audio_duration' => 100,
+        'exported_at' => null,
+    ]);
+
+    Artisan::call('audio:export-correct', ['--filename' => 'test_correct.tsv']);
+
+    expect(file_get_contents(storage_path('app/test_correct.tsv')))
+        ->toContain('active.wav')
+        ->not->toContain('legacy.wav');
+
+    // The backlog of the previous dataset is still reachable by an explicit id.
+    Artisan::call('audio:export-correct', [
+        '--filename' => 'test_correct.tsv',
+        '--file-id' => $legacyText->file_id,
+    ]);
+
+    expect(file_get_contents(storage_path('app/test_correct.tsv')))
+        ->toContain('legacy.wav')
+        ->not->toContain('active.wav')
+        ->and(Export::count())->toBe(2);
+});
+
 it('skips already exported audios on re-run and re-exports everything with --all', function () {
     $file = File::factory()->create();
     $text = Text::factory()->create(['file_id' => $file->id]);

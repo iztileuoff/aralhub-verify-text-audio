@@ -14,7 +14,11 @@ class ExportCorrectAudioCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'audio:export-correct {--filename=correct_audios.tsv} {--file-id=8} {--name=} {--all}';
+    protected $signature = 'audio:export-correct
+        {--filename=correct_audios.tsv : Output file under storage/app/}
+        {--file-id= : Dataset file to export; defaults to the active dataset}
+        {--name= : Optional label stored on the created Export}
+        {--all : Re-dump everything ready, ignoring exported_at}';
 
     /**
      * The console command description.
@@ -29,7 +33,7 @@ class ExportCorrectAudioCommand extends Command
     public function handle(): int
     {
         $filename = $this->option('filename');
-        $fileId = (int) $this->option('file-id');
+        $fileId = $this->resolveFileId();
         $all = (bool) $this->option('all');
         $path = storage_path('app/'.$filename);
 
@@ -88,6 +92,20 @@ class ExportCorrectAudioCommand extends Command
         $this->info("Exported {$count} correct audios to {$path}.{$suffix}");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Dataset file to export: the --file-id option, or the active dataset when
+     * the option is omitted. An explicit id still reaches an older dataset —
+     * that is how the backlog of a previous dataset gets finished off.
+     */
+    private function resolveFileId(): int
+    {
+        $option = $this->option('file-id');
+
+        return $option === null || $option === ''
+            ? (int) config('dataset.main_file_id')
+            : (int) $option;
     }
 
     /**

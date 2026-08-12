@@ -13,7 +13,9 @@ class ExportAudioFilenamesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'audio:export-filenames {--filename=audio_filenames.txt} {--file-id=8}';
+    protected $signature = 'audio:export-filenames
+        {--filename=audio_filenames.txt : Output file under storage/app/}
+        {--file-id= : Dataset file to export; defaults to the active dataset}';
 
     /**
      * The console command description.
@@ -28,7 +30,7 @@ class ExportAudioFilenamesCommand extends Command
     public function handle(): int
     {
         $filename = $this->option('filename');
-        $fileId = (int) $this->option('file-id');
+        $fileId = $this->resolveFileId();
         $path = storage_path('app/'.$filename);
 
         $file = fopen($path, 'w');
@@ -54,5 +56,18 @@ class ExportAudioFilenamesCommand extends Command
         $this->info("Exported {$count} filenames to {$path}.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Dataset file to export: the --file-id option, or the active dataset when
+     * the option is omitted. An explicit id still reaches an older dataset.
+     */
+    private function resolveFileId(): int
+    {
+        $option = $this->option('file-id');
+
+        return $option === null || $option === ''
+            ? (int) config('dataset.main_file_id')
+            : (int) $option;
     }
 }
