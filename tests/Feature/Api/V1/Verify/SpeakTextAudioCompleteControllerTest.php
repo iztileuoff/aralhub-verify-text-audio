@@ -96,6 +96,59 @@ it('does not save audio or change state when the storage upload fails', function
         ->and($text->edit_audio_filename)->toBe('audio/old-file.mp3');
 });
 
+it('answers a resent upload with the saved state instead of a second take', function () {
+    Storage::fake('yandex-s3');
+
+    $text = Text::factory()->create([
+        'speak_started_at' => now()->subMinutes(5),
+        'edit_speaker_id' => $this->user->id,
+    ]);
+
+    $upload = fn () => $this->postJson(
+        route('admin.verify.speak.text.audio.complete', $text),
+        ['audio' => UploadedFile::fake()->create('audio.mp3', 100, 'audio/mpeg')]
+    );
+
+    $upload()->assertSuccessful();
+    $first = $text->audio()->sole();
+
+    $upload()->assertSuccessful();
+
+    expect($text->audio()->count())->toBe(1)
+        ->and($text->audio()->sole()->id)->toBe($first->id)
+        ->and($text->refresh()->audio_count)->toBe(1);
+
+    // The take that was saved is still in storage, and nothing extra landed there.
+    Storage::disk('yandex-s3')->assertExists($first->edit_audio_filename);
+    expect(Storage::disk('yandex-s3')->files('audio'))->toHaveCount(1);
+});
+
+it('lets another speaker record the same text', function () {
+    Storage::fake('yandex-s3');
+
+    $text = Text::factory()->create();
+
+    $this->postJson(
+        route('admin.verify.speak.text.audio.complete', $text),
+        ['audio' => UploadedFile::fake()->create('audio.mp3', 100, 'audio/mpeg')]
+    )->assertSuccessful();
+
+    Sanctum::actingAs(User::factory()->create([
+        'role' => RoleEnum::SPEAKER->value,
+        'gender' => GenderEnum::FEMALE->value,
+    ]));
+
+    $this->postJson(
+        route('admin.verify.speak.text.audio.complete', $text),
+        ['audio' => UploadedFile::fake()->create('audio.mp3', 100, 'audio/mpeg')]
+    )->assertSuccessful();
+
+    expect($text->audio()->count())->toBe(2)
+        ->and($text->refresh()->audio_count)->toBe(2)
+        ->and($text->audio_male_count)->toBe(1)
+        ->and($text->audio_female_count)->toBe(1);
+});
+
 it('requires a valid audio file', function () {
     $text = Text::factory()->create();
 

@@ -65,6 +65,24 @@ of step with the config and make the admin panel show one dataset while every qu
 
 ---
 
+## Recording rules
+
+Two rules shape what the speaker queue (`GET admin/verify/speak/text`) hands out:
+
+1. **One speaker records a text once.** The queue never offers a text the speaker already
+   has an audio for, so every recording of a text is a different voice.
+2. **A text collects at most `DATASET_MAX_AUDIO_PER_TEXT` recordings** (`config/dataset.php`,
+   default **3**). Texts nobody has read come first; only when there are none left does the
+   queue fall back to the lowest audio count still under the limit.
+
+Rule 1 is enforced on the way in as well, and that is the part that matters in production:
+uploading an audio takes up to a minute, so clients resend `POST speak/text/{text}/audio/complete`
+after a timeout or a double tap. Such a retry is answered with the saved state (200) instead of
+creating a second take — before this guard existed it produced 557 duplicate
+text+speaker pairs, 550 of them within five minutes of each other.
+
+---
+
 ## Audio export pipeline
 
 The dataset is produced in a repeatable cycle. Step 2 runs in a separate Python app; everything

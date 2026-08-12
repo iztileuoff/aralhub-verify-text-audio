@@ -9,6 +9,7 @@ use App\Http\Resources\V1\Admin\TextResource;
 use App\Models\Text;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -21,6 +22,13 @@ class SpeakTextAudioCompleteController extends Controller
      */
     public function __invoke(StoreSpeakTextRequest $request, Text $text): JsonResponse
     {
+        // One speaker, one recording per text. The upload takes up to a minute,
+        // so clients resend it after a timeout or a double tap; answering such a
+        // retry with the saved state keeps the app happy without a second take.
+        if ($this->recordedBy($text, auth()->id())) {
+            return (new TextResource($text))->response();
+        }
+
         $disk = config('audio.disk');
 
         try {
@@ -42,18 +50,36 @@ class SpeakTextAudioCompleteController extends Controller
             ], 503);
         }
 
+        $saved = DB::transaction(function () use ($text, $path, $disk): bool {
+            // Two retries can be in flight at once, both past the check above;
+            // the row lock lets only one of them through.
+            Text::query()->whereKey($text->getKey())->lockForUpdate()->first();
+
+            if ($this->recordedBy($text, auth()->id())) {
+                return false;
+            }
+
+            $text->audio()->create([
+                'edit_audio_filename' => $path,
+                'storage_disk' => $disk,
+                'speak_started_at' => $text->speak_started_at,
+                'speak_finished_at' => now(),
+                'edit_speaker_id' => auth()->user()->id,
+                'edit_speaker_gender' => auth()->user()->gender,
+            ]);
+
+            return true;
+        });
+
+        if (! $saved) {
+            Storage::disk($disk)->delete($path);
+
+            return (new TextResource($text))->response();
+        }
+
         if ($text->edit_audio_filename) {
             Storage::disk($text->audioDisk())->delete($text->edit_audio_filename);
         }
-
-        $text->audio()->create([
-            'edit_audio_filename' => $path,
-            'storage_disk' => $disk,
-            'speak_started_at' => $text->speak_started_at,
-            'speak_finished_at' => now(),
-            'edit_speaker_id' => auth()->user()->id,
-            'edit_speaker_gender' => auth()->user()->gender,
-        ]);
 
         $text->speak_started_at = null;
         $text->edit_speaker_id = null;
@@ -64,5 +90,13 @@ class SpeakTextAudioCompleteController extends Controller
         $text->save();
 
         return (new TextResource($text))->response();
+    }
+
+    /**
+     * Whether this speaker already has a recording of this text.
+     */
+    private function recordedBy(Text $text, int $speakerId): bool
+    {
+        return $text->audio()->where('edit_speaker_id', $speakerId)->exists();
     }
 }
