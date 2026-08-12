@@ -9,7 +9,6 @@ use App\Models\Audio;
 use App\Models\Text;
 use App\Models\User;
 use Dedoc\Scramble\Attributes\Group;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
@@ -56,7 +55,6 @@ class DailyQuotaController extends Controller
     private function buildDailyQuota(): array
     {
         $today = today();
-        $mainFileId = config('dataset.main_file_id');
 
         $userStats = User::query()
             ->selectRaw(
@@ -76,23 +74,24 @@ class DailyQuotaController extends Controller
             ->first();
 
         $textStats = Text::query()
+            ->mainFile()
             ->excludingSplitParts()
             ->selectRaw(
-                'SUM(CASE WHEN is_main = 1 AND file_id = ? THEN 1 ELSE 0 END) as texts_count, '.
-                'SUM(CASE WHEN is_main = 1 AND file_id = ? AND has_text_error = 1 THEN 1 ELSE 0 END) as error_texts_count, '.
-                'SUM(CASE WHEN is_main = 1 AND file_id = ? THEN audio_count ELSE 0 END) as audio_finished_texts_count, '.
+                'COUNT(*) as texts_count, '.
+                'SUM(CASE WHEN has_text_error = 1 THEN 1 ELSE 0 END) as error_texts_count, '.
+                'SUM(audio_count) as audio_finished_texts_count, '.
                 'SUM(CASE WHEN edit_finished_at IS NOT NULL THEN 1 ELSE 0 END) as edit_finished_texts_count, '.
                 'SUM(CASE WHEN edit_finished_at IS NULL THEN 1 ELSE 0 END) as edit_not_finished_texts_count, '.
                 'SUM(CASE WHEN edit_finished_at IS NULL OR edit_finished_at >= ? THEN 1 ELSE 0 END) as daily_quota_texts_count, '.
                 'SUM(CASE WHEN speak_finished_at IS NULL OR speak_finished_at >= ? THEN 1 ELSE 0 END) as daily_quota_audios_count, '.
                 'SUM(CASE WHEN speak_finished_at IS NOT NULL AND (moderator_finished_at IS NULL OR moderator_finished_at >= ?) THEN 1 ELSE 0 END) as daily_quota_check_audios_count, '.
                 'SUM(CASE WHEN edit_finished_at >= ? THEN 1 ELSE 0 END) as edit_finished_today_count',
-                [$mainFileId, $mainFileId, $mainFileId, $today, $today, $today, $today]
+                [$today, $today, $today, $today]
             )
             ->first();
 
         $audioMainStats = Audio::query()
-            ->whereHas('text', fn (Builder $query) => $query->mainFile())
+            ->mainFile()
             ->selectRaw(
                 'COUNT(*) as total_audios_count, '.
                 'COALESCE(SUM(edit_converted_audio_duration), 0) as total_audio_duration_seconds, '.
@@ -102,6 +101,7 @@ class DailyQuotaController extends Controller
             ->first();
 
         $audioTodayStats = Audio::query()
+            ->mainFile()
             ->selectRaw(
                 'SUM(CASE WHEN speak_finished_at >= ? THEN 1 ELSE 0 END) as speak_finished_today_count, '.
                 'SUM(CASE WHEN moderator_finished_at >= ? THEN 1 ELSE 0 END) as moderator_finished_today_count',

@@ -29,12 +29,16 @@ class UserController extends Controller
             ->when($request->filled('search'), fn ($q) => $q->search($request->input('search')))
             ->when($request->filled('specialization_id'), fn ($q) => $q->where('specialization_id', $request->input('specialization_id')))
             ->when(auth()->user()->role === RoleEnum::ADMIN, fn ($q) => $q->where('admin_id', auth()->user()->id))
-            ->withCount(['finishedEditTexts', 'finishedSpeakTexts', 'finishedModerationTexts'])
-            ->withCount(['dateFinishedSpeakAudio' => fn ($q) => $q->onDate('speak_finished_at', $date)])
-            ->withCount(['dateFinishedModerationAudio' => fn ($q) => $q->onDate('moderator_finished_at', $date)])
-            ->withCount(['todayFinishedEditTexts' => fn ($q) => $q->onDate('edit_finished_at', $date)])
-            ->withCount(['todayFinishedSpeakTexts' => fn ($q) => $q->onDate('speak_finished_at', $date)])
-            ->withCount(['todayFinishedModerationTexts' => fn ($q) => $q->onDate('moderator_finished_at', $date)])
+            ->withCount([
+                'finishedEditTexts' => fn ($q) => $q->mainFile(),
+                'finishedSpeakTexts' => fn ($q) => $q->mainFile(),
+                'finishedModerationTexts' => fn ($q) => $q->mainFile(),
+            ])
+            ->withCount(['dateFinishedSpeakAudio' => fn ($q) => $q->mainFile()->onDate('speak_finished_at', $date)])
+            ->withCount(['dateFinishedModerationAudio' => fn ($q) => $q->mainFile()->onDate('moderator_finished_at', $date)])
+            ->withCount(['todayFinishedEditTexts' => fn ($q) => $q->mainFile()->onDate('edit_finished_at', $date)])
+            ->withCount(['todayFinishedSpeakTexts' => fn ($q) => $q->mainFile()->onDate('speak_finished_at', $date)])
+            ->withCount(['todayFinishedModerationTexts' => fn ($q) => $q->mainFile()->onDate('moderator_finished_at', $date)])
             ->orderBy('date_finished_speak_audio_count', 'desc')
             ->orderBy('id', 'desc')
             ->paginate($request->input('per_page', 10));

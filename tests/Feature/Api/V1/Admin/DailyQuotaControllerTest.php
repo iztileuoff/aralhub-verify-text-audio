@@ -86,26 +86,26 @@ it('scopes text and error counts to the main dataset file', function () {
 
 it('groups the moderation-check quota condition so unspoken texts are excluded', function () {
     // Spoken, awaiting moderation -> counted.
-    Text::factory()->create([
+    Text::factory()->main()->create([
         'speak_finished_at' => now()->subDay(),
         'moderator_finished_at' => null,
     ]);
 
     // Spoken, moderated today -> counted.
-    Text::factory()->create([
+    Text::factory()->main()->create([
         'speak_finished_at' => now()->subDay(),
         'moderator_finished_at' => now(),
     ]);
 
     // Spoken, moderated long ago -> excluded.
-    Text::factory()->create([
+    Text::factory()->main()->create([
         'speak_finished_at' => now()->subDay(),
         'moderator_finished_at' => now()->subWeek(),
     ]);
 
     // Not spoken yet but flagged as moderated today: the previous ungrouped
     // orWhere wrongly counted this row; the fix must exclude it.
-    Text::factory()->create([
+    Text::factory()->main()->create([
         'speak_finished_at' => null,
         'moderator_finished_at' => now(),
     ]);
@@ -168,6 +168,51 @@ it('aggregates edit progress and daily-quota text counts', function () {
         ->and((float) $data['audio_progress_percent'])->toBe(33.33)
         ->and($data['daily_quota_texts_count'])->toBe(2)
         ->and($data['daily_quota_audios_count'])->toBe(3);
+});
+
+it('scopes the edit, quota and today counters to the active dataset file', function () {
+    $mainText = Text::factory()->main()->create([
+        'edit_finished_at' => now(),
+        'speak_finished_at' => now(),
+        'moderator_finished_at' => now(),
+    ]);
+
+    // A whole parallel dataset: none of its rows may reach any counter.
+    $otherText = Text::factory()->create([
+        'edit_finished_at' => now(),
+        'speak_finished_at' => now(),
+        'moderator_finished_at' => now(),
+    ]);
+
+    Text::factory()->count(3)->create([
+        'file_id' => $otherText->file_id,
+        'is_main' => true,
+        'edit_finished_at' => null,
+    ]);
+
+    Audio::factory()->create([
+        'text_id' => $mainText->id,
+        'speak_finished_at' => now(),
+        'moderator_finished_at' => now(),
+    ]);
+
+    Audio::factory()->count(4)->create([
+        'text_id' => $otherText->id,
+        'speak_finished_at' => now(),
+        'moderator_finished_at' => now(),
+    ]);
+
+    $data = $this->getJson(route('admin.daily.quota.texts.show'))->json('data');
+
+    expect($data['texts_count'])->toBe(1)
+        ->and($data['edit_finished_texts_count'])->toBe(1)
+        ->and($data['edit_not_finished_texts_count'])->toBe(0)
+        ->and($data['edit_finished_today_count'])->toBe(1)
+        ->and($data['daily_quota_texts_count'])->toBe(1)
+        ->and($data['daily_quota_audios_count'])->toBe(1)
+        ->and($data['daily_quota_check_audios_count'])->toBe(1)
+        ->and($data['speak_finished_today_count'])->toBe(1)
+        ->and($data['moderator_finished_today_count'])->toBe(1);
 });
 
 it('excludes split-part texts from the quota counters', function () {

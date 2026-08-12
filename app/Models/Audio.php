@@ -117,6 +117,15 @@ class Audio extends Model
     }
 
     /**
+     * Limit the query to audios recorded for the main texts of the primary
+     * dataset file; the counterpart of Text::scopeMainFile() across the relation.
+     */
+    public function scopeMainFile(Builder $query): Builder
+    {
+        return $query->whereHas('text', fn (Builder $text): Builder => $text->mainFile());
+    }
+
+    /**
      * Constrain a datetime column to a single calendar day using an
      * index-friendly range instead of wrapping the column in DATE().
      */

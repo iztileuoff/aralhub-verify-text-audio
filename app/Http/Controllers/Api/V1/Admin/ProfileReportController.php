@@ -47,6 +47,7 @@ class ProfileReportController extends Controller
             ->selectRaw('DATE(speak_finished_at) as date, is_correct, COUNT(*) as total')
             ->where('edit_speaker_id', $userId)
             ->whereNotNull('speak_finished_at')
+            ->mainFile()
             ->whereBetween('speak_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
@@ -115,6 +116,7 @@ class ProfileReportController extends Controller
             ->where('moderator_id', $userId)
             ->whereNotNull('moderator_finished_at')
             ->whereNotNull('is_correct')
+            ->mainFile()
             ->whereBetween('moderator_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
