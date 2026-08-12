@@ -19,8 +19,6 @@ use Rap2hpoutre\FastExcel\FastExcel;
 #[Group(name: 'Reports & Exports', weight: 80)]
 class ExportReportUserController extends Controller
 {
-    private const int FILE_ID = 8;
-
     /**
      * @throws IOException
      * @throws WriterNotOpenedException
@@ -36,6 +34,7 @@ class ExportReportUserController extends Controller
 
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
+        $mainFileId = config('dataset.main_file_id');
 
         $period = collect(CarbonPeriod::create($fromDate, $toDate))->toArray();
 
@@ -43,7 +42,7 @@ class ExportReportUserController extends Controller
         $audioStats = Audio::query()
             ->selectRaw('edit_speaker_id, DATE(speak_finished_at) as date, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $mainFileId))
             ->whereBetween('speak_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
@@ -71,7 +70,7 @@ class ExportReportUserController extends Controller
             $dayTotals[$dateString] = $dayTotals[$dateString] ?? 0;
         }
 
-        // ✅ Users who spoke file_id=8 texts within the period
+        // ✅ Users who spoke texts of the main dataset file within the period
         $users = User::query()
             ->where('role', '!=', RoleEnum::SUPER_ADMIN->value)
             ->whereIn('id', array_keys($statsMap))

@@ -15,8 +15,6 @@ use Illuminate\Http\Request;
 #[Group(name: 'Reports & Exports', weight: 80)]
 class ReportSpeakerController extends Controller
 {
-    private const int FILE_ID = 8;
-
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
@@ -26,6 +24,7 @@ class ReportSpeakerController extends Controller
 
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
+        $mainFileId = config('dataset.main_file_id');
 
         $dates = collect(CarbonPeriod::create($fromDate, $toDate))
             ->map(fn ($date): string => $date->format('Y-m-d'))
@@ -34,7 +33,7 @@ class ReportSpeakerController extends Controller
         $periodWritten = Audio::query()
             ->selectRaw('edit_speaker_id, DATE(speak_finished_at) as date, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $mainFileId))
             ->whereBetween('speak_finished_at', [
                 $fromDate.' 00:00:00',
                 $toDate.' 23:59:59',
@@ -51,7 +50,7 @@ class ReportSpeakerController extends Controller
         $totalWritten = Audio::query()
             ->selectRaw('edit_speaker_id, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $mainFileId))
             ->groupBy('edit_speaker_id')
             ->pluck('total', 'edit_speaker_id');
 
@@ -59,7 +58,7 @@ class ReportSpeakerController extends Controller
             ->selectRaw('edit_speaker_id, is_correct, COUNT(*) as total')
             ->whereNotNull('speak_finished_at')
             ->whereNotNull('is_correct')
-            ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+            ->whereHas('text', fn (Builder $query) => $query->where('file_id', $mainFileId))
             ->groupBy('edit_speaker_id', 'is_correct')
             ->get();
 

@@ -14,8 +14,6 @@ use Rap2hpoutre\FastExcel\SheetCollection;
 
 class ExportReportCommand extends Command
 {
-    private const int FILE_ID = 8;
-
     protected $signature = 'report:export
         {--filename=report.xlsx : Output Excel filename}
         {--exported=all : Export status filter — all, 1 (exported only), or 0 (not exported only)}
@@ -29,11 +27,16 @@ class ExportReportCommand extends Command
     /** Inclusive lower bound on user registration date (users.created_at); null = no bound. */
     private ?Carbon $registeredFrom = null;
 
+    /** Id of the dataset file the report is scoped to. */
+    private int $mainFileId;
+
     public function handle(): int
     {
         if (! $this->resolveExportedFilter() || ! $this->resolveRegisteredFilter()) {
             return self::INVALID;
         }
+
+        $this->mainFileId = (int) config('dataset.main_file_id');
 
         $filename = $this->option('filename');
         $path = storage_path('app/'.$filename);
@@ -79,6 +82,8 @@ class ExportReportCommand extends Command
      */
     private function resolveRegisteredFilter(): bool
     {
+        $this->registeredFrom = null;
+
         $value = $this->option('registered-from');
 
         if ($value === null || $value === '') {
@@ -130,7 +135,7 @@ class ExportReportCommand extends Command
             Audio::query()
                 ->selectRaw('edit_speaker_id, COUNT(*) as total')
                 ->whereNotNull('speak_finished_at')
-                ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+                ->whereHas('text', fn (Builder $query) => $query->where('file_id', $this->mainFileId))
         )
             ->groupBy('edit_speaker_id')
             ->pluck('total', 'edit_speaker_id');
@@ -140,7 +145,7 @@ class ExportReportCommand extends Command
                 ->selectRaw('edit_speaker_id, is_correct, COUNT(*) as total')
                 ->whereNotNull('speak_finished_at')
                 ->whereNotNull('is_correct')
-                ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+                ->whereHas('text', fn (Builder $query) => $query->where('file_id', $this->mainFileId))
         )
             ->groupBy('edit_speaker_id', 'is_correct')
             ->get();
@@ -188,7 +193,7 @@ class ExportReportCommand extends Command
                 ->selectRaw('moderator_id, is_correct, COUNT(*) as total')
                 ->whereNotNull('moderator_finished_at')
                 ->whereNotNull('is_correct')
-                ->whereHas('text', fn (Builder $query) => $query->where('file_id', self::FILE_ID))
+                ->whereHas('text', fn (Builder $query) => $query->where('file_id', $this->mainFileId))
         )
             ->groupBy('moderator_id', 'is_correct')
             ->get();
