@@ -14,6 +14,7 @@ class FinishedAudioController extends Controller
     public function __invoke(FinishedAudioRequest $request)
     {
         $audio = Audio::query()
+            ->mainFile()
             ->where('is_correct', true)
             ->withinSttLimit()
             ->with('text:id,edit_original_transcript,edit_normalized_transcript,edit_tokenized_transcript')
