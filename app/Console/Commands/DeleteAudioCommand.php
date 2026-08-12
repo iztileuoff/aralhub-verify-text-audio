@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Audio;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class DeleteAudioCommand extends Command
 {
@@ -23,13 +22,7 @@ class DeleteAudioCommand extends Command
         $count = 0;
 
         foreach ($audios as $audio) {
-            if ($audio->edit_audio_filename) {
-                Storage::delete($audio->edit_audio_filename);
-            }
-
-            if ($audio->edit_converted_audio_filename) {
-                Storage::delete($audio->edit_converted_audio_filename);
-            }
+            $audio->deleteStoredFiles();
 
             $text = $audio->text;
 

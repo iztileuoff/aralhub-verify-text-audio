@@ -38,6 +38,7 @@ class Text extends Model
         'edit_finished_at',
         'edit_cancelled_user_id',
         'edit_audio_filename',
+        'storage_disk',
         'edit_converted_audio_filename',
         'edit_converted_audio_duration',
         'speak_started_at',
@@ -80,6 +81,7 @@ class Text extends Model
             'edit_finished_at' => 'datetime',
             'edit_cancelled_user_id' => 'integer',
             'edit_audio_filename' => 'string',
+            'storage_disk' => 'string',
             'edit_converted_audio_filename' => 'string',
             'edit_converted_audio_duration' => 'integer',
             'speak_started_at' => 'datetime',
@@ -110,9 +112,18 @@ class Text extends Model
     {
         return Attribute::make(
             get: fn () => $this->edit_audio_filename
-                ? Storage::disk('yandex-s3')->url($this->edit_audio_filename)
+                ? Storage::disk($this->audioDisk())->url($this->edit_audio_filename)
                 : null,
         );
+    }
+
+    /**
+     * The disk this recording lives on: the one stamped at upload time, or the
+     * legacy disk for rows recorded before the storage became configurable.
+     */
+    public function audioDisk(): string
+    {
+        return $this->storage_disk ?: config('audio.legacy_disk');
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder

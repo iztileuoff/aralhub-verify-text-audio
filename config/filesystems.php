@@ -74,6 +74,25 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Cloudflare R2. S3-compatible, so the same driver applies; "region"
+         * is always "auto" and the bucket must be reached through a public
+         * r2.dev subdomain or a custom domain set as R2_URL, because playback
+         * URLs are handed straight to the browser.
+         */
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => env('R2_DEFAULT_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET_NAME'),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

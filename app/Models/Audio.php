@@ -32,6 +32,7 @@ class Audio extends Model
         'text_id',
         'parent_audio_id',
         'edit_audio_filename',
+        'storage_disk',
         'edit_converted_audio_filename',
         'edit_converted_audio_duration',
         'exported_at',
@@ -53,6 +54,7 @@ class Audio extends Model
             'text_id' => 'integer',
             'parent_audio_id' => 'integer',
             'edit_audio_filename' => 'string',
+            'storage_disk' => 'string',
             'edit_converted_audio_filename' => 'string',
             'edit_converted_audio_duration' => 'integer',
             'exported_at' => 'datetime',
@@ -78,9 +80,34 @@ class Audio extends Model
     {
         return Attribute::make(
             get: fn () => $this->edit_audio_filename
-                ? Storage::disk('yandex-s3')->url($this->edit_audio_filename)
+                ? Storage::disk($this->audioDisk())->url($this->edit_audio_filename)
                 : null,
         );
+    }
+
+    /**
+     * The disk this recording lives on: the one stamped at upload time, or the
+     * legacy disk for rows recorded before the storage became configurable.
+     */
+    public function audioDisk(): string
+    {
+        return $this->storage_disk ?: config('audio.legacy_disk');
+    }
+
+    /**
+     * Delete the files of this recording, each from the disk it actually sits
+     * on: the original from the object storage it was uploaded to, the
+     * converted copy from the local public disk. The row itself is untouched.
+     */
+    public function deleteStoredFiles(): void
+    {
+        if ($this->edit_audio_filename) {
+            Storage::disk($this->audioDisk())->delete($this->edit_audio_filename);
+        }
+
+        if ($this->edit_converted_audio_filename) {
+            Storage::disk('public')->delete($this->edit_converted_audio_filename);
+        }
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder
