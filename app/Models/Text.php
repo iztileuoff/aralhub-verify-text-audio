@@ -148,12 +148,14 @@ class Text extends Model
     }
 
     /**
-     * Limit the query to the main texts of the primary dataset file.
+     * Limit the query to the main texts of a dataset file: the active one by
+     * default, an explicit id to reach an older dataset — the same rule the
+     * export commands follow with their --file-id option.
      */
-    public function scopeMainFile(Builder $query): Builder
+    public function scopeMainFile(Builder $query, ?int $fileId = null): Builder
     {
         return $query->where('is_main', true)
-            ->where('file_id', config('dataset.main_file_id'));
+            ->where('file_id', $fileId ?? config('dataset.main_file_id'));
     }
 
     /**

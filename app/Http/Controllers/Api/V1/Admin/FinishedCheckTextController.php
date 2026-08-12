@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Http\Controllers\Concerns\ScopesDatasetFile;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\AudioResource;
 use App\Models\Audio;
@@ -11,9 +12,12 @@ use Illuminate\Http\Request;
 #[Group(name: 'Texts', weight: 50)]
 class FinishedCheckTextController extends Controller
 {
+    use ScopesDatasetFile;
+
     public function __invoke(Request $request)
     {
         $audio = Audio::query()
+            ->mainFile($this->requestedFileId($request))
             ->whereNotNull('is_correct')
             ->when($request->filled('speaker_id'), fn ($q) => $q->where('edit_speaker_id', $request->input('speaker_id')))
             ->when($request->filled('moderator_id'), fn ($q) => $q->where('moderator_id', $request->input('moderator_id')))

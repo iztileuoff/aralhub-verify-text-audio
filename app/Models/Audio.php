@@ -144,12 +144,12 @@ class Audio extends Model
     }
 
     /**
-     * Limit the query to audios recorded for the main texts of the primary
-     * dataset file; the counterpart of Text::scopeMainFile() across the relation.
+     * Limit the query to audios recorded for the main texts of a dataset file;
+     * the counterpart of Text::scopeMainFile() across the relation.
      */
-    public function scopeMainFile(Builder $query): Builder
+    public function scopeMainFile(Builder $query, ?int $fileId = null): Builder
     {
-        return $query->whereHas('text', fn (Builder $text): Builder => $text->mainFile());
+        return $query->whereHas('text', fn (Builder $text): Builder => $text->mainFile($fileId));
     }
 
     /**
