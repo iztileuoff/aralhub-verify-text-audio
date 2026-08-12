@@ -228,6 +228,24 @@ After the **first** deploy that ships the export feature, run the one-time group
 php artisan export:seed-groups
 ```
 
+### Monitoring (Pulse)
+
+The dashboard is at `/pulse`, behind the `viewPulse` gate — super admins and admins only, same
+as `/login` (phone + password) and the `/dashboard` page that links to it. Requests, slow
+queries, exceptions and cache stats are recorded by the app itself; nothing extra runs for them.
+
+The **Servers** card is the exception: it needs `pulse:check`, and on this host there is no
+Supervisor access, so it runs from the `fastuser` crontab once a minute instead of as a daemon:
+
+```cron
+* * * * * cd /var/www/fastuser/data/www/api.verify.aralhub.uz && /opt/php8.4/bin/php artisan pulse:check --once >/dev/null 2>&1
+```
+
+That gives the card one data point per minute rather than a continuous stream. Remove the entry
+and the card goes blank while the rest of Pulse keeps working. The queue worker runs under
+Supervisor (`api-verify-queue-worker`); this app has no `schedule:run` cron because it has no
+scheduled tasks.
+
 ---
 
 ## Local development
