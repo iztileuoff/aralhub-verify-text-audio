@@ -21,15 +21,18 @@ class SpeakTextAudioCompleteController extends Controller
      */
     public function __invoke(StoreSpeakTextRequest $request, Text $text): JsonResponse
     {
+        $disk = config('audio.disk');
+
         try {
-            $path = $request->file('audio')->store('audio', 'yandex-s3');
+            $path = $request->file('audio')->store('audio', $disk);
         } catch (Throwable $exception) {
             report($exception);
             $path = false;
         }
 
         if ($path === false) {
-            Log::error('Audio upload to Yandex S3 failed', [
+            Log::error('Audio upload to object storage failed', [
+                'disk' => $disk,
                 'text_id' => $text->id,
                 'user_id' => auth()->id(),
             ]);
@@ -40,11 +43,12 @@ class SpeakTextAudioCompleteController extends Controller
         }
 
         if ($text->edit_audio_filename) {
-            Storage::disk('yandex-s3')->delete($text->edit_audio_filename);
+            Storage::disk($text->audioDisk())->delete($text->edit_audio_filename);
         }
 
         $text->audio()->create([
             'edit_audio_filename' => $path,
+            'storage_disk' => $disk,
             'speak_started_at' => $text->speak_started_at,
             'speak_finished_at' => now(),
             'edit_speaker_id' => auth()->user()->id,

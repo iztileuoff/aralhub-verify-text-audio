@@ -28,14 +28,15 @@ class LongAudioSplitController extends Controller
 
         $parts = $request->validated('parts');
 
+        $disk = config('audio.disk');
         $storedPaths = [];
 
         foreach ($parts as $part) {
-            $path = $part['audio']->store('audio', 'yandex-s3');
+            $path = $part['audio']->store('audio', $disk);
 
             if ($path === false) {
                 foreach ($storedPaths as $stored) {
-                    Storage::disk('yandex-s3')->delete($stored);
+                    Storage::disk($disk)->delete($stored);
                 }
 
                 return response()->json([
@@ -46,7 +47,7 @@ class LongAudioSplitController extends Controller
             $storedPaths[] = $path;
         }
 
-        DB::transaction(function () use ($audio, $parts, $storedPaths): void {
+        DB::transaction(function () use ($audio, $parts, $storedPaths, $disk): void {
             foreach ($parts as $index => $part) {
                 $text = Text::create([
                     'file_id' => $audio->text?->file_id,
@@ -59,6 +60,7 @@ class LongAudioSplitController extends Controller
                 $audio->splitParts()->create([
                     'text_id' => $text->id,
                     'edit_audio_filename' => $storedPaths[$index],
+                    'storage_disk' => $disk,
                     'edit_converted_audio_duration' => $part['duration'],
                     'edit_speaker_id' => $audio->edit_speaker_id,
                     'edit_speaker_gender' => $audio->edit_speaker_gender,

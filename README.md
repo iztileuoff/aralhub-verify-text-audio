@@ -6,7 +6,31 @@ computed by an **external Python script** and imported back, and every export is
 pipeline can be re-run safely on continuously growing data.
 
 > API: `api.verify.aralhub.uz` (Fastpanel). Tech stack: PHP 8.4, Laravel 12, Sanctum, FastExcel,
-> Yandex S3 (flysystem), SQLite/MySQL.
+> S3-compatible object storage (flysystem), SQLite/MySQL.
+
+---
+
+## Where recordings are stored
+
+New recordings go to the disk named by `AUDIO_DISK` (`config/audio.php`), and every `audio` /
+`texts` row keeps the disk it was written to in `storage_disk`. Rows with `storage_disk = NULL`
+predate the column and are read from `AUDIO_LEGACY_DISK`.
+
+That is what makes the object storage swappable: changing `AUDIO_DISK` only affects uploads from
+that moment on, while everything already uploaded keeps being read — and deleted — from the disk
+it actually lives on. No file migration is required to switch providers.
+
+Configured disks are in `config/filesystems.php`: `yandex-s3` (in use so far) and `r2` (Cloudflare
+R2 — same S3 driver, `region=auto`, no per-object ACLs, so the bucket must be published through an
+`r2.dev` subdomain or a custom domain set as `R2_URL`).
+
+⚠️ The external Python script fetches originals by public URL built from `id;filename`, so when
+`AUDIO_DISK` changes it needs the new base URL as well.
+
+⚠️ `audio:delete` and `audio:delete-incorrect` used to call `Storage::delete()` with no disk, which
+resolves to the default `local` disk — so they dropped the database rows but never removed anything
+from object storage. Both now go through `Audio::deleteStoredFiles()` and really delete. Files
+orphaned by earlier runs are still in the bucket and have to be swept separately.
 
 ---
 
