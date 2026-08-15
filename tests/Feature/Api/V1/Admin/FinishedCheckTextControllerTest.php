@@ -12,7 +12,8 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Storage::fake('yandex-s3');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
 
     $this->file = File::factory()->create();
     config(['dataset.main_file_id' => $this->file->id]);

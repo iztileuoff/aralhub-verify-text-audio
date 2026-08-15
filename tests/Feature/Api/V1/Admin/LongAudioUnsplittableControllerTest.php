@@ -11,7 +11,8 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Storage::fake('yandex-s3');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
 
     Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::ADMIN->value]));
 });

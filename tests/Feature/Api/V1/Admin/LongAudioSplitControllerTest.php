@@ -15,7 +15,8 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Storage::fake('yandex-s3');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
 
     Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::ADMIN->value]));
 });
@@ -67,8 +68,8 @@ it('splits a long audio into two shorter audios with their own texts', function 
         ->and($parts[1]->text->is_split_part)->toBeTrue()
         ->and($parts[0]->text->id)->not->toBe($text->id);
 
-    Storage::disk('yandex-s3')->assertExists($parts[0]->edit_audio_filename);
-    Storage::disk('yandex-s3')->assertExists($parts[1]->edit_audio_filename);
+    Storage::disk(config('audio.disk'))->assertExists($parts[0]->edit_audio_filename);
+    Storage::disk(config('audio.disk'))->assertExists($parts[1]->edit_audio_filename);
 });
 
 it('rejects a payload that is not exactly two parts', function () {

@@ -21,7 +21,8 @@ beforeEach(function () {
 });
 
 it('stores the audio and updates the text when the upload succeeds', function () {
-    Storage::fake('yandex-s3');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
 
     $text = Text::factory()->create([
         'speak_started_at' => now()->subMinutes(5),
@@ -41,7 +42,7 @@ it('stores the audio and updates the text when the upload succeeds', function ()
         ->and($audio->edit_speaker_gender)->toBe(GenderEnum::MALE)
         ->and($audio->edit_audio_filename)->toStartWith('audio/');
 
-    Storage::disk('yandex-s3')->assertExists($audio->edit_audio_filename);
+    Storage::disk(config('audio.disk'))->assertExists($audio->edit_audio_filename);
 
     $text->refresh();
 
@@ -53,8 +54,9 @@ it('stores the audio and updates the text when the upload succeeds', function ()
 });
 
 it('replaces the previous audio file once the new upload succeeds', function () {
-    Storage::fake('yandex-s3');
-    Storage::disk('yandex-s3')->put('audio/old-file.mp3', 'old');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
+    Storage::disk(config('audio.legacy_disk'))->put('audio/old-file.mp3', 'old');
 
     $text = Text::factory()->create([
         'edit_audio_filename' => 'audio/old-file.mp3',
@@ -65,7 +67,7 @@ it('replaces the previous audio file once the new upload succeeds', function () 
         ['audio' => UploadedFile::fake()->create('audio.mp3', 100, 'audio/mpeg')]
     )->assertSuccessful();
 
-    Storage::disk('yandex-s3')->assertMissing('audio/old-file.mp3');
+    Storage::disk(config('audio.legacy_disk'))->assertMissing('audio/old-file.mp3');
 });
 
 it('does not save audio or change state when the storage upload fails', function () {
@@ -97,7 +99,8 @@ it('does not save audio or change state when the storage upload fails', function
 });
 
 it('answers a resent upload with the saved state instead of a second take', function () {
-    Storage::fake('yandex-s3');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
 
     $text = Text::factory()->create([
         'speak_started_at' => now()->subMinutes(5),
@@ -119,12 +122,13 @@ it('answers a resent upload with the saved state instead of a second take', func
         ->and($text->refresh()->audio_count)->toBe(1);
 
     // The take that was saved is still in storage, and nothing extra landed there.
-    Storage::disk('yandex-s3')->assertExists($first->edit_audio_filename);
-    expect(Storage::disk('yandex-s3')->files('audio'))->toHaveCount(1);
+    Storage::disk(config('audio.disk'))->assertExists($first->edit_audio_filename);
+    expect(Storage::disk(config('audio.disk'))->files('audio'))->toHaveCount(1);
 });
 
 it('lets another speaker record the same text', function () {
-    Storage::fake('yandex-s3');
+    Storage::fake(config('audio.disk'));
+    Storage::fake(config('audio.legacy_disk'));
 
     $text = Text::factory()->create();
 
