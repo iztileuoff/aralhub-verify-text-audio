@@ -20,9 +20,10 @@ That is what makes the object storage swappable: changing `AUDIO_DISK` only affe
 that moment on, while everything already uploaded keeps being read — and deleted — from the disk
 it actually lives on. No file migration is required to switch providers.
 
-Configured disks are in `config/filesystems.php`: `yandex-s3` (in use so far) and `r2` (Cloudflare
-R2 — same S3 driver, `region=auto`, no per-object ACLs, so the bucket must be published through an
-`r2.dev` subdomain or a custom domain set as `R2_URL`).
+Configured disks are in `config/filesystems.php`: `r2` (Cloudflare R2 — in use since the switch;
+same S3 driver, `region=auto`, no per-object ACLs, so the bucket must be published through an
+`r2.dev` subdomain or a custom domain set as `R2_URL`) and `yandex-s3`, which now only serves the
+recordings made before it — hence `AUDIO_LEGACY_DISK=yandex-s3`.
 
 ⚠️ The external Python script fetches originals by public URL built from `id;filename`, so when
 `AUDIO_DISK` changes it needs the new base URL as well.
