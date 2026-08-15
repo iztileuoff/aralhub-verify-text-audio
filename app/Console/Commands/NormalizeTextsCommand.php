@@ -6,11 +6,11 @@ use App\Models\Audio;
 use App\Models\Text;
 use Illuminate\Console\Command;
 
-class TestCommand extends Command
+class NormalizeTextsCommand extends Command
 {
-    protected $signature = 'test';
+    protected $signature = 'texts:normalize';
 
-    protected $description = 'Command description';
+    protected $description = 'Fill the normalized and tokenized transcripts of texts that do not have them yet';
 
     public function handle(): void
     {
@@ -67,6 +67,6 @@ class TestCommand extends Command
             $count++;
         }
 
-        $this->info('Test command done: '.$count);
+        $this->info('Normalized texts: '.$count);
     }
 }
