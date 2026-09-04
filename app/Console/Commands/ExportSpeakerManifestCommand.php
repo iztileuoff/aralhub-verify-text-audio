@@ -68,7 +68,13 @@ class ExportSpeakerManifestCommand extends Command
     {
         $path = storage_path('app/'.$this->option('filename'));
 
-        $file = fopen($path, 'w');
+        $file = @fopen($path, 'w');
+
+        if ($file === false) {
+            $this->error("Cannot write to {$path}.");
+
+            return self::FAILURE;
+        }
 
         fwrite($file, implode("\t", self::COLUMNS).PHP_EOL);
 

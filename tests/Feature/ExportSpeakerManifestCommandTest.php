@@ -188,3 +188,10 @@ it('keeps transcripts on one line so tabs and line breaks cannot break the tsv',
         ->and($rows[0]['transcript_original'])->toBe('Bir ekі úsh')
         ->and($rows[0]['transcript_normalized'])->toBe('');
 });
+
+it('fails cleanly when the output file cannot be written', function () {
+    $exit = Artisan::call('audio:export-speaker-manifest', ['--filename' => 'no-such-dir/test_speaker_manifest.tsv']);
+
+    expect($exit)->toBe(1)
+        ->and(Artisan::output())->toContain('Cannot write to');
+});
