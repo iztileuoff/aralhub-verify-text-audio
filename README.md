@@ -199,6 +199,31 @@ One-time backfill that organises pre-existing exported audios into export groups
 
 ---
 
+### `audio:export-speaker-manifest`
+
+Dumps **every verified audio of every dataset** with the speaker who read it and where its file
+lives. It exists for the `kaa-tts-voices` project (per-speaker voice sets for TTS): the export
+`.tsv` has no speaker column and filenames are random hashes, so the speaker → audio link is
+only reachable through the database. Read-only — no `Export`, no `exported_at`.
+
+| Option        | Default                 | Description                       |
+| ------------- | ----------------------- | --------------------------------- |
+| `--filename`  | `speaker_manifest.tsv`  | Output file under `storage/app/`. |
+
+- **Selects:** `is_correct = true` across **all** `file_id`s (deliberately not scoped to the
+  active dataset — see `docs/adr/0001-speaker-manifest-spans-all-datasets.md`); split parents
+  (`split_status = SPLIT`) are dropped, their parts are kept.
+- **Output:** tab-separated **with a header row**: `audio_id`, `speaker_id`, `gender`, `age`,
+  `file_id`, `text_id`, `is_split_part`, `parent_audio_id`, `audio_filename`, `storage_disk`,
+  `audio_url`, `converted_filename`, `duration_samples`, `duration_s`, `recorded_at`,
+  `moderated_at`, `exported_at`, `export_id`, `transcript_original`, `transcript_normalized`.
+  `storage_disk` is resolved per row (`NULL` → `AUDIO_LEGACY_DISK`), `audio_url` is built from
+  that disk's configured base URL. No names or phone numbers — `speaker_id` is enough to look a
+  person up in the admin panel.
+- ⚠️ For recordings converted in March–April 2026 the old date-range `.tsv`s carry the
+  **converted** filename (`audio_conv/…`), which differs from the original — match those on
+  `converted_filename`, everything later on `audio_filename`.
+
 ## Data model notes
 
 `audio` table additions used by the pipeline:
