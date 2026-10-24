@@ -308,17 +308,23 @@ The dashboard is at `/pulse`, behind the `viewPulse` gate — super admins and a
 as `/login` (phone + password) and the `/dashboard` page that links to it. Requests, slow
 queries, exceptions and cache stats are recorded by the app itself; nothing extra runs for them.
 
-The **Servers** card is the exception: it needs `pulse:check`, and on this host there is no
-Supervisor access, so it runs from the `fastuser` crontab once a minute instead of as a daemon:
+The **Servers** card is the exception: it needs `pulse:check`. On this host there is no
+Supervisor access, so it is meant to run from the `fastuser` crontab once a minute:
 
 ```cron
-* * * * * cd /var/www/fastuser/data/www/api.verify.aralhub.uz && /opt/php8.4/bin/php artisan pulse:check --once >/dev/null 2>&1
+* * * * * cd /var/www/fastuser/data/www/api.verify.aralhub.uz && /opt/php84/bin/php artisan pulse:check --once >/dev/null 2>&1
 ```
 
-That gives the card one data point per minute rather than a continuous stream. Remove the entry
-and the card goes blank while the rest of Pulse keeps working. The queue worker runs under
-Supervisor (`api-verify-queue-worker`); this app has no `schedule:run` cron because it has no
-scheduled tasks.
+⚠️ As of 2026-10-24 that entry is **not** in the crontab, so the Servers card is blank; add it to
+turn the card on. One data point per minute rather than a continuous stream; the rest of Pulse
+works without it. This app has no `schedule:run` cron because it has no scheduled tasks.
+
+PHP 8.4 on the host is `/opt/php84/bin/php` (the system `php` is 8.3).
+
+The queue (`QUEUE_CONNECTION=database`) was meant to be worked by a Supervisor program
+`api-verify-queue-worker`. ⚠️ On 2026-10-24 no `queue:work` process for this app was running
+(the `jobs` table was empty, so nothing was stuck). Dataset-file uploads from the admin panel are
+queued jobs — if one hangs, check the worker first. The call trimming does not use the queue.
 
 ---
 

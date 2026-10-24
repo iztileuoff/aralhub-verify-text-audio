@@ -615,12 +615,12 @@ aytpaqshı edim bir bólegin házir bersem bul ushın ótinish jazıwım kerek p
 cd /var/www/fastuser/data/www/api.verify.aralhub.uz
 
 # Тексты по датасетам
-/opt/php8.4/bin/php artisan tinker --execute="
+/opt/php84/bin/php artisan tinker --execute="
   print_r(DB::table('texts')->selectRaw('file_id, is_main, is_split_part, count(*) as c')
     ->groupBy('file_id','is_main','is_split_part')->orderBy('file_id')->get()->toArray());"
 
 # Аудио по датасетам: озвучено / без модерации / принято / выгружено
-/opt/php8.4/bin/php artisan tinker --execute="
+/opt/php84/bin/php artisan tinker --execute="
   print_r(DB::table('audio')->join('texts','audio.text_id','=','texts.id')
     ->selectRaw('texts.file_id, count(*) as total,
        sum(audio.speak_finished_at is not null) as spoken,
@@ -631,4 +631,5 @@ cd /var/www/fastuser/data/www/api.verify.aralhub.uz
 ```
 
 Деплой — `./.deploy.sh` из каталога приложения (см. `README.md` §Deployment).
-На сервере системный `php` — 8.2.24, актуальный интерпретатор — `/opt/php8.4/bin/php`.
+На сервере системный `php` — 8.3 (на 2026-10-24), актуальный интерпретатор — `/opt/php84/bin/php`
+(пути `/opt/php8.4` на сервере нет).
