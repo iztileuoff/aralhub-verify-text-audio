@@ -43,6 +43,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the user trims and transcribes phone calls.
+     */
+    public function trimmer(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'role' => RoleEnum::TRIMMER->value,
+        ]);
+    }
+
+    /**
      * Indicate that the user is not verified.
      */
     public function unverified(): static
