@@ -28,6 +28,42 @@ class CallRecording extends Model
     /** @use HasFactory<CallRecordingFactory> */
     use HasFactory;
 
+    /**
+     * Audio formats accepted from the customer's upload link — wider than what
+     * the browser editor can open, so nothing is lost on the way in;
+     * calls:register then reports the formats that need converting first.
+     */
+    public const UPLOAD_AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'oga', 'opus', 'm4a', 'aac', 'flac', 'webm', 'amr', 'gsm', 'wma', '3gp', 'mp4'];
+
+    /** Archives (and multi-volume parts) accepted from the upload link; valid as both a PHP and a JS regex body. */
+    public const UPLOAD_ARCHIVE_PATTERN = '\.(rar|zip|7z|r\d{2}|z\d{2}|\d{3})$';
+
+    /** Batch (delivery) names: a folder name in the bucket. */
+    public const UPLOAD_BATCH_PATTERN = '[A-Za-z0-9][A-Za-z0-9_-]{0,49}';
+
+    /** Archive part size. R2 wants every part but the last to be the same size, so it never changes mid-upload. */
+    public const UPLOAD_PART_BYTES = 64 * 1024 * 1024;
+
+    public const UPLOAD_MAX_FILE_BYTES = 100 * 1024 * 1024;
+
+    public const UPLOAD_MAX_ARCHIVE_BYTES = 50 * 1024 * 1024 * 1024;
+
+    /**
+     * Where the audio files of a delivery go — the folder calls:register reads.
+     */
+    public static function sourcePrefix(string $batch): string
+    {
+        return 'source/'.$batch;
+    }
+
+    /**
+     * Where uploaded archives wait until they are unpacked on the server.
+     */
+    public static function archivePrefix(string $batch): string
+    {
+        return 'archives/'.$batch;
+    }
+
     protected $fillable = [
         'batch',
         'original_filename',

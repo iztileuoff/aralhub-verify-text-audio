@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Calls\CallApproveController;
+use App\Http\Controllers\Api\V1\Calls\CallArchiveCompleteController;
+use App\Http\Controllers\Api\V1\Calls\CallArchivePartsController;
+use App\Http\Controllers\Api\V1\Calls\CallArchiveStartController;
 use App\Http\Controllers\Api\V1\Calls\CallCurrentController;
 use App\Http\Controllers\Api\V1\Calls\CallModerationController;
 use App\Http\Controllers\Api\V1\Calls\CallRejectController;
@@ -9,8 +12,11 @@ use App\Http\Controllers\Api\V1\Calls\CallRestoreController;
 use App\Http\Controllers\Api\V1\Calls\CallSkipController;
 use App\Http\Controllers\Api\V1\Calls\CallStatsController;
 use App\Http\Controllers\Api\V1\Calls\CallSubmitController;
+use App\Http\Controllers\Api\V1\Calls\CallUploadExistingController;
+use App\Http\Controllers\Api\V1\Calls\CallUploadFilesController;
 use App\Http\Controllers\Api\V1\Calls\MyCallsController;
 use App\Http\Controllers\Api\V1\Calls\MyCallStatsController;
+use App\Models\CallRecording;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,4 +47,22 @@ Route::group([
     Route::post('{call}/approve', CallApproveController::class)->name('approve');
     Route::post('{call}/reject', CallRejectController::class)->name('reject');
     Route::post('{call}/restore', CallRestoreController::class)->name('restore');
+});
+
+/*
+ * Behind the customer's upload link (routes/web.php "calls.upload.page"): no
+ * login, the signed URL is the key. The browser sends the bytes straight to
+ * the calls bucket; these routes only hand out signed bucket URLs for one batch.
+ */
+Route::group([
+    'prefix' => 'calls-upload/{batch}',
+    'as' => 'calls.upload.',
+    'where' => ['batch' => CallRecording::UPLOAD_BATCH_PATTERN],
+    'middleware' => ['signed:relative', 'throttle:600,1'],
+], function () {
+    Route::post('existing', CallUploadExistingController::class)->name('existing');
+    Route::post('files', CallUploadFilesController::class)->name('files');
+    Route::post('archive/start', CallArchiveStartController::class)->name('archive.start');
+    Route::post('archive/parts', CallArchivePartsController::class)->name('archive.parts');
+    Route::post('archive/complete', CallArchiveCompleteController::class)->name('archive.complete');
 });
