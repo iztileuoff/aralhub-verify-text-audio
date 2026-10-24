@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsVerified;
+use App\Http\Middleware\EnsureUserLacksRole;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
             'user-verified' => EnsureUserIsVerified::class,
+            'role' => EnsureUserHasRole::class,
+            'role.deny' => EnsureUserLacksRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

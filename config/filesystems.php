@@ -93,6 +93,24 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Phone-call recordings (config/calls.php). A separate, private R2
+         * bucket: unlike the speaker recordings it has no public URL, so
+         * playback goes through temporaryUrl(). Credentials default to the
+         * main R2 ones, since both buckets usually sit in one account.
+         */
+        'calls' => [
+            'driver' => 's3',
+            'key' => env('CALLS_ACCESS_KEY_ID', env('R2_ACCESS_KEY_ID')),
+            'secret' => env('CALLS_SECRET_ACCESS_KEY', env('R2_SECRET_ACCESS_KEY')),
+            'region' => env('CALLS_DEFAULT_REGION', 'auto'),
+            'bucket' => env('CALLS_BUCKET_NAME'),
+            'endpoint' => env('CALLS_ENDPOINT', env('R2_ENDPOINT')),
+            'use_path_style_endpoint' => env('CALLS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

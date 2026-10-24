@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 /*
@@ -46,4 +47,37 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Bytes of a silent RIFF/WAVE file. Defaults to the dataset format
+ * (16 kHz, mono, 16-bit PCM); $listChunk puts an odd-sized LIST chunk before
+ * "data", the way real encoders do, to exercise chunk walking and padding.
+ */
+function wavBytes(float $seconds, int $sampleRate = 16000, int $channels = 1, int $bits = 16, int $format = 1, bool $listChunk = false): string
+{
+    $blockAlign = $channels * intdiv($bits, 8);
+    $data = str_repeat("\0", (int) round($seconds * $sampleRate) * $blockAlign);
+    $fmt = pack('vvVVvv', $format, $channels, $sampleRate, $sampleRate * $blockAlign, $blockAlign, $bits);
+
+    $chunks = 'fmt '.pack('V', strlen($fmt)).$fmt;
+
+    if ($listChunk) {
+        $chunks .= 'LIST'.pack('V', 7)."INFOabc\0";
+    }
+
+    $chunks .= 'data'.pack('V', strlen($data)).$data;
+
+    return 'RIFF'.pack('V', 4 + strlen($chunks)).'WAVE'.$chunks;
+}
+
+/**
+ * An uploaded WAV file built by wavBytes().
+ */
+function fakeWav(float $seconds = 2, int $sampleRate = 16000, int $channels = 1, int $bits = 16, int $format = 1, bool $listChunk = false): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent(
+        'call.wav',
+        wavBytes($seconds, $sampleRate, $channels, $bits, $format, $listChunk),
+    );
 }

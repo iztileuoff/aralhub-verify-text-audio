@@ -224,6 +224,54 @@ only reachable through the database. Read-only — no `Export`, no `exported_at`
   **converted** filename (`audio_conv/…`), which differs from the original — match those on
   `converted_filename`, everything later on `audio_filename`.
 
+## Phone-call trimming
+
+A separate section for ≈ 8 GB of phone calls (≤ 2 min each) that arrived without text. Users with
+role **Trimmer** (`6`) cut the silence before and after the conversation in the browser, write the
+whole conversation in Karakalpak Latin and submit a 16 kHz mono 16-bit WAV; admins approve or send
+it back. API and screens: `docs/frontend/call-trim.md`; decisions and rollout: `docs/call-trim-plan.md`.
+
+- **Kept apart from the dataset.** Calls live in `call_recordings` / `call_recording_events`, not
+  in `texts` / `audio`, so they never show up in the speaker queues, the counters or
+  `audio:export-correct`.
+- **Trimmers see only their section.** `role:trimmer` opens `admin/calls/*`; every other `admin/*`
+  and `admin/verify/*` route answers them `403` (`role.deny:trimmer`). Only the profile is shared.
+- **Private storage.** Disk `calls` (`CALLS_BUCKET_NAME`, keys default to `R2_*`) must be a bucket
+  without public access — these are real people's conversations. The browser gets `temporaryUrl()`s
+  and `fetch()`es them, so the bucket needs a CORS rule (`GET`) for the admin frontend's domain.
+- **No ffmpeg needed.** The WAV format and duration are read from the file header in PHP.
+
+### `calls:register`
+
+Registers the files uploaded to the calls bucket (e.g. with `rclone`) as pending calls.
+Idempotent — re-running after more files arrive only adds the new ones.
+
+| Option     | Default       | Description                                        |
+| ---------- | ------------- | -------------------------------------------------- |
+| `--prefix` | `source/`     | Folder in the bucket to scan, recursively.         |
+| `--batch`  | folder name   | Label stored on the new calls.                     |
+
+Only formats a browser can decode are registered (`mp3 wav ogg oga opus m4a aac flac webm`); the
+rest are counted and reported so they can be converted first.
+
+### `calls:export`
+
+Exports approved calls in the **same columns as `audio:export-correct`**, so the two files can be
+merged: `call-<id>`, `<file>.wav`, transcript, normalized, tokenized, duration in samples, and an
+empty gender column (a call has two voices). The `call-` prefix keeps ids from colliding with
+`text_id`s. Next to the `.tsv` it writes `<name>_files.txt` (`call-<id>;<path in the bucket>`).
+
+| Option       | Default                | Description                                               |
+| ------------ | ---------------------- | --------------------------------------------------------- |
+| `--filename` | `calls.tsv`            | Output file under `storage/app/`.                         |
+| `--name`     | `calls batch YYYY-MM`  | Export group name.                                        |
+| `--all`      | off                    | Re-dump every approved call; no `Export`, nothing stamped. |
+
+Same gate as the main export: `exported_at` / `export_id` are stamped and an `Export` is created,
+so nothing is exported twice.
+
+---
+
 ## Data model notes
 
 `audio` table additions used by the pipeline:

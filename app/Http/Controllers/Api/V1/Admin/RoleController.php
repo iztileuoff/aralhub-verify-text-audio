@@ -18,6 +18,7 @@ class RoleController extends Controller
                 RoleEnum::EDITOR,
                 RoleEnum::SPEAKER,
                 RoleEnum::MODERATOR,
+                RoleEnum::TRIMMER,
             ]))
             ->map(fn (RoleEnum $role) => [
                 'id' => $role->value,

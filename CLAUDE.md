@@ -31,6 +31,12 @@ taken (including what is deliberately being thrown away) and the phase breakdown
 issues #35–#42 mirror it. The plan is the source of truth for *why* something is filtered
 the way it is — the code alone does not say it.
 
+**Phone-call trimming** (role Trimmer = 6) is a separate section with its own tables
+(`call_recordings`, `call_recording_events`) and private disk `calls` — never route calls
+through `texts`/`audio` or the dataset scopes. Trimmers must see only `admin/calls/*`: any new
+route group under `admin/` needs `role.deny:trimmer` (or an explicit `role:`), otherwise they
+can reach it. See README "Phone-call trimming" and `docs/call-trim-plan.md`.
+
 Deployment is `.deploy.sh` **on the prod server**, and it needs the interpreter override:
 `PHP_BIN=/opt/php8.4/bin/php ./.deploy.sh` (the system `php` there is 8.2).
 

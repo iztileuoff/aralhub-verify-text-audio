@@ -19,6 +19,9 @@ enum RoleEnum: int
     /** Проверяет тексты и аудио. */
     case MODERATOR = 5;
 
+    /** Обрезает телефонные звонки и пишет к ним текст; видит только этот раздел. */
+    case TRIMMER = 6;
+
     public function getLabelText(): string
     {
         return match ($this) {
@@ -27,6 +30,7 @@ enum RoleEnum: int
             self::EDITOR => 'Editor',
             self::SPEAKER => 'Speaker',
             self::MODERATOR => 'Moderator',
+            self::TRIMMER => 'Trimmer',
         };
     }
 
@@ -38,6 +42,7 @@ enum RoleEnum: int
             self::EDITOR => ['editor'],
             self::SPEAKER => ['speaker'],
             self::MODERATOR => ['moderator'],
+            self::TRIMMER => ['trimmer'],
         };
     }
 }

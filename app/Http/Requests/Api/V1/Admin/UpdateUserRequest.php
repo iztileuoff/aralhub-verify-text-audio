@@ -16,7 +16,7 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => [Rule::in([RoleEnum::ADMIN->value, RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value])],
+            'role' => [Rule::in([RoleEnum::ADMIN->value, RoleEnum::EDITOR->value, RoleEnum::SPEAKER->value, RoleEnum::MODERATOR->value, RoleEnum::TRIMMER->value])],
             'first_name' => ['string', 'max:255'],
             'last_name' => ['string', 'max:255'],
             'phone' => [new UzPhoneRule, Rule::unique('users', 'phone')->ignore($this->user->id)],
