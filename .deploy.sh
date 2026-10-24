@@ -7,7 +7,7 @@
 #   ./.deploy.sh
 #
 # Override binaries if needed (Fastpanel often ships versioned PHP):
-#   PHP_BIN=/usr/bin/php8.4 COMPOSER_BIN=/usr/local/bin/composer ./.deploy.sh
+#   PHP_BIN=/opt/php84/bin/php ./.deploy.sh      (the PHP 8.4 the app runs on)
 #
 # NOTE: this performs `git reset --hard origin/<branch>` — any uncommitted
 # changes on the server are discarded. The .env file is gitignored and untouched.

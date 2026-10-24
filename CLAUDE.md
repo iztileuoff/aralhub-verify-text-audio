@@ -38,7 +38,10 @@ route group under `admin/` needs `role.deny:trimmer` (or an explicit `role:`), o
 can reach it. See README "Phone-call trimming" and `docs/call-trim-plan.md`.
 
 Deployment is `.deploy.sh` **on the prod server**, and it needs the interpreter override:
-`PHP_BIN=/opt/php8.4/bin/php ./.deploy.sh` (the system `php` there is 8.2).
+`PHP_BIN=/opt/php84/bin/php ./.deploy.sh` (the system `php` there is 8.3; composer runs on it,
+which the lock file allows). There is no `/opt/php8.4` — older notes that say so are wrong.
+SSH: `fastuser@37.140.216.89`, a user **shared with other sites** on that host — work only
+inside `~/www/api.verify.aralhub.uz`.
 
 Run tests with `vendor/bin/pest --compact` or `php artisan test --compact`.
 On Windows `vendor/bin/pest` is `pest.bat`, and cmd parses a `|` inside

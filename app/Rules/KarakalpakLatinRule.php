@@ -9,14 +9,14 @@ use Normalizer;
 
 /**
  * A transcript in the Karakalpak Latin alphabet: A–Z plus Á Ǵ Í Ń Ó Ú (the
- * lowercase pair of Í is the dotless ı), with plain punctuation. Cyrillic and
- * digits are refused — numbers are written as words, because the model
- * learns how they sound.
+ * lowercase pair of Í is the dotless ı), digits and plain punctuation.
+ * Cyrillic is refused. Numbers may be written either way — in digits or in
+ * words (decided with the customer, 2026-10-24).
  */
 class KarakalpakLatinRule implements ValidationRule
 {
-    /** Anything outside the alphabet and the allowed punctuation. */
-    private const FORBIDDEN = '/[^A-Za-zÁáǴǵÍıŃńÓóÚú .,?!\-\'":;]/u';
+    /** Anything outside the alphabet, digits and the allowed punctuation. */
+    private const FORBIDDEN = '/[^A-Za-zÁáǴǵÍıŃńÓóÚú0-9 .,?!\-\'":;]/u';
 
     /**
      * Run the validation rule.
@@ -33,12 +33,6 @@ class KarakalpakLatinRule implements ValidationRule
 
         if (preg_match('/\p{Cyrillic}/u', $value)) {
             $fail('Текст пишется латиницей: кириллица не допускается.');
-
-            return;
-        }
-
-        if (preg_match('/\d/', $value)) {
-            $fail('Числа пишутся словами: цифры не допускаются.');
 
             return;
         }

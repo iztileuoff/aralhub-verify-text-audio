@@ -83,6 +83,15 @@ it('lower-cases Í to the dotless ı and folds line breaks into spaces', functio
         ->and($call->tokenized_transcript)->toBe('ı s s ı | s u w ı q | k ú n , | q ı z ı l |');
 });
 
+it('accepts numbers written in digits', function () {
+    submitCall($this->call, ['transcript' => 'Saat 15 te, 2026-jıl.'])->assertCreated();
+
+    $call = $this->call->refresh();
+
+    expect($call->transcript)->toBe('Saat 15 te, 2026-jıl.')
+        ->and($call->tokenized_transcript)->toBe('s a a t | 1 5 | t e , | 2 0 2 6 - j ı l |');
+});
+
 it('turns the dotted í into ı before storing', function () {
     submitCall($this->call, ['transcript' => 'Qízíl'])->assertCreated();
 
@@ -131,7 +140,6 @@ it('refuses a transcript that is not Karakalpak Latin', function (string $transc
 })->with([
     'cyrillic' => ['Ассалаўма әлейкум', 'Текст пишется латиницей: кириллица не допускается.'],
     'mixed cyrillic' => ['Qalay жаǵday', 'Текст пишется латиницей: кириллица не допускается.'],
-    'digits' => ['Saat 15 te', 'Числа пишутся словами: цифры не допускаются.'],
     'other alphabets' => ['Qalay ş ö', 'Недопустимые символы: ş ö.'],
     'markup' => ['Qalay [shum]', 'Недопустимые символы: [ ].'],
     'punctuation only' => ['...', 'В тексте нет ни одного слова.'],
