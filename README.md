@@ -241,6 +241,36 @@ it back. API and screens: `docs/frontend/call-trim.md`; decisions and rollout: `
   and `fetch()`es them, so the bucket needs a CORS rule (`GET`) for the admin frontend's domain.
 - **No ffmpeg needed.** The WAV format and duration are read from the file header in PHP.
 
+### Getting the calls in: the customer's upload link
+
+```bash
+php artisan calls:upload-link batch-1 --days=7      # prints https://api.verify.aralhub.uz/calls-upload/batch-1?expires=…&signature=…
+```
+
+The customer opens the link (no login — the signature is the key, it expires) and picks either
+**a folder** (every audio file inside goes to `source/<batch>/…`, keeping sub-folders) or **an
+archive** — `.rar` / `.zip` / `.7z`, including multi-volume parts — which goes to
+`archives/<batch>/` in 64 MB parts. The browser sends the bytes **straight to the calls bucket**
+through signed URLs; the server only signs, so its disk and upload limits never come into play.
+Reopening the link resumes: uploaded files are skipped, an archive continues from its last whole
+part (resume state lives in the bucket, not in the browser).
+
+The bucket's CORS must allow `PUT` from `https://api.verify.aralhub.uz` (the page's origin) in
+addition to the `GET` rule for the admin frontend.
+
+Then:
+
+```bash
+php artisan calls:register --prefix=source/batch-1 --batch=batch-1   # a folder was uploaded
+# an archive was uploaded:
+php artisan calls:fetch-archives batch-1          # → storage/app/calls-import/batch-1/
+#   unpack it there (7-Zip for rar), then:
+php artisan calls:upload storage/app/calls-import/batch-1/<unpacked> --batch=batch-1   # upload + register
+```
+
+`calls:upload` is idempotent too: files already in the bucket with the same size are skipped.
+Delete `storage/app/calls-import/<batch>` afterwards — the server's disk is shared with other sites.
+
 ### `calls:register`
 
 Registers the files uploaded to the calls bucket (e.g. with `rclone`) as pending calls.
