@@ -20,7 +20,8 @@ class UploadCallsCommand extends Command
      */
     protected $signature = 'calls:upload
         {dir : Local folder with the calls (e.g. an unpacked archive)}
-        {--batch= : Delivery name; the files go to source/<batch>/ in the calls bucket}';
+        {--batch= : Delivery name; the files go to source/<batch>/ in the calls bucket}
+        {--originals= : Optional TSV "<path in dir>\t<customer\'s original name>" — stored as original_filename (admins only see it)}';
 
     /**
      * The console command description.
@@ -99,6 +100,50 @@ class UploadCallsCommand extends Command
 
         $this->call('calls:register', ['--prefix' => $prefix, '--batch' => $batch]);
 
+        if ($this->option('originals')) {
+            $renamed = $this->applyOriginalNames((string) $this->option('originals'), $prefix);
+
+            if ($renamed === null) {
+                return self::FAILURE;
+            }
+
+            $this->info("Original names stored for {$renamed} calls.");
+        }
+
         return $failed === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * Files uploaded under neutral names (no phone numbers for the trimmers to
+     * see) keep the customer's name in original_filename, so every call can
+     * still be traced back to its source recording.
+     */
+    private function applyOriginalNames(string $mappingPath, string $prefix): ?int
+    {
+        $handle = is_file($mappingPath) ? fopen($mappingPath, 'rb') : false;
+
+        if ($handle === false) {
+            $this->error("Cannot read {$mappingPath}.");
+
+            return null;
+        }
+
+        $renamed = 0;
+
+        while (($line = fgets($handle)) !== false) {
+            $columns = explode("\t", rtrim($line, "\r\n"), 2);
+
+            if (count($columns) !== 2 || $columns[0] === '' || $columns[1] === '') {
+                continue;
+            }
+
+            $renamed += CallRecording::query()
+                ->where('source_path', $prefix.'/'.ltrim(str_replace('\\', '/', $columns[0]), '/'))
+                ->update(['original_filename' => mb_substr($columns[1], 0, 255)]);
+        }
+
+        fclose($handle);
+
+        return $renamed;
     }
 }

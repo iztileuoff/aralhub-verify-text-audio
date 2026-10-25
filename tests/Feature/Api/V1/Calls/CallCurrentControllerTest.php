@@ -34,6 +34,19 @@ it('books the oldest free call for the trimmer', function () {
         ->and($first->assigned_at)->not->toBeNull();
 });
 
+it('shows the trimmer the neutral file name, never the customer\'s one', function () {
+    CallRecording::factory()->create([
+        'source_path' => 'source/batch-1/call-000123.mp3',
+        'original_filename' => 'Tulpor/2026-09-01/00-00-20_in_+998934880232_ZULXUMAR_X.mp3',
+    ]);
+
+    $response = $this->getJson(route('admin.calls.current'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.original_filename', 'call-000123.mp3');
+
+    expect($response->getContent())->not->toContain('998934880232')->not->toContain('ZULXUMAR');
+});
+
 it('hands out a signed, expiring url instead of a public one', function () {
     CallRecording::factory()->create(['source_path' => 'source/b1/x.mp3']);
 

@@ -15,7 +15,7 @@ class CallResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'original_filename' => $this->original_filename,
+            'original_filename' => $this->visibleFilename($request),
             'source_url' => $this->sourceUrl(),
             'source_url_expires_at' => $this->urlExpiresAt()->toIso8601String(),
             'source_duration_ms' => $this->source_duration_ms,
@@ -37,6 +37,18 @@ class CallResource extends JsonResource
             'moderator' => $this->person($this->moderator),
             'moderated_at' => $this->moderated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * The customer's file names carry the caller's phone number and the
+     * operator's name. Admins see them; trimmers get the neutral name the
+     * file has in the bucket (e.g. "call-000123.mp3").
+     */
+    private function visibleFilename(Request $request): string
+    {
+        $isAdmin = in_array('admin', $request->user()?->role?->getPermissionsArray() ?? [], true);
+
+        return $isAdmin ? $this->original_filename : basename($this->source_path);
     }
 
     /**

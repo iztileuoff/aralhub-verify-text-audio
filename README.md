@@ -269,6 +269,10 @@ php artisan calls:upload storage/app/calls-import/batch-1/<unpacked> --batch=bat
 ```
 
 `calls:upload` is idempotent too: files already in the bucket with the same size are skipped.
+The customer's file names carry the caller's phone number and the operator's name, so calls are
+uploaded under neutral names (`call-000123.mp3`) with `--originals=<tsv>` (`<neutral path>\t<original
+name>` per line): the original lands in `original_filename`, which the API shows to admins only —
+trimmers get the neutral name. Keep the TSV: it is the only other link back to the source file.
 Delete `storage/app/calls-import/<batch>` afterwards — the server's disk is shared with other sites.
 
 ### `calls:register`
