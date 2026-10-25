@@ -36,6 +36,17 @@ it('lists submitted calls oldest first with both playback urls', function () {
         ->and($response->json('data.0.trimmed_url'))->toContain($older->trimmed_path);
 });
 
+it('shows admins the customer\'s original file name', function () {
+    CallRecording::factory()->submitted($this->trimmer)->create([
+        'source_path' => 'source/batch-1/call-000123.mp3',
+        'original_filename' => 'Tulpor/2026-09-01/00-00-20_in_+998934880232_ZULXUMAR_X.mp3',
+    ]);
+
+    $this->getJson(route('admin.calls.moderation'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.0.original_filename', 'Tulpor/2026-09-01/00-00-20_in_+998934880232_ZULXUMAR_X.mp3');
+});
+
 it('filters by status and trimmer', function () {
     $other = User::factory()->trimmer()->create();
     $skipped = CallRecording::factory()->skipped($this->trimmer)->create();

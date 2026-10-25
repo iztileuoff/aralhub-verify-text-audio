@@ -274,6 +274,26 @@ describe('server-side commands', function () {
         expect(CallRecording::query()->count())->toBe(2);
     });
 
+    it('keeps the customer\'s names of files uploaded under neutral ones', function () {
+        $mapping = $this->dir.'/../originals-'.uniqid().'.tsv';
+        file_put_contents($mapping, "oct/a.mp3\tTulpor/2026-10-01/00-00-03_in_+998991301906_ZUXRA_N1.mp3\nb.wav\tTulpor/2026-10-02/x.wav\nmissing.mp3\tnope.mp3\n");
+
+        $this->artisan('calls:upload', ['dir' => $this->dir, '--batch' => 'batch-1', '--originals' => $mapping])
+            ->expectsOutputToContain('Original names stored for 2 calls.')
+            ->assertSuccessful();
+
+        expect(CallRecording::query()->where('source_path', 'source/batch-1/oct/a.mp3')->value('original_filename'))
+            ->toBe('Tulpor/2026-10-01/00-00-03_in_+998991301906_ZUXRA_N1.mp3');
+
+        unlink($mapping);
+    });
+
+    it('fails clearly when the names file cannot be read', function () {
+        $this->artisan('calls:upload', ['dir' => $this->dir, '--batch' => 'batch-1', '--originals' => '/no/such.tsv'])
+            ->expectsOutputToContain('Cannot read /no/such.tsv.')
+            ->assertFailed();
+    });
+
     it('downloads the uploaded archives to unpack them', function () {
         Storage::disk('calls')->put('archives/batch-1/calls.part1.rar', 'part-one');
         Storage::disk('calls')->put('archives/batch-1/calls.part2.rar', 'part-two!');
