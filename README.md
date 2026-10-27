@@ -277,15 +277,14 @@ Delete `storage/app/calls-import/<batch>` afterwards — the server's disk is sh
 
 ### Landmarks (admins)
 
-Admins build a dictionary of **landmarks** callers name (`Yurfak`, `Aeroport`…) with one audio each:
-`GET admin/calls/landmarks/current` hands out a random trimmed call (submitted or approved, no
-decision yet, held 30 min like the trimmer queue), and `POST admin/calls/{call}/landmark` records one
-decision — `primary` (new landmark, this call is its audio), `duplicate` (already known — skipped),
-`also` (one more example) or `none`. Any decision takes the call out of the queue for good. Names are
-unique case- and space-insensitively (`CallLandmark::normalize`, `Í → ı`); a `primary` with a known
-name gets `409` with the existing landmark. `GET admin/calls/landmarks?search=` serves the
-autocomplete and the dictionary; `PATCH admin/calls/landmarks/{id}` fixes typos.
-Frontend spec: `docs/frontend/call-landmarks.md`.
+Admins collect the **landmarks** callers name (`юрфак`, `Aeroport`…) across the same calls — a
+queue of its own, independent of trimming (only calls a trimmer marked unusable stay out), handed
+out at random and held 30 min. `GET admin/landmarks/calls/current` gives a call;
+`POST admin/landmarks/calls/{call}/label|duplicate|empty` decides it for good: a new landmark, a link
+to an existing one, or none. Names are unique after `CallLandmark::normalize` (case, spaces, ё→е,
+Í→ı); `label` with a known name answers `409` with that landmark. `GET admin/landmarks?search=` is
+the autocomplete and the dictionary (`calls_count` = how often heard), `GET admin/landmarks/stats`
+the counters, `PATCH admin/landmarks/{id}` fixes typos. Contract: `docs/frontend/call-landmarks.md`.
 
 ### `calls:register`
 

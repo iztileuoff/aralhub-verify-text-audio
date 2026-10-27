@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Calls;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\Admin\CallResource;
-use App\Models\CallLandmark;
 use App\Models\CallRecording;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -19,9 +18,9 @@ class CallLandmarkCurrentController extends Controller
     /**
      * Звонок для разметки ориентира: тот, что админ уже держит, иначе случайный свободный.
      *
-     * В очереди — сданные и принятые звонки без решения по ориентиру; каждый
-     * выдаётся одному админу и после решения больше не появляется.
-     * `{"data": null}` — размечать нечего.
+     * Очередь независима от обрезки: все звонки, кроме помеченных обрезчиком
+     * непригодными. Бронь 30 минут; повторный запрос бронь не продлевает.
+     * `{"data": null}` — всё прослушано.
      */
     public function __invoke(Request $request): JsonResponse
     {
@@ -30,10 +29,6 @@ class CallLandmarkCurrentController extends Controller
 
         return response()->json([
             'data' => $call ? new CallResource($call->load(['trimmer', 'moderator', 'landmark'])) : null,
-            'meta' => [
-                'remaining' => CallRecording::query()->landmarkPending()->count(),
-                'landmarks_total' => CallLandmark::query()->count(),
-            ],
         ]);
     }
 

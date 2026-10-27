@@ -2,17 +2,14 @@
 
 namespace App\Http\Requests\Api\V1\Calls;
 
-use App\Enums\CallLandmarkDecisionEnum;
-use App\Rules\KarakalpakLatinRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class LabelCallLandmarkRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
         if (is_string($this->input('name'))) {
-            $this->merge(['name' => KarakalpakLatinRule::normalize($this->input('name'))]);
+            $this->merge(['name' => trim((string) preg_replace('/\s+/u', ' ', $this->input('name')))]);
         }
     }
 
@@ -21,20 +18,8 @@ class LabelCallLandmarkRequest extends FormRequest
      */
     public function rules(): array
     {
-        $needsLandmark = [CallLandmarkDecisionEnum::ALSO->value, CallLandmarkDecisionEnum::DUPLICATE->value];
-
         return [
-            'decision' => ['required', Rule::enum(CallLandmarkDecisionEnum::class)],
-            'name' => [
-                'required_if:decision,'.CallLandmarkDecisionEnum::PRIMARY->value,
-                'prohibited_unless:decision,'.CallLandmarkDecisionEnum::PRIMARY->value,
-                'string', 'max:100', new KarakalpakLatinRule,
-            ],
-            'landmark_id' => [
-                'required_if:decision,'.implode(',', $needsLandmark),
-                'prohibited_unless:decision,'.implode(',', $needsLandmark),
-                'integer', Rule::exists('call_landmarks', 'id'),
-            ],
+            'name' => ['required', 'string', 'min:2', 'max:100'],
         ];
     }
 
@@ -44,8 +29,8 @@ class LabelCallLandmarkRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required_if' => 'Напишите ориентир.',
-            'landmark_id.required_if' => 'Выберите ориентир из подсказок.',
+            'name.required' => 'Напишите ориентир.',
+            'name.min' => 'Ориентир — минимум 2 символа.',
         ];
     }
 

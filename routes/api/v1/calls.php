@@ -6,8 +6,11 @@ use App\Http\Controllers\Api\V1\Calls\CallArchivePartsController;
 use App\Http\Controllers\Api\V1\Calls\CallArchiveStartController;
 use App\Http\Controllers\Api\V1\Calls\CallCurrentController;
 use App\Http\Controllers\Api\V1\Calls\CallLandmarkCurrentController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkDuplicateController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkEmptyController;
 use App\Http\Controllers\Api\V1\Calls\CallLandmarkIndexController;
 use App\Http\Controllers\Api\V1\Calls\CallLandmarkLabelController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkStatsController;
 use App\Http\Controllers\Api\V1\Calls\CallLandmarkUpdateController;
 use App\Http\Controllers\Api\V1\Calls\CallModerationController;
 use App\Http\Controllers\Api\V1\Calls\CallRejectController;
@@ -48,13 +51,27 @@ Route::group([
 ], function () {
     Route::get('moderation', CallModerationController::class)->name('moderation');
     Route::get('stats', CallStatsController::class)->name('stats');
-    Route::get('landmarks/current', CallLandmarkCurrentController::class)->name('landmarks.current');
-    Route::get('landmarks', CallLandmarkIndexController::class)->name('landmarks.index');
-    Route::patch('landmarks/{landmark}', CallLandmarkUpdateController::class)->name('landmarks.update');
-    Route::post('{call}/landmark', CallLandmarkLabelController::class)->name('landmark');
     Route::post('{call}/approve', CallApproveController::class)->name('approve');
     Route::post('{call}/reject', CallRejectController::class)->name('reject');
     Route::post('{call}/restore', CallRestoreController::class)->name('restore');
+});
+
+/*
+ * Landmarks (docs/frontend/call-landmarks.md): admins build the dictionary of
+ * places callers name. Its own queue on the same calls, independent of trimming.
+ */
+Route::group([
+    'prefix' => 'admin/landmarks',
+    'as' => 'admin.landmarks.',
+    'middleware' => ['auth:sanctum', 'role:admin'],
+], function () {
+    Route::get('/', CallLandmarkIndexController::class)->name('index');
+    Route::get('stats', CallLandmarkStatsController::class)->name('stats');
+    Route::get('calls/current', CallLandmarkCurrentController::class)->name('calls.current');
+    Route::post('calls/{call}/label', CallLandmarkLabelController::class)->name('calls.label');
+    Route::post('calls/{call}/duplicate', CallLandmarkDuplicateController::class)->name('calls.duplicate');
+    Route::post('calls/{call}/empty', CallLandmarkEmptyController::class)->name('calls.empty');
+    Route::patch('{landmark}', CallLandmarkUpdateController::class)->name('update');
 });
 
 /*

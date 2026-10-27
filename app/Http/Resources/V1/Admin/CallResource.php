@@ -36,7 +36,7 @@ class CallResource extends JsonResource
             'submitted_at' => $this->submitted_at?->toIso8601String(),
             'moderator' => $this->person($this->moderator),
             'moderated_at' => $this->moderated_at?->toIso8601String(),
-            'landmark_decision' => $this->when($this->isAdmin($request), fn () => $this->landmark_decision),
+            'landmark_status' => $this->when($this->isAdmin($request), fn (): string => $this->landmarkStatus()),
             'landmark' => $this->when($this->isAdmin($request), fn (): ?array => $this->landmark
                 ? ['id' => $this->landmark->id, 'name' => $this->landmark->name]
                 : null),

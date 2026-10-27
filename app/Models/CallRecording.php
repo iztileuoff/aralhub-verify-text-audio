@@ -161,15 +161,31 @@ class CallRecording extends Model
     }
 
     /**
-     * Calls waiting for a landmark decision: trimmed (submitted or approved)
-     * and not decided yet, whoever may be holding them right now.
+     * Calls waiting for a landmark decision, whoever may be holding them right
+     * now. The landmark queue runs on the source recordings and is independent
+     * of trimming — only calls a trimmer marked unusable stay out.
      */
     public function scopeLandmarkPending(Builder $query): Builder
     {
         return $query
-            ->whereIn('status', [CallStatusEnum::SUBMITTED, CallStatusEnum::APPROVED])
-            ->whereNotNull('trimmed_path')
+            ->whereNot('status', CallStatusEnum::SKIPPED)
             ->whereNull('landmark_decision');
+    }
+
+    /**
+     * The call's place in the landmark queue as the API reports it:
+     * pending / in_progress (held by an admin) / labeled / duplicate / empty.
+     */
+    public function landmarkStatus(): string
+    {
+        if ($this->landmark_decision !== null) {
+            return $this->landmark_decision->value;
+        }
+
+        $held = $this->landmark_assigned_to !== null
+            && $this->landmark_assigned_at?->gte(self::lockExpiredBefore());
+
+        return $held ? 'in_progress' : 'pending';
     }
 
     /**

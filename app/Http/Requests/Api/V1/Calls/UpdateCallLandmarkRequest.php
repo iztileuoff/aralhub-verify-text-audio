@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Api\V1\Calls;
 
-use App\Rules\KarakalpakLatinRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCallLandmarkRequest extends FormRequest
@@ -10,7 +9,7 @@ class UpdateCallLandmarkRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if (is_string($this->input('name'))) {
-            $this->merge(['name' => KarakalpakLatinRule::normalize($this->input('name'))]);
+            $this->merge(['name' => trim((string) preg_replace('/\s+/u', ' ', $this->input('name')))]);
         }
     }
 
@@ -20,7 +19,7 @@ class UpdateCallLandmarkRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:100', new KarakalpakLatinRule],
+            'name' => ['required', 'string', 'min:2', 'max:100'],
         ];
     }
 

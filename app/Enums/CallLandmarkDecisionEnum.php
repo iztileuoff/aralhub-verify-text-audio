@@ -4,19 +4,17 @@ namespace App\Enums;
 
 /**
  * What an admin decided about a call in the landmark queue. Any decision
- * takes the call out of the queue for good.
+ * takes the call out of the queue for good. The API reports it as the
+ * call's "landmark_status", next to the undecided pending / in_progress.
  */
 enum CallLandmarkDecisionEnum: string
 {
-    /** Новый ориентир; этот звонок — его главное аудио. */
-    case PRIMARY = 'primary';
+    /** Новый ориентир создан этим звонком. */
+    case LABELED = 'labeled';
 
-    /** Ещё один пример уже известного ориентира. */
-    case ALSO = 'also';
-
-    /** Ориентир уже есть — звонок пропущен (запомнено, какой это был ориентир). */
+    /** Ориентир уже был — звонок привязан к существующему. */
     case DUPLICATE = 'duplicate';
 
-    /** В разговоре ориентира нет. */
-    case NONE = 'none';
+    /** Ориентира в звонке нет. */
+    case EMPTY = 'empty';
 }
