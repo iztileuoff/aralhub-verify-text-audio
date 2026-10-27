@@ -24,223 +24,266 @@ beforeEach(function () {
  */
 function takeLandmarkCall(): ?int
 {
-    return test()->getJson(route('admin.calls.landmarks.current'))->assertSuccessful()->json('data.id');
+    return test()->getJson(route('admin.landmarks.calls.current'))->assertSuccessful()->json('data.id');
 }
 
-function labelCall(int $callId, array $payload): TestResponse
+function decideCall(string $action, int $callId, array $payload = []): TestResponse
 {
-    return test()->postJson(route('admin.calls.landmark', $callId), $payload);
+    return test()->postJson(route('admin.landmarks.calls.'.$action, $callId), $payload);
+}
+
+function landmark(string $name, array $attributes = []): CallLandmark
+{
+    return CallLandmark::factory()->create(['name' => $name, 'normalized_name' => CallLandmark::normalize($name), ...$attributes]);
 }
 
 it('is for admins and super admins only', function (RoleEnum $role) {
     Sanctum::actingAs(User::factory()->create(['role' => $role->value]));
 
-    $this->getJson(route('admin.calls.landmarks.current'))->assertForbidden();
-    $this->getJson(route('admin.calls.landmarks.index'))->assertForbidden();
+    $this->getJson(route('admin.landmarks.calls.current'))->assertForbidden();
+    $this->getJson(route('admin.landmarks.index'))->assertForbidden();
+    $this->getJson(route('admin.landmarks.stats'))->assertForbidden();
 })->with([RoleEnum::TRIMMER, RoleEnum::MODERATOR, RoleEnum::SPEAKER, RoleEnum::EDITOR]);
 
-it('hands out only trimmed calls that have no landmark decision yet', function () {
-    CallRecording::factory()->create();
-    CallRecording::factory()->inProgress()->create();
-    CallRecording::factory()->rejected()->create();
+it('hands out any call not yet decided, whatever its trimming state, except unusable ones', function () {
+    $pending = CallRecording::factory()->create();
+    $trimming = CallRecording::factory()->inProgress()->create();
     CallRecording::factory()->skipped()->create();
-    CallRecording::factory()->approved()->create(['landmark_decision' => CallLandmarkDecisionEnum::NONE]);
-    $submitted = CallRecording::factory()->submitted()->create();
-    $approved = CallRecording::factory()->approved()->create();
-
-    $this->getJson(route('admin.calls.landmarks.current'))
-        ->assertSuccessful()
-        ->assertJsonPath('meta.remaining', 2)
-        ->assertJsonPath('meta.landmarks_total', 0);
-
-    expect([$submitted->id, $approved->id])->toContain(CallRecording::query()->whereNotNull('landmark_assigned_to')->sole()->id);
-});
-
-it('gives the same call back on reload and a different one to another admin', function () {
-    CallRecording::factory()->count(2)->submitted()->create();
+    CallRecording::factory()->submitted()->create(['landmark_decision' => CallLandmarkDecisionEnum::EMPTY]);
 
     $first = takeLandmarkCall();
 
-    expect(takeLandmarkCall())->toBe($first);
+    Sanctum::actingAs(User::factory()->admin()->create());
+    $second = takeLandmarkCall();
 
     Sanctum::actingAs(User::factory()->admin()->create());
 
-    expect(takeLandmarkCall())->not->toBeNull()->not->toBe($first);
+    expect([$first, $second])->toEqualCanonicalizing([$pending->id, $trimming->id])
+        ->and(takeLandmarkCall())->toBeNull();
 });
 
-it('answers null when there is nothing left to label', function () {
-    $this->getJson(route('admin.calls.landmarks.current'))
+it('returns the call with its source url and status in progress', function () {
+    CallRecording::factory()->create(['source_path' => 'source/batch-1/call-000007.mp3']);
+
+    $response = $this->getJson(route('admin.landmarks.calls.current'))
         ->assertSuccessful()
-        ->assertJsonPath('data', null)
-        ->assertJsonPath('meta.remaining', 0);
+        ->assertJsonPath('data.landmark_status', 'in_progress')
+        ->assertJsonPath('data.landmark', null);
+
+    expect($response->json('data.source_url'))->toContain('source/batch-1/call-000007.mp3');
 });
 
-it('creates a landmark with the call as its audio', function () {
-    CallRecording::factory()->submitted()->create();
+it('gives the same call back on reload without extending the hold', function () {
+    CallRecording::factory()->count(2)->create();
+
+    $first = takeLandmarkCall();
+    $heldAt = CallRecording::query()->find($first)->landmark_assigned_at;
+
+    $this->travel(5)->minutes();
+
+    expect(takeLandmarkCall())->toBe($first)
+        ->and(CallRecording::query()->find($first)->landmark_assigned_at->equalTo($heldAt))->toBeTrue();
+});
+
+it('puts an abandoned call back into the queue after the hold expires', function () {
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
-    labelCall($callId, ['decision' => 'primary', 'name' => '  Yurfak '])
+    $this->travel(config('calls.lock_ttl_minutes') + 1)->minutes();
+    Sanctum::actingAs($other = User::factory()->admin()->create());
+
+    expect(takeLandmarkCall())->toBe($callId)
+        ->and(CallRecording::query()->find($callId)->landmark_assigned_to)->toBe($other->id);
+});
+
+it('answers null when everything is listened to', function () {
+    $this->getJson(route('admin.landmarks.calls.current'))->assertSuccessful()->assertExactJson(['data' => null]);
+});
+
+it('creates a new landmark from the call', function () {
+    CallRecording::factory()->create();
+    $callId = takeLandmarkCall();
+
+    decideCall('label', $callId, ['name' => '  Юрфак  '])
         ->assertSuccessful()
-        ->assertJsonPath('data.landmark_decision', 'primary')
-        ->assertJsonPath('data.landmark.name', 'Yurfak')
-        ->assertJsonPath('landmark.examples_count', 1);
+        ->assertJsonPath('data.landmark_status', 'labeled')
+        ->assertJsonPath('data.landmark.name', 'Юрфак');
 
     $landmark = CallLandmark::query()->sole();
     $call = CallRecording::query()->find($callId);
 
-    expect($landmark->name)->toBe('Yurfak')
-        ->and($landmark->normalized_name)->toBe('yurfak')
+    expect($landmark->normalized_name)->toBe('юрфак')
         ->and($landmark->call_recording_id)->toBe($callId)
         ->and($landmark->created_by)->toBe($this->admin->id)
-        ->and($call->landmark_decision)->toBe(CallLandmarkDecisionEnum::PRIMARY)
+        ->and($call->landmark_decision)->toBe(CallLandmarkDecisionEnum::LABELED)
+        ->and($call->landmark_id)->toBe($landmark->id)
         ->and($call->landmark_by)->toBe($this->admin->id)
         ->and($call->landmark_assigned_to)->toBeNull();
 
-    $this->getJson(route('admin.calls.landmarks.current'))->assertJsonPath('data', null);
+    expect(takeLandmarkCall())->toBeNull();
 });
 
-it('does not create a landmark that already exists, whatever the case or spacing', function (string $typed) {
-    $yurfak = CallLandmark::factory()->create(['name' => 'Yurfak', 'normalized_name' => 'yurfak']);
-    CallRecording::factory()->submitted()->create();
+it('refuses a landmark that already exists, whatever the case, spacing or ё', function (string $typed) {
+    $existing = landmark('Юрфак');
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
-    labelCall($callId, ['decision' => 'primary', 'name' => $typed])
+    decideCall('label', $callId, ['name' => $typed])
         ->assertConflict()
-        ->assertJsonPath('landmark.id', $yurfak->id)
-        ->assertJsonPath('landmark.name', 'Yurfak');
+        ->assertJsonPath('message', 'Этот ориентир уже есть.')
+        ->assertJsonPath('landmark.id', $existing->id)
+        ->assertJsonPath('landmark.calls_count', 0);
 
     expect(CallLandmark::query()->count())->toBe(1)
         ->and(CallRecording::query()->find($callId)->landmark_decision)->toBeNull();
-})->with(['Yurfak', 'yurfak', 'YURFAK', ' Yurfak.']);
+})->with(['Юрфак', ' юрфак ', 'ЮРФАК', 'юрфак.']);
 
-it('skips a call whose landmark is already known, remembering which one', function () {
-    $yurfak = CallLandmark::factory()->create(['name' => 'Yurfak', 'normalized_name' => 'yurfak']);
-    CallRecording::factory()->submitted()->create();
-    $callId = takeLandmarkCall();
-
-    labelCall($callId, ['decision' => 'duplicate', 'landmark_id' => $yurfak->id])
-        ->assertSuccessful()
-        ->assertJsonPath('data.landmark_decision', 'duplicate')
-        ->assertJsonPath('landmark.examples_count', 0)
-        ->assertJsonPath('landmark.mentions_count', 1);
-
-    $this->getJson(route('admin.calls.landmarks.current'))->assertJsonPath('data', null);
+it('treats ё and е, Í and ı as the same letter', function () {
+    expect(CallLandmark::normalize('Тёплый  Стан'))->toBe('теплый стан')
+        ->and(CallLandmark::normalize('Íshki bazar'))->toBe('ıshki bazar')
+        ->and(CallLandmark::normalize('íshki bazar'))->toBe('ıshki bazar');
 });
 
-it('keeps a call as one more example of a known landmark', function () {
-    $first = CallRecording::factory()->approved()->create(['landmark_decision' => CallLandmarkDecisionEnum::PRIMARY]);
-    $yurfak = CallLandmark::factory()->create(['name' => 'Yurfak', 'normalized_name' => 'yurfak', 'call_recording_id' => $first->id]);
-    $first->update(['landmark_id' => $yurfak->id]);
-    CallRecording::factory()->submitted()->create();
+it('links a call to a landmark that is already known', function () {
+    $yurfak = landmark('Yurfak');
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
-    labelCall($callId, ['decision' => 'also', 'landmark_id' => $yurfak->id])
+    decideCall('duplicate', $callId, ['landmark_id' => $yurfak->id])
         ->assertSuccessful()
-        ->assertJsonPath('data.landmark_decision', 'also')
-        ->assertJsonPath('landmark.examples_count', 2);
+        ->assertJsonPath('data.landmark_status', 'duplicate')
+        ->assertJsonPath('data.landmark.id', $yurfak->id);
+
+    expect(takeLandmarkCall())->toBeNull();
 });
 
-it('takes a call without a landmark out of the queue', function () {
-    CallRecording::factory()->submitted()->create();
+it('marks a call without a landmark', function () {
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
-    labelCall($callId, ['decision' => 'none'])
+    decideCall('empty', $callId)
         ->assertSuccessful()
-        ->assertJsonPath('data.landmark_decision', 'none')
+        ->assertJsonPath('data.landmark_status', 'empty')
         ->assertJsonPath('data.landmark', null);
 
-    $this->getJson(route('admin.calls.landmarks.current'))->assertJsonPath('data', null);
+    expect(takeLandmarkCall())->toBeNull();
 });
 
 it('answers a retried decision with the saved state', function () {
-    CallRecording::factory()->submitted()->create();
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
-    labelCall($callId, ['decision' => 'none'])->assertSuccessful();
-    labelCall($callId, ['decision' => 'none'])->assertSuccessful();
+    decideCall('empty', $callId)->assertSuccessful();
+    decideCall('empty', $callId)->assertSuccessful()->assertJsonPath('data.landmark_status', 'empty');
 });
 
-it('only lets the admin holding the call decide it', function () {
-    CallRecording::factory()->submitted()->create();
+it('answers 409 when the hold expired and another admin took the call', function () {
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
+    $this->travel(config('calls.lock_ttl_minutes') + 1)->minutes();
     Sanctum::actingAs(User::factory()->admin()->create());
+    takeLandmarkCall();
+    Sanctum::actingAs($this->admin);
 
-    labelCall($callId, ['decision' => 'none'])->assertConflict();
-
-    expect(CallRecording::query()->find($callId)->landmark_decision)->toBeNull();
+    decideCall('label', $callId, ['name' => 'Yurfak'])
+        ->assertConflict()
+        ->assertJsonMissingPath('landmark');
 });
 
-it('validates the decision', function (array $payload, string $field) {
-    $yurfak = CallLandmark::factory()->create();
-    CallRecording::factory()->submitted()->create();
+it('answers 422 for a call the admin never took', function () {
+    $call = CallRecording::factory()->create();
+
+    decideCall('empty', $call->id)->assertUnprocessable();
+
+    expect($call->refresh()->landmark_decision)->toBeNull();
+});
+
+it('validates the name and the landmark', function (string $action, array $payload, string $field) {
+    CallRecording::factory()->create();
     $callId = takeLandmarkCall();
 
-    labelCall($callId, array_map(fn ($value) => $value === 'LANDMARK' ? $yurfak->id : $value, $payload))
+    decideCall($action, $callId, $payload)
         ->assertUnprocessable()
         ->assertJsonValidationErrors($field);
 })->with([
-    'new without a name' => [['decision' => 'primary'], 'name'],
-    'cyrillic name' => [['decision' => 'primary', 'name' => 'Юрфак'], 'name'],
-    'also without a landmark' => [['decision' => 'also'], 'landmark_id'],
-    'unknown landmark' => [['decision' => 'duplicate', 'landmark_id' => 999], 'landmark_id'],
-    'name with "none"' => [['decision' => 'none', 'name' => 'Yurfak'], 'name'],
-    'unknown decision' => [['decision' => 'maybe'], 'decision'],
+    'no name' => ['label', [], 'name'],
+    'too short' => ['label', ['name' => ' a '], 'name'],
+    'too long' => ['label', ['name' => str_repeat('a', 101)], 'name'],
+    'no landmark' => ['duplicate', [], 'landmark_id'],
+    'unknown landmark' => ['duplicate', ['landmark_id' => 999], 'landmark_id'],
 ]);
 
-it('suggests landmarks as the admin types, prefix matches first', function () {
-    foreach (['Bayu bazar', 'Yurfak', 'Yunusabad', 'Aeroport'] as $name) {
-        CallLandmark::factory()->create(['name' => $name, 'normalized_name' => CallLandmark::normalize($name)]);
-    }
+it('suggests by substring: exact match first, then the most frequent', function () {
+    $flag = landmark('флаг');
+    landmark('Флагшток');
+    $popular = landmark('Новый флаг');
+    landmark('Aeroport');
+    CallRecording::factory()->count(3)->create(['landmark_decision' => CallLandmarkDecisionEnum::DUPLICATE, 'landmark_id' => $popular->id]);
 
-    $this->getJson(route('admin.calls.landmarks.index', ['search' => 'YU']))
+    $this->getJson(route('admin.landmarks.index', ['search' => 'ФЛАГ', 'per_page' => 8]))
         ->assertSuccessful()
         ->assertJsonCount(3, 'data')
-        ->assertJsonPath('data.0.name', 'Yunusabad')
-        ->assertJsonPath('data.1.name', 'Yurfak')
-        ->assertJsonPath('data.2.name', 'Bayu bazar');
+        ->assertJsonPath('data.0.id', $flag->id)
+        ->assertJsonPath('data.1.name', 'Новый флаг')
+        ->assertJsonPath('data.1.calls_count', 3)
+        ->assertJsonPath('data.2.name', 'Флагшток');
 
-    $this->getJson(route('admin.calls.landmarks.index', ['search' => '%']))->assertJsonCount(0, 'data');
+    $this->getJson(route('admin.landmarks.index', ['search' => '%']))->assertJsonCount(0, 'data');
 });
 
-it('lists every landmark with its audio and how often it was heard', function () {
-    $call = CallRecording::factory()->approved()->create(['landmark_decision' => CallLandmarkDecisionEnum::PRIMARY]);
-    $yurfak = CallLandmark::factory()->create(['name' => 'Yurfak', 'normalized_name' => 'yurfak', 'call_recording_id' => $call->id, 'created_by' => $this->admin->id]);
-    $call->update(['landmark_id' => $yurfak->id]);
-    CallRecording::factory()->count(2)->approved()->create(['landmark_decision' => CallLandmarkDecisionEnum::DUPLICATE, 'landmark_id' => $yurfak->id]);
+it('lists every landmark, newest first, with who added it', function () {
+    landmark('Aeroport', ['created_at' => now()->subDay()]);
+    landmark('Yurfak', ['created_by' => $this->admin->id]);
 
-    $response = $this->getJson(route('admin.calls.landmarks.index'))
+    $this->getJson(route('admin.landmarks.index', ['per_page' => 50]))
         ->assertSuccessful()
         ->assertJsonPath('data.0.name', 'Yurfak')
-        ->assertJsonPath('data.0.examples_count', 1)
-        ->assertJsonPath('data.0.mentions_count', 3)
-        ->assertJsonPath('data.0.primary_call.id', $call->id)
-        ->assertJsonPath('data.0.created_by.id', $this->admin->id);
+        ->assertJsonPath('data.0.created_by.id', $this->admin->id)
+        ->assertJsonPath('data.1.name', 'Aeroport');
+});
 
-    expect($response->json('data.0.primary_call.trimmed_url'))->toContain($call->trimmed_path);
+it('counts the queue', function () {
+    CallRecording::factory()->count(3)->create();
+    CallRecording::factory()->skipped()->create();
+    CallRecording::factory()->create(['landmark_decision' => CallLandmarkDecisionEnum::LABELED]);
+    CallRecording::factory()->count(2)->create(['landmark_decision' => CallLandmarkDecisionEnum::DUPLICATE]);
+    CallRecording::factory()->create(['landmark_decision' => CallLandmarkDecisionEnum::EMPTY]);
+    landmark('Yurfak');
+    takeLandmarkCall();
+
+    $this->getJson(route('admin.landmarks.stats'))
+        ->assertSuccessful()
+        ->assertExactJson(['data' => [
+            'calls_total' => 7,
+            'pending' => 2,
+            'in_progress' => 1,
+            'labeled' => 1,
+            'duplicate' => 2,
+            'empty' => 1,
+            'landmarks_total' => 1,
+        ]]);
 });
 
 it('renames a landmark but never into another one', function () {
-    $typo = CallLandmark::factory()->create(['name' => 'Yurfk', 'normalized_name' => 'yurfk']);
-    CallLandmark::factory()->create(['name' => 'Aeroport', 'normalized_name' => 'aeroport']);
+    $typo = landmark('Yurfk');
+    landmark('Aeroport');
 
-    $this->patchJson(route('admin.calls.landmarks.update', $typo), ['name' => 'Yurfak'])
+    $this->patchJson(route('admin.landmarks.update', $typo), ['name' => 'Yurfak'])
         ->assertSuccessful()
         ->assertJsonPath('data.name', 'Yurfak');
 
-    expect($typo->refresh()->normalized_name)->toBe('yurfak');
-
-    $this->patchJson(route('admin.calls.landmarks.update', $typo), ['name' => 'aeroport'])
+    $this->patchJson(route('admin.landmarks.update', $typo), ['name' => 'AEROPORT'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('name');
 });
 
-it('does not show landmark details to trimmers', function () {
+it('does not show landmark fields to trimmers', function () {
     $trimmer = User::factory()->trimmer()->create();
-    CallRecording::factory()->submitted($trimmer)->create(['landmark_decision' => CallLandmarkDecisionEnum::NONE]);
+    CallRecording::factory()->submitted($trimmer)->create(['landmark_decision' => CallLandmarkDecisionEnum::EMPTY]);
     Sanctum::actingAs($trimmer);
 
-    $response = $this->getJson(route('admin.calls.my'))->assertSuccessful();
-
-    expect($response->json('data.0'))->not->toHaveKey('landmark_decision')->not->toHaveKey('landmark');
+    expect($this->getJson(route('admin.calls.my'))->json('data.0'))
+        ->not->toHaveKey('landmark_status')
+        ->not->toHaveKey('landmark');
 });

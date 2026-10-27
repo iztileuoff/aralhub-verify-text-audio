@@ -14,8 +14,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class CallLandmarkIndexController extends Controller
 {
     /**
-     * Словарь ориентиров с их аудио; с `search` — подсказки при наборе
-     * (сначала начинающиеся с введённого, потом содержащие его).
+     * Ориентиры. С `search` — подсказки: подстрока по нормализованному имени,
+     * точное совпадение первым, дальше самые частые. Без `search` — все, новые первыми.
      */
     public function __invoke(CallLandmarkIndexRequest $request): AnonymousResourceCollection
     {
@@ -23,12 +23,17 @@ class CallLandmarkIndexController extends Controller
         $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
 
         $landmarks = CallLandmark::query()
-            ->with(['primaryCall', 'creator'])
-            ->withCount(['examples', 'calls'])
-            ->when($search !== '', fn (Builder $query): Builder => $query
-                ->whereRaw("normalized_name like ? escape '!'", ['%'.$escaped.'%'])
-                ->orderByRaw("case when normalized_name like ? escape '!' then 0 else 1 end", [$escaped.'%']))
-            ->orderBy('normalized_name')
+            ->with('creator')
+            ->withCount('calls')
+            ->when(
+                $search !== '',
+                fn (Builder $query): Builder => $query
+                    ->whereRaw("normalized_name like ? escape '!'", ['%'.$escaped.'%'])
+                    ->orderByRaw('case when normalized_name = ? then 0 else 1 end', [$search])
+                    ->orderByDesc('calls_count')
+                    ->orderBy('normalized_name'),
+                fn (Builder $query): Builder => $query->orderByDesc('created_at')->orderByDesc('id'),
+            )
             ->paginate($request->validated('per_page') ?? 20);
 
         return CallLandmarkResource::collection($landmarks);

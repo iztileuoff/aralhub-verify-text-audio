@@ -31,6 +31,6 @@ class CallLandmarkUpdateController extends Controller
 
         $landmark->update(['name' => $name, 'normalized_name' => $normalized]);
 
-        return (new CallLandmarkResource($landmark->load(['primaryCall', 'creator'])->loadCount(['examples', 'calls'])))->response();
+        return (new CallLandmarkResource($landmark->load('creator')->loadCount('calls')))->response();
     }
 }
