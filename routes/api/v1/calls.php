@@ -5,6 +5,10 @@ use App\Http\Controllers\Api\V1\Calls\CallArchiveCompleteController;
 use App\Http\Controllers\Api\V1\Calls\CallArchivePartsController;
 use App\Http\Controllers\Api\V1\Calls\CallArchiveStartController;
 use App\Http\Controllers\Api\V1\Calls\CallCurrentController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkCurrentController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkIndexController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkLabelController;
+use App\Http\Controllers\Api\V1\Calls\CallLandmarkUpdateController;
 use App\Http\Controllers\Api\V1\Calls\CallModerationController;
 use App\Http\Controllers\Api\V1\Calls\CallRejectController;
 use App\Http\Controllers\Api\V1\Calls\CallReleaseController;
@@ -44,6 +48,10 @@ Route::group([
 ], function () {
     Route::get('moderation', CallModerationController::class)->name('moderation');
     Route::get('stats', CallStatsController::class)->name('stats');
+    Route::get('landmarks/current', CallLandmarkCurrentController::class)->name('landmarks.current');
+    Route::get('landmarks', CallLandmarkIndexController::class)->name('landmarks.index');
+    Route::patch('landmarks/{landmark}', CallLandmarkUpdateController::class)->name('landmarks.update');
+    Route::post('{call}/landmark', CallLandmarkLabelController::class)->name('landmark');
     Route::post('{call}/approve', CallApproveController::class)->name('approve');
     Route::post('{call}/reject', CallRejectController::class)->name('reject');
     Route::post('{call}/restore', CallRestoreController::class)->name('restore');

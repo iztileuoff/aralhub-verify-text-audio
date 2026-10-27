@@ -275,6 +275,18 @@ name>` per line): the original lands in `original_filename`, which the API shows
 trimmers get the neutral name. Keep the TSV: it is the only other link back to the source file.
 Delete `storage/app/calls-import/<batch>` afterwards — the server's disk is shared with other sites.
 
+### Landmarks (admins)
+
+Admins build a dictionary of **landmarks** callers name (`Yurfak`, `Aeroport`…) with one audio each:
+`GET admin/calls/landmarks/current` hands out a random trimmed call (submitted or approved, no
+decision yet, held 30 min like the trimmer queue), and `POST admin/calls/{call}/landmark` records one
+decision — `primary` (new landmark, this call is its audio), `duplicate` (already known — skipped),
+`also` (one more example) or `none`. Any decision takes the call out of the queue for good. Names are
+unique case- and space-insensitively (`CallLandmark::normalize`, `Í → ı`); a `primary` with a known
+name gets `409` with the existing landmark. `GET admin/calls/landmarks?search=` serves the
+autocomplete and the dictionary; `PATCH admin/calls/landmarks/{id}` fixes typos.
+Frontend spec: `docs/frontend/call-landmarks.md`.
+
 ### `calls:register`
 
 Registers the files uploaded to the calls bucket (e.g. with `rclone`) as pending calls.

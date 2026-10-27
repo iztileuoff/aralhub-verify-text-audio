@@ -22,7 +22,7 @@ class CallModerationController extends Controller
         $direction = $request->validated('direction') ?? 'asc';
 
         $calls = CallRecording::query()
-            ->with(['trimmer', 'moderator'])
+            ->with(['trimmer', 'moderator', 'landmark'])
             ->where('status', $request->validated('status') ?? CallStatusEnum::SUBMITTED->value)
             ->when(
                 $request->filled('trimmer_id'),

@@ -36,6 +36,10 @@ class CallResource extends JsonResource
             'submitted_at' => $this->submitted_at?->toIso8601String(),
             'moderator' => $this->person($this->moderator),
             'moderated_at' => $this->moderated_at?->toIso8601String(),
+            'landmark_decision' => $this->when($this->isAdmin($request), fn () => $this->landmark_decision),
+            'landmark' => $this->when($this->isAdmin($request), fn (): ?array => $this->landmark
+                ? ['id' => $this->landmark->id, 'name' => $this->landmark->name]
+                : null),
         ];
     }
 
@@ -46,9 +50,12 @@ class CallResource extends JsonResource
      */
     private function visibleFilename(Request $request): string
     {
-        $isAdmin = in_array('admin', $request->user()?->role?->getPermissionsArray() ?? [], true);
+        return $this->isAdmin($request) ? $this->original_filename : basename($this->source_path);
+    }
 
-        return $isAdmin ? $this->original_filename : basename($this->source_path);
+    private function isAdmin(Request $request): bool
+    {
+        return in_array('admin', $request->user()?->role?->getPermissionsArray() ?? [], true);
     }
 
     /**

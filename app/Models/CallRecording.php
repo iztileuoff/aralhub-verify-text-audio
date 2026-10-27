@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CallEventTypeEnum;
+use App\Enums\CallLandmarkDecisionEnum;
 use App\Enums\CallSkipReasonEnum;
 use App\Enums\CallStatusEnum;
 use Closure;
@@ -89,6 +90,12 @@ class CallRecording extends Model
         'moderated_at',
         'exported_at',
         'export_id',
+        'landmark_decision',
+        'landmark_id',
+        'landmark_by',
+        'landmark_at',
+        'landmark_assigned_to',
+        'landmark_assigned_at',
     ];
 
     protected function casts(): array
@@ -109,6 +116,12 @@ class CallRecording extends Model
             'moderated_at' => 'datetime',
             'exported_at' => 'datetime',
             'export_id' => 'integer',
+            'landmark_decision' => CallLandmarkDecisionEnum::class,
+            'landmark_id' => 'integer',
+            'landmark_by' => 'integer',
+            'landmark_at' => 'datetime',
+            'landmark_assigned_to' => 'integer',
+            'landmark_assigned_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -144,6 +157,29 @@ class CallRecording extends Model
                         ->where('rejections_count', 0)
                         ->where('assigned_at', '<', self::lockExpiredBefore());
                 });
+        });
+    }
+
+    /**
+     * Calls waiting for a landmark decision: trimmed (submitted or approved)
+     * and not decided yet, whoever may be holding them right now.
+     */
+    public function scopeLandmarkPending(Builder $query): Builder
+    {
+        return $query
+            ->whereIn('status', [CallStatusEnum::SUBMITTED, CallStatusEnum::APPROVED])
+            ->whereNotNull('trimmed_path')
+            ->whereNull('landmark_decision');
+    }
+
+    /**
+     * Pending calls no admin holds: never handed out, or held and abandoned.
+     */
+    public function scopeLandmarkAvailable(Builder $query): Builder
+    {
+        return $query->landmarkPending()->where(function (Builder $inner): void {
+            $inner->whereNull('landmark_assigned_to')
+                ->orWhere('landmark_assigned_at', '<', self::lockExpiredBefore());
         });
     }
 
@@ -245,6 +281,11 @@ class CallRecording extends Model
             'trimmed_duration' => $this->trimmed_duration,
             'comment' => $comment,
         ]);
+    }
+
+    public function landmark(): BelongsTo
+    {
+        return $this->belongsTo(CallLandmark::class);
     }
 
     public function trimmer(): BelongsTo
