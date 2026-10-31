@@ -29,4 +29,18 @@ return [
 
     'max_audio_per_text' => (int) env('DATASET_MAX_AUDIO_PER_TEXT', 3),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Duration Token
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret of the external Python script that converts recordings
+    | and reports their durations (guest/audio/upload, guest/audio/update).
+    | It sends the value in the X-Duration-Token header. Left empty, both
+    | endpoints refuse every call.
+    |
+    */
+
+    'duration_token' => env('DATASET_DURATION_TOKEN'),
+
 ];

@@ -62,21 +62,36 @@ Route::group([
     Route::apiSingleton('profile', ProfileController::class);
 });
 
-// Call trimmers see only their own section (routes/api/v1/calls.php).
+/*
+ * Who may open what mirrors the role lists of the admin panel menu
+ * (dataset.aralhub.uz). `role:admin` covers the super admin too. Call trimmers
+ * see only their own section (routes/api/v1/calls.php); every group below
+ * refuses them.
+ */
+
+// Shared by every work role: the quota bar and the personal report.
 Route::group([
     'prefix' => 'admin',
     'as' => 'admin.',
     'middleware' => ['auth:sanctum', 'role.deny:trimmer'],
 ], function () {
-    Route::apiSingleton('daily/quota/texts', DailyQuotaController::class)->names('daily.quota.texts');
+    Route::get('daily/quota/texts', [DailyQuotaController::class, 'show'])->name('daily.quota.texts.show');
+
+    Route::get('profile/report', ProfileReportController::class)->name('profile.report');
+});
+
+// Management: users, results, reports, long audio.
+Route::group([
+    'prefix' => 'admin',
+    'as' => 'admin.',
+    'middleware' => ['auth:sanctum', 'role:admin'],
+], function () {
+    Route::match(['put', 'patch'], 'daily/quota/texts', [DailyQuotaController::class, 'update'])->name('daily.quota.texts.update');
 
     Route::apiResource('roles', RoleController::class)->only('index');
     Route::apiResource('users', UserController::class);
     Route::apiResource('text-statuses', TextStatusesController::class)->only('index');
-    Route::apiResource('texts', TextController::class);
-    Route::apiResource('files', FileController::class);
     Route::apiResource('actions', ActionController::class)->only('index');
-    Route::apiResource('specializations', SpecializationController::class);
 
     Route::get('finished/edit/texts', FinishedEditTextController::class)->name('finished.edit.texts');
     Route::get('finished/audio/texts', FinishedAudioTextController::class)->name('finished.audio.texts');
@@ -85,10 +100,7 @@ Route::group([
     Route::get('error/texts', ErrorTextController::class)->name('error.texts');
 
     Route::get('dataset', ActiveDatasetController::class)->name('dataset.active');
-    Route::post('dataset', DatasetController::class)->name('dataset');
-    Route::post('export/report-users', ExportReportUserController::class)->name('export.report-users');
-
-    Route::get('profile/report', ProfileReportController::class)->name('profile.report');
+    Route::match(['get', 'post'], 'export/report-users', ExportReportUserController::class)->name('export.report-users');
 
     Route::get('report/speakers', ReportSpeakerController::class)->name('report.speakers');
     Route::get('report/moderators', ReportModeratorController::class)->name('report.moderators');
@@ -102,29 +114,48 @@ Route::group([
     Route::post('long/audio/{audio}/unsplittable', LongAudioUnsplittableController::class)->name('long.audio.unsplittable');
 });
 
+// The "Admin paneli": texts, dataset files and specializations.
+Route::group([
+    'prefix' => 'admin',
+    'as' => 'admin.',
+    'middleware' => ['auth:sanctum', 'role:super-admin'],
+], function () {
+    Route::apiResource('texts', TextController::class);
+    Route::apiResource('files', FileController::class);
+    Route::apiResource('specializations', SpecializationController::class);
+
+    Route::post('dataset', DatasetController::class)->name('dataset');
+});
+
 Route::group([
     'prefix' => 'admin/verify',
     'as' => 'admin.verify.',
-    'middleware' => ['auth:sanctum', 'role.deny:trimmer'],
+    'middleware' => ['auth:sanctum'],
 ], function () {
-    Route::get('users', VerifyUserController::class)->name('users');
+    Route::get('users', VerifyUserController::class)->name('users')->middleware('role:admin');
 
     // edit
-    Route::get('text', VerifyTextController::class)->name('text');
-    Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
-    Route::patch('text/{text}/update', TextUpdateController::class)->name('text.update');
-    Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
+    Route::middleware('role:admin,editor')->group(function () {
+        Route::get('text', VerifyTextController::class)->name('text');
+        Route::post('text/{text}/complete', TextCompleteController::class)->name('text.complete');
+        Route::patch('text/{text}/update', TextUpdateController::class)->name('text.update');
+        Route::delete('text/{text}/cancel', TextCancelController::class)->name('text.cancel');
+    });
 
     // speak
-    Route::get('speak/text', SpeakTextController::class)->name('speak.text');
-    Route::post('speak/text/{text}/audio/complete', SpeakTextAudioCompleteController::class)->name('speak.text.audio.complete');
-    Route::post('speak/text/{text}/skip', SpeakTextSkipController::class)->name('speak.text.skip');
-    Route::post('speak/text/{text}/error', SpeakTextErrorController::class)->name('speak.text.error');
+    Route::middleware('role:admin,speaker')->group(function () {
+        Route::get('speak/text', SpeakTextController::class)->name('speak.text');
+        Route::post('speak/text/{text}/audio/complete', SpeakTextAudioCompleteController::class)->name('speak.text.audio.complete');
+        Route::post('speak/text/{text}/skip', SpeakTextSkipController::class)->name('speak.text.skip');
+        Route::post('speak/text/{text}/error', SpeakTextErrorController::class)->name('speak.text.error');
+    });
 
     // moderator
-    Route::get('moderator/text', ModeratorTextController::class)->name('moderator.text');
-    Route::post('moderator/text/{text}/check', ModeratorTextCheckController::class)->name('moderator.text.check');
+    Route::middleware('role:admin,moderator')->group(function () {
+        Route::get('moderator/text', ModeratorTextController::class)->name('moderator.text');
+        Route::post('moderator/text/{text}/check', ModeratorTextCheckController::class)->name('moderator.text.check');
 
-    Route::get('moderator/audio', ModeratorAudioController::class)->name('moderator.audio');
-    Route::post('moderator/audio/{audio}/check', ModeratorAudioCheckController::class)->name('moderator.audio.check');
+        Route::get('moderator/audio', ModeratorAudioController::class)->name('moderator.audio');
+        Route::post('moderator/audio/{audio}/check', ModeratorAudioCheckController::class)->name('moderator.audio.check');
+    });
 });

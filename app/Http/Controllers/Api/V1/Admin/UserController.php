@@ -10,6 +10,7 @@ use App\Http\Resources\V1\Admin\UserResource;
 use App\Models\User;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 #[Group(name: 'Users & Roles', weight: 40)]
 class UserController extends Controller
@@ -28,15 +29,27 @@ class UserController extends Controller
         return UserResource::collection($users);
     }
 
+    /**
+     * A user created by an admin belongs to that admin, otherwise it would
+     * vanish from their own list (the panel's form sends no admin_id).
+     */
     public function store(StoreUserRequest $request)
     {
-        $user = User::create($request->validated());
+        $attributes = $request->validated();
+
+        if ($request->user()->role === RoleEnum::ADMIN) {
+            $attributes['admin_id'] = $request->user()->id;
+        }
+
+        $user = User::create($attributes);
 
         return new UserResource($user);
     }
 
     public function show(User $user)
     {
+        Gate::authorize('view', $user);
+
         return new UserResource($user);
     }
 
@@ -49,6 +62,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        Gate::authorize('delete', $user);
+
         $user->delete();
 
         return response()->json();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureDurationToken;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsVerified;
 use App\Http\Middleware\EnsureUserLacksRole;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'user-verified' => EnsureUserIsVerified::class,
             'role' => EnsureUserHasRole::class,
             'role.deny' => EnsureUserLacksRole::class,
+            'duration.token' => EnsureDurationToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

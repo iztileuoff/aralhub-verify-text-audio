@@ -34,6 +34,21 @@ enum RoleEnum: int
         };
     }
 
+    /**
+     * Roles this role may give to a user. Nobody grants the super admin;
+     * only the super admin grants the admin role.
+     *
+     * @return array<int, self>
+     */
+    public function grantableRoles(): array
+    {
+        return match ($this) {
+            self::SUPER_ADMIN => [self::ADMIN, self::EDITOR, self::SPEAKER, self::MODERATOR, self::TRIMMER],
+            self::ADMIN => [self::EDITOR, self::SPEAKER, self::MODERATOR, self::TRIMMER],
+            default => [],
+        };
+    }
+
     public function getPermissionsArray(): array
     {
         return match ($this) {

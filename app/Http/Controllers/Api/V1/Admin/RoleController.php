@@ -12,14 +12,7 @@ class RoleController extends Controller
 {
     public function index(Request $request)
     {
-        $roles = collect(RoleEnum::cases())
-            ->filter(fn (RoleEnum $role) => in_array($role, [
-                RoleEnum::ADMIN,
-                RoleEnum::EDITOR,
-                RoleEnum::SPEAKER,
-                RoleEnum::MODERATOR,
-                RoleEnum::TRIMMER,
-            ]))
+        $roles = collect($request->user()->role?->grantableRoles() ?? [])
             ->map(fn (RoleEnum $role) => [
                 'id' => $role->value,
                 'name' => $role->getLabelText(),
