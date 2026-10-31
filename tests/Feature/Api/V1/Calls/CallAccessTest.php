@@ -61,7 +61,7 @@ it('opens moderation and statistics to admins and super admins only', function (
 it('still lets the other roles into the existing sections', function () {
     Sanctum::actingAs(User::factory()->admin()->create());
 
-    $this->getJson(route('admin.texts.index'))->assertSuccessful();
+    $this->getJson(route('admin.users.index'))->assertSuccessful();
 });
 
 it('lists the trimmer role so admins can create the accounts', function () {

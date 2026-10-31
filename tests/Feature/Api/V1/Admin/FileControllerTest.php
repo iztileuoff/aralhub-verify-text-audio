@@ -9,7 +9,7 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::ADMIN->value]));
+    Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::SUPER_ADMIN->value]));
 });
 
 it('marks only the configured dataset as active in the file list', function () {

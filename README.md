@@ -128,6 +128,11 @@ php artisan audio:export-correct --filename=correct_audios.tsv --name="batch 202
 php artisan audio:export-correct --file-id=8 --name="v2 final"
 ```
 
+Python can also push results over HTTP instead of `result.txt`: `POST /api/v1/guest/audio/upload`
+(converted `.wav` + `duration`) and `POST /api/v1/guest/audio/update` (`audio_filename` + `duration`).
+Both require the header `X-Duration-Token: <DATASET_DURATION_TOKEN>` from `.env`; with the variable
+empty they answer `401` to everyone.
+
 ---
 
 ## Commands reference

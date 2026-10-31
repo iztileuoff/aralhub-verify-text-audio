@@ -9,7 +9,7 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::ADMIN->value]));
+    Sanctum::actingAs(User::factory()->create(['role' => RoleEnum::SUPER_ADMIN->value]));
 });
 
 it('excludes split-part texts from the admin text list', function () {
