@@ -47,6 +47,57 @@ it('shows admins the customer\'s original file name', function () {
         ->assertJsonPath('data.0.original_filename', 'Tulpor/2026-09-01/00-00-20_in_+998934880232_ZULXUMAR_X.mp3');
 });
 
+it('finds a call by its id, with or without #', function (string $search) {
+    CallRecording::factory()->count(3)->submitted($this->trimmer)->create();
+    $wanted = CallRecording::factory()->submitted($this->trimmer)->create(['id' => 704]);
+
+    $this->getJson(route('admin.calls.moderation', ['search' => $search]))
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $wanted->id);
+})->with(['704', '#704', ' # 704 ']);
+
+it('searches the id within the chosen status, or everywhere with status=all', function () {
+    CallRecording::factory()->approved($this->trimmer)->create(['id' => 704]);
+
+    $this->getJson(route('admin.calls.moderation', ['search' => '704']))->assertJsonCount(0, 'data');
+
+    $this->getJson(route('admin.calls.moderation', ['search' => '704', 'status' => 'all']))
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.status', 'approved');
+});
+
+it('finds calls by a part of the neutral or the original file name', function () {
+    CallRecording::factory()->submitted($this->trimmer)->create([
+        'source_path' => 'source/batch-1/call-000123.mp3',
+        'original_filename' => 'Tulpor/2026-09-04/11-56-51_in_+998973564734_MANSUR_J9.mp3',
+    ]);
+    CallRecording::factory()->submitted($this->trimmer)->create(['original_filename' => 'other.mp3']);
+
+    $this->getJson(route('admin.calls.moderation', ['search' => 'call-000123']))->assertJsonCount(1, 'data');
+    $this->getJson(route('admin.calls.moderation', ['search' => '998973564734']))->assertJsonCount(1, 'data');
+    $this->getJson(route('admin.calls.moderation', ['search' => '%']))->assertJsonCount(0, 'data');
+});
+
+it('opens one call by id in any status', function () {
+    $call = CallRecording::factory()->create();
+
+    $this->getJson(route('admin.calls.show', $call))
+        ->assertSuccessful()
+        ->assertJsonPath('data.id', $call->id)
+        ->assertJsonPath('data.status', 'pending');
+
+    $this->getJson('/api/v1/admin/calls/999999')->assertNotFound();
+});
+
+it('does not open calls by id for trimmers', function () {
+    $call = CallRecording::factory()->submitted($this->trimmer)->create();
+    Sanctum::actingAs($this->trimmer);
+
+    $this->getJson(route('admin.calls.show', $call))->assertForbidden();
+    $this->getJson(route('admin.calls.current'))->assertSuccessful();
+});
+
 it('filters by status and trimmer', function () {
     $other = User::factory()->trimmer()->create();
     $skipped = CallRecording::factory()->skipped($this->trimmer)->create();
