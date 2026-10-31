@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\Calls\CallModerationController;
 use App\Http\Controllers\Api\V1\Calls\CallRejectController;
 use App\Http\Controllers\Api\V1\Calls\CallReleaseController;
 use App\Http\Controllers\Api\V1\Calls\CallRestoreController;
+use App\Http\Controllers\Api\V1\Calls\CallShowController;
 use App\Http\Controllers\Api\V1\Calls\CallSkipController;
 use App\Http\Controllers\Api\V1\Calls\CallStatsController;
 use App\Http\Controllers\Api\V1\Calls\CallSubmitController;
@@ -51,6 +52,7 @@ Route::group([
 ], function () {
     Route::get('moderation', CallModerationController::class)->name('moderation');
     Route::get('stats', CallStatsController::class)->name('stats');
+    Route::get('{call}', CallShowController::class)->whereNumber('call')->name('show');
     Route::post('{call}/approve', CallApproveController::class)->name('approve');
     Route::post('{call}/reject', CallRejectController::class)->name('reject');
     Route::post('{call}/restore', CallRestoreController::class)->name('restore');
