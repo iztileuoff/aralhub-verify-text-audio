@@ -320,6 +320,18 @@ empty gender column (a call has two voices). The `call-` prefix keeps ids from c
 Same gate as the main export: `exported_at` / `export_id` are stamped and an `Export` is created,
 so nothing is exported twice.
 
+### `calls:export-landmarks`
+
+Writes the call landmarks as a `text,mentions` CSV (UTF-8, comma, standard quoting), most mentioned
+first; `mentions` is the number of calls tied to the landmark. Made for the UBAY Taxi landmark queue.
+Names that look like a phone number (7+ digits) are left out and listed in the output. Read-only:
+nothing is stamped, so pass `--after-id` (printed at the end of each run) to send only new ones.
+
+| Option       | Default         | Description                                   |
+| ------------ | --------------- | --------------------------------------------- |
+| `--filename` | `landmarks.csv` | Output file under `storage/app/`.             |
+| `--after-id` | —               | Only landmarks with a larger id.              |
+
 ---
 
 ## Data model notes
