@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\RoleEnum;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -10,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pulse\Facades\Pulse;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
         Gate::define('viewApiDocs', function (User $user): bool {
             return in_array($user->role, [RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN], true);
         });
