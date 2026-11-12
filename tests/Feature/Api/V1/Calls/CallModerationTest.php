@@ -143,6 +143,15 @@ it('lets the moderator fix the transcript while approving', function () {
         ->and($call->events()->sole()->comment)->toBe('transcript edited');
 });
 
+it('accepts digits in a corrected transcript', function () {
+    $call = CallRecording::factory()->submitted($this->trimmer)->create();
+
+    $this->postJson(route('admin.calls.approve', $call), ['transcript' => 'Nomer 90 123 45 67, saat 15 te.'])
+        ->assertSuccessful();
+
+    expect($call->refresh()->transcript)->toBe('Nomer 90 123 45 67, saat 15 te.');
+});
+
 it('checks a corrected transcript with the same rules', function () {
     $call = CallRecording::factory()->submitted($this->trimmer)->create();
 
