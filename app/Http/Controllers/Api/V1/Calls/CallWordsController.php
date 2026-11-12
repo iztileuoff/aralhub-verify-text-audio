@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Calls;
 
 use App\Enums\CallStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Calls\CallWordsRequest;
 use App\Models\CallRecording;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -12,32 +13,75 @@ use Illuminate\Support\Facades\Cache;
 #[Group(name: 'Calls - Trimming', weight: 60)]
 class CallWordsController extends Controller
 {
-    private const CACHE_KEY = 'calls_words_dictionary';
+    private const CACHE_KEY = 'calls_words_dictionary_v2';
 
     private const CACHE_FRESH_SECONDS = 3600;
 
     private const CACHE_STALE_SECONDS = 7200;
 
+    private const DEFAULT_SUGGESTIONS = 6;
+
+    /** The Karakalpak letters folded to plain Latin, so `og` finds `oǵan`. */
+    private const FOLD = ['á' => 'a', 'ǵ' => 'g', 'ı' => 'i', 'í' => 'i', 'ń' => 'n', 'ó' => 'o', 'ú' => 'u'];
+
     /**
-     * Словарь частых слов для подсказок при наборе текста звонка.
+     * Подсказки слов при наборе текста звонка.
      *
-     * Слова из текстов сданных и принятых звонков, в нижнем регистре, `í` приведено к `ı`;
-     * отсортированы по частоте. Редкие слова (опечатки), голые числа и одиночные буквы не
-     * входят. Пересчитывается не чаще раза в час — фронт загружает словарь один раз за сессию.
+     * С `prefix` — частые слова, которые начинаются с него (без учёта регистра и букв
+     * `á ǵ ı ń ó ú`: `og` находит `oǵan`), не больше `limit` (по умолчанию 6, максимум 20).
+     * Без `prefix` — весь словарь (до 5 000 слов). Слова из текстов сданных и принятых
+     * звонков, в нижнем регистре, `í` приведено к `ı`, по частоте; слова реже 3 раз, голые
+     * числа и одиночные буквы не входят. Словарь пересчитывается не чаще раза в час.
      */
-    public function __invoke(): JsonResponse
+    public function __invoke(CallWordsRequest $request): JsonResponse
     {
-        $words = Cache::flexible(
+        $dictionary = Cache::flexible(
             self::CACHE_KEY,
             [self::CACHE_FRESH_SECONDS, self::CACHE_STALE_SECONDS],
             fn (): array => $this->buildDictionary(),
         );
 
-        return response()->json(['data' => $words], 200, [], JSON_UNESCAPED_UNICODE);
+        $prefix = $request->validated('prefix');
+
+        $words = $prefix === null
+            ? array_slice($dictionary, 0, (int) config('calls.words_limit'))
+            : $this->suggest($dictionary, $prefix, (int) ($request->validated('limit') ?? self::DEFAULT_SUGGESTIONS));
+
+        return response()->json([
+            'data' => array_map(fn (array $entry): array => ['word' => $entry['word'], 'count' => $entry['count']], $words),
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
     /**
-     * @return array<int, array{word: string, count: int}>
+     * Most frequent words whose folded form starts with the folded prefix. The
+     * word typed in full is left out — there is nothing to complete.
+     *
+     * @param  array<int, array{word: string, count: int, folded: string}>  $dictionary
+     * @return array<int, array{word: string, count: int, folded: string}>
+     */
+    private function suggest(array $dictionary, string $prefix, int $limit): array
+    {
+        $typed = self::lower($prefix);
+        $folded = self::fold($typed);
+        $found = [];
+
+        foreach ($dictionary as $entry) {
+            if ($entry['word'] !== $typed && str_starts_with($entry['folded'], $folded)) {
+                $found[] = $entry;
+
+                if (count($found) === $limit) {
+                    break;
+                }
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * Every word seen at least `calls.words_min_count` times, most frequent first.
+     *
+     * @return array<int, array{word: string, count: int, folded: string}>
      */
     private function buildDictionary(): array
     {
@@ -50,9 +94,7 @@ class CallWordsController extends Controller
             ->lazyById(500);
 
         foreach ($calls as $call) {
-            $text = strtr(mb_strtolower($call->transcript), ['í' => 'ı']);
-
-            foreach (preg_split('/[^\p{L}\p{N}]+/u', $text, -1, PREG_SPLIT_NO_EMPTY) as $word) {
+            foreach (preg_split('/[^\p{L}\p{N}]+/u', self::lower($call->transcript), -1, PREG_SPLIT_NO_EMPTY) as $word) {
                 if (mb_strlen($word) < 2 || ! preg_match('/\p{L}/u', $word)) {
                     continue;
                 }
@@ -68,10 +110,21 @@ class CallWordsController extends Controller
 
         $dictionary = [];
 
-        foreach (array_slice($counts, 0, (int) config('calls.words_limit'), true) as $word => $count) {
-            $dictionary[] = ['word' => (string) $word, 'count' => $count];
+        foreach ($counts as $word => $count) {
+            $dictionary[] = ['word' => (string) $word, 'count' => $count, 'folded' => self::fold((string) $word)];
         }
 
         return $dictionary;
+    }
+
+    /** Lower case with `í` → `ı`, the form words are stored in. */
+    private static function lower(string $text): string
+    {
+        return strtr(mb_strtolower($text), ['í' => 'ı']);
+    }
+
+    private static function fold(string $word): string
+    {
+        return strtr($word, self::FOLD);
     }
 }
