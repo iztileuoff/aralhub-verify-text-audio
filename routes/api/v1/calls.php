@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Calls\CallStatsController;
 use App\Http\Controllers\Api\V1\Calls\CallSubmitController;
 use App\Http\Controllers\Api\V1\Calls\CallUploadExistingController;
 use App\Http\Controllers\Api\V1\Calls\CallUploadFilesController;
+use App\Http\Controllers\Api\V1\Calls\CallWordsController;
 use App\Http\Controllers\Api\V1\Calls\MyCallsController;
 use App\Http\Controllers\Api\V1\Calls\MyCallStatsController;
 use App\Models\CallRecording;
@@ -43,6 +44,15 @@ Route::group([
     Route::post('{call}/submit', CallSubmitController::class)->name('submit');
     Route::post('{call}/skip', CallSkipController::class)->name('skip');
     Route::post('{call}/release', CallReleaseController::class)->name('release');
+});
+
+// Autocomplete dictionary: trimmers type transcripts, admins correct them in moderation.
+Route::group([
+    'prefix' => 'admin/calls',
+    'as' => 'admin.calls.',
+    'middleware' => ['auth:sanctum', 'role:trimmer,admin'],
+], function () {
+    Route::get('words', CallWordsController::class)->name('words');
 });
 
 Route::group([

@@ -53,4 +53,19 @@ return [
 
     'max_upload_kb' => (int) env('CALLS_MAX_UPLOAD_KB', 10240),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Word Suggestions
+    |--------------------------------------------------------------------------
+    |
+    | The dictionary behind the transcript autocomplete (GET calls/words):
+    | the most frequent words of submitted and approved transcripts. Words
+    | seen fewer than `words_min_count` times are mostly typos and left out.
+    |
+    */
+
+    'words_limit' => (int) env('CALLS_WORDS_LIMIT', 5000),
+
+    'words_min_count' => (int) env('CALLS_WORDS_MIN_COUNT', 3),
+
 ];
