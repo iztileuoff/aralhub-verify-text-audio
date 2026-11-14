@@ -7,12 +7,16 @@ use Illuminate\Foundation\Http\FormRequest;
 class CallWordsRequest extends FormRequest
 {
     /**
+     * After the previous words even one typed letter narrows the next word;
+     * on its own a prefix needs two.
+     *
      * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
-            'prefix' => ['nullable', 'string', 'min:2', 'max:50'],
+            'prev' => ['nullable', 'string', 'max:100'],
+            'prefix' => ['nullable', 'string', $this->filled('prev') ? 'min:1' : 'min:2', 'max:50'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:20'],
         ];
     }
